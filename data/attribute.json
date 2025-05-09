@@ -1,0 +1,60 @@
+{
+    "Dictionaries": [
+        {
+            "id": "1",
+            "name": "tagName",
+            "first": "3",
+            "intermediate": "3",
+            "last": "3",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "2",
+            "name": "type",
+            "first": "5",
+            "intermediate": "1",
+            "last": "5",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "3",
+            "name": "id",
+            "first": "1",
+            "intermediate": "1",
+            "last": "1",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "4",
+            "name": "name",
+            "first": "1",
+            "intermediate": "1",
+            "last": "1",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "5",
+            "name": "display",
+            "first": "1",
+            "intermediate": "1",
+            "last": "1",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "6",
+            "name": "disabled",
+            "first": "1",
+            "intermediate": "1",
+            "last": "1",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "7",
+            "name": "class",
+            "first": "1",
+            "intermediate": "1",
+            "last": "1",
+            "comment": "Initial version from 15/04/2024"
+        }
+    ]
+}

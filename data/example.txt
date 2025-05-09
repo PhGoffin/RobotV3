@@ -1,0 +1,1 @@
+SELECT D.*, concat(H.code, D.code) as label FROM dictionary D, dictionaryheader H WHERE D.projectID = 1 AND D.active = 1 and D.dictionaryheaderID = H.dictionaryheaderID and concat(H.code, D.code) not in (select parameter1 from test)

@@ -1,0 +1,403 @@
+{
+    "Dictionaries": [
+        {
+            "id": "1",
+            "path": "Root",
+            "condition": "*|!Table|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "2",
+            "path": "Root/ancestor::*[2]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "3",
+            "path": "Root/ancestor::*[2]/following-sibling::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "4",
+            "path": "Root/ancestor::*[2]/following-sibling::*[1]/ancestor::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "5",
+            "path": "Root/ancestor::*[2]/following-sibling::*[1]/descendant::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "6",
+            "path": "Root/ancestor::*[3]/following-sibling::*[1]/descendant::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "7",
+            "path": "Root/ancestor::*[2]/preceding-sibling::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "8",
+            "path": "Root/ancestor::*[2]/preceding-sibling::*[1]/ancestor::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "9",
+            "path": "Root/ancestor::*[2]/preceding-sibling::*[1]/descendant::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "10",
+            "path": "Root/descendant::*[2]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "11",
+            "path": "Root/descendant::*[2]/following-sibling::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "12",
+            "path": "Root/descendant::*[2]/preceding-sibling::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "13",
+            "path": "Root/following-sibling::*[2]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "14",
+            "path": "Root/following-sibling::*[2]/ancestor::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "15",
+            "path": "Root/following-sibling::*[2]/descendant::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "16",
+            "path": "Root/preceding-sibling::*[2]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "17",
+            "path": "Root/preceding-sibling::*[2]/ancestor::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "18",
+            "path": "Root/preceding-sibling::*[2]/descendant::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "19",
+            "path": "Root/ancestor::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "20",
+            "path": "Root/ancestor::*[1]/following-sibling::*[2]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "21",
+            "path": "Root/ancestor::*[1]/following-sibling::*[2]/descendant::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "22",
+            "path": "Root/ancestor::*[1]/preceding-sibling::*[2]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "23",
+            "path": "Root/ancestor::*[1]/preceding-sibling::*[2]/descendant::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "24",
+            "path": "Root/ancestor::*[1]/following-sibling::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "25",
+            "path": "Root/ancestor::*[1]/following-sibling::*[1]/descendant::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "26",
+            "path": "Root/ancestor::*[1]/preceding-sibling::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "27",
+            "path": "Root/ancestor::*[1]/preceding-sibling::*[1]/descendant::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "28",
+            "path": "Root/descendant::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "29",
+            "path": "Root/descendant::*[1]/following-sibling::*[2]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "30",
+            "path": "Root/descendant::*[1]/following-sibling::*[2]/ancestor::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "31",
+            "path": "Root/descendant::*[1]/preceding-sibling::*[2]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "32",
+            "path": "Root/descendant::*[1]/preceding-sibling::*[2]/ancestor::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "33",
+            "path": "Root/descendant::*[1]/following-sibling::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "34",
+            "path": "Root/descendant::*[1]/following-sibling::*[1]/ancestor::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "35",
+            "path": "Root/descendant::*[1]/preceding-sibling::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "36",
+            "path": "Root/descendant::*[1]/preceding-sibling::*[1]/ancestor::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "37",
+            "path": "Root/following-sibling::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "38",
+            "path": "Root/following-sibling::*[1]/ancestor::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "39",
+            "path": "Root/following-sibling::*[1]/ancestor::*[1]/preceding-sibling::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "40",
+            "path": "Root/following-sibling::*[1]/descendant::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "41",
+            "path": "Root/following-sibling::*[1]/descendant::*[1]/ancestor::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "42",
+            "path": "Root/following-sibling::*[1]/descendant::*[1]/preceding-sibling::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "43",
+            "path": "Root/preceding-sibling::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "44",
+            "path": "Root/preceding-sibling::*[1]/ancestor::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "45",
+            "path": "Root/preceding-sibling::*[1]/ancestor::*[1]/descendant::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "46",
+            "path": "Root/preceding-sibling::*[1]/ancestor::*[1]/following-sibling::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "47",
+            "path": "Root/preceding-sibling::*[1]/descendant::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "48",
+            "path": "Root/preceding-sibling::*[1]/descendant::*[1]/ancestor::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "49",
+            "path": "Root/preceding-sibling::*[1]/descendant::*[1]/following-sibling::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "50",
+            "path": "Root/ancestor::*[1]/following-sibling::*[1]/descendant::*[3]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "51",
+            "path": "Root/ancestor::*[1]/following-sibling::*[1]/descendant::*[3]/descendant::*[2]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "52",
+            "path": "Root/ancestor::*[1]/following-sibling::*[1]/descendant::ux-datepicker/descendant::*[1]",
+            "condition": "*|!Table|!Radio Checkbox|!Text Editor|!Navigation Icon|!Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "53",
+            "path": "Root/ancestor::ag-grid-angular/descendant::div[contains(@class, 'ag-root-wrapper-body')]/descendant::div[contains(@ref,'eBodyViewport')]/descendant::div[contains(@ref,'eCenterViewport')]",
+            "condition": "Table",
+            "comment": "Initial version from 15/04/2024 - Specific for the table"
+        },
+        {
+            "id": "57",
+            "path": "Root/ancestor::div[contains(@class,'ui-table-scrollable-header')]/following-sibling::div[1][contains(@class, 'ui-table-scrollable-body')]/descendant::table[1]",
+            "condition": "Table",
+            "comment": "Initial version from 15/04/2024 - Specific for the table"
+        },
+        {
+            "id": "59",
+            "path": "Root/ancestor::tr[1]/ancestor::thead[1]/ancestor::table[1]",
+            "condition": "Table",
+            "comment": "Initial version from 15/04/2024 - Specific for the table"
+        },
+        {
+            "id": "55",
+            "path": "Root/ancestor::ux-form-group/descendant::label[not (contains(@class, 'wrapper'))]",
+            "condition": "Radio Checkbox",
+            "comment": "Initial version from 15/04/2024 - Specific for radio or check box"
+        },
+        {
+            "id": "54",
+            "path": "Root/ancestor::*[1]/following-sibling::*[1]/descendant::input[@type = 'radio' or @type = 'checkbox']",
+            "condition": "Radio Checkbox",
+            "comment": "Initial version from 15/04/2024 - Specific for radio or check box"
+        },
+        {
+            "id": "56",
+            "path": "Root/ancestor::label[1]/following-sibling::div[1]/descendant::div[contains(@class, 'ql-editor')]",
+            "condition": "Text Editor",
+            "comment": "Initial version from 15/04/2024 - Specific for Text Editor with ql-editor"
+        },
+        {
+            "id": "64",
+            "path": "Root/ancestor::div[1]/descendant::div[contains(@class, 'ql-editor')]",
+            "condition": "Text Editor",
+            "comment": "Initial version from 15/04/2024 - Specific for Text Editor with ql-editor"
+        },
+        {
+            "id": "58",
+            "path": "Root/ancestor::div[@class= 'ux-layout-page-header__title']/descendant::*[1]",
+            "condition": "Title",
+            "comment": "Initial version from 15/04/2024 - Specific for the Title"
+        },
+        {
+            "id": "60",
+            "path": "Root/ancestor::label[1]/following-sibling::div[1]/descendant::p-calendar[1]/descendant::*[1]",
+            "condition": "Calendar",
+            "comment": "Initial version from 15/04/2024 - Specific for the Calendar"
+        },
+        {
+            "id": "61",
+            "path": "Root/ancestor::span[contains(@class, 'ux-tree__node-label') or contains(@class, 'eui-menu-item')]",
+            "condition": "Navigation",
+            "comment": "Initial version from 15/04/2024 - Specific for Navigation without anchor"
+        },
+        {
+            "id": "62",
+            "path": "Root/ancestor::div[contains(@class, 'sidebar-item__header')]/descendant::span[contains(@class, 'icon')]",
+            "condition": "Navigation",
+            "comment": "Initial version from 15/04/2024 - Specific for Navigation without anchor"
+        },
+        {
+            "id": "63",
+            "path": "Root/following-sibling::div/descendant::ux-datepicker/descendant::input",
+            "condition": "Calendar",
+            "comment": "Initial version from 15/04/2024 - Specific for the Calendar"
+        },
+        {
+            "id": "65",
+            "path": "Root/ancestor::span[contains(@class, 'eui-menu-item__link-label')]/span[contains(@class, 'eui-menu-item__label')]",
+            "condition": "Menu",
+            "comment": "Initial version from 15/04/2024 - Specific for the Menu"
+        },
+        {
+            "id": "66",
+            "path": "Root/ancestor::div[@class = 'ux-panel-content']/descendant::select",
+            "condition": "Listbox",
+            "comment": "Initial version from 15/04/2024 - Specific for the list box"
+        }
+         
+
+    ]
+}
+

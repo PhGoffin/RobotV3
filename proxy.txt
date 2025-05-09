@@ -1,0 +1,20 @@
+
+
+INTPA Server Proxy
+======================
+set http_proxy=http://goffipl:StPeket123@ps-lux-usr.cec.eu.int:8012
+set https_proxy=http://goffipl:StPeket123@ps-lux-usr.cec.eu.int:8012
+
+Github project on the local computer
+=====================================
+git config --global user.name "goffipl
+git config --global user.email Philippe-Jean-L.GOFFIN@ext.ec.europa.eu
+git config --global http.proxy  http_proxy=http://goffipl:<password>@ps-lux-usr.cec.eu.int:8012
+git config --global https.proxy  http_proxy=http://goffipl:<password>@ps-lux-usr.cec.eu.int:8012
+
+git clone https://github.com/PhGoffin/robot.git
+select the source control in Visual Code to allow the connection and the referesh
+
+
+
+

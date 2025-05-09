@@ -1,0 +1,325 @@
+{
+    "Dictionaries": [
+        {
+            "id": "1",
+            "path": "Root",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "2",
+            "path": "Root/ancestor::*[2]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "3",
+            "path": "Root/ancestor::*[2]/following-sibling::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "4",
+            "path": "Root/ancestor::*[2]/following-sibling::*[1]/ancestor::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "5",
+            "path": "Root/ancestor::*[2]/following-sibling::*[1]/descendant::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "6",
+            "path": "Root/ancestor::*[3]/following-sibling::*[1]/descendant::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "7",
+            "path": "Root/ancestor::*[2]/preceding-sibling::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "8",
+            "path": "Root/ancestor::*[2]/preceding-sibling::*[1]/ancestor::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "9",
+            "path": "Root/ancestor::*[2]/preceding-sibling::*[1]/descendant::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "10",
+            "path": "Root/descendant::*[2]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "11",
+            "path": "Root/descendant::*[2]/following-sibling::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "12",
+            "path": "Root/descendant::*[2]/preceding-sibling::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "13",
+            "path": "Root/following-sibling::*[2]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "14",
+            "path": "Root/following-sibling::*[2]/ancestor::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "15",
+            "path": "Root/following-sibling::*[2]/descendant::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "16",
+            "path": "Root/preceding-sibling::*[2]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "17",
+            "path": "Root/preceding-sibling::*[2]/ancestor::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "18",
+            "path": "Root/preceding-sibling::*[2]/descendant::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "19",
+            "path": "Root/ancestor::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "20",
+            "path": "Root/ancestor::*[1]/following-sibling::*[2]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "21",
+            "path": "Root/ancestor::*[1]/following-sibling::*[2]/descendant::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "22",
+            "path": "Root/ancestor::*[1]/preceding-sibling::*[2]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "23",
+            "path": "Root/ancestor::*[1]/preceding-sibling::*[2]/descendant::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "24",
+            "path": "Root/ancestor::*[1]/following-sibling::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "25",
+            "path": "Root/ancestor::*[1]/following-sibling::*[1]/descendant::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "26",
+            "path": "Root/ancestor::*[1]/preceding-sibling::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "27",
+            "path": "Root/ancestor::*[1]/preceding-sibling::*[1]/descendant::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "28",
+            "path": "Root/descendant::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "29",
+            "path": "Root/descendant::*[1]/following-sibling::*[2]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "30",
+            "path": "Root/descendant::*[1]/following-sibling::*[2]/ancestor::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "31",
+            "path": "Root/descendant::*[1]/preceding-sibling::*[2]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "32",
+            "path": "Root/descendant::*[1]/preceding-sibling::*[2]/ancestor::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "33",
+            "path": "Root/descendant::*[1]/following-sibling::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "34",
+            "path": "Root/descendant::*[1]/following-sibling::*[1]/ancestor::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "35",
+            "path": "Root/descendant::*[1]/preceding-sibling::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "36",
+            "path": "Root/descendant::*[1]/preceding-sibling::*[1]/ancestor::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "37",
+            "path": "Root/following-sibling::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "38",
+            "path": "Root/following-sibling::*[1]/ancestor::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "39",
+            "path": "Root/following-sibling::*[1]/ancestor::*[1]/preceding-sibling::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "40",
+            "path": "Root/following-sibling::*[1]/descendant::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "41",
+            "path": "Root/following-sibling::*[1]/descendant::*[1]/ancestor::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "42",
+            "path": "Root/following-sibling::*[1]/descendant::*[1]/preceding-sibling::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "43",
+            "path": "Root/preceding-sibling::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "44",
+            "path": "Root/preceding-sibling::*[1]/ancestor::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "45",
+            "path": "Root/preceding-sibling::*[1]/ancestor::*[1]/descendant::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "46",
+            "path": "Root/preceding-sibling::*[1]/ancestor::*[1]/following-sibling::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "47",
+            "path": "Root/preceding-sibling::*[1]/descendant::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "48",
+            "path": "Root/preceding-sibling::*[1]/descendant::*[1]/ancestor::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "49",
+            "path": "Root/preceding-sibling::*[1]/descendant::*[1]/following-sibling::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "50",
+            "path": "Root/ancestor::*[1]/following-sibling::*[1]/descendant::*[3]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "51",
+            "path": "Root/ancestor::*[1]/following-sibling::*[1]/descendant::*[3]/descendant::*[2]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "52",
+            "path": "Root/ancestor::*[1]/following-sibling::*[1]/descendant::ux-datepicker/descendant::*[1]",
+            "condition": "*|!Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        },
+        {
+            "id": "53",
+            "path": "Root/ancestor::div[contains(@name, 'smenu')]/descendant::a",
+            "condition": "Sub Menu",
+            "comment": "Initial version from 15/04/2024"
+        }
+         
+
+    ]
+}
+

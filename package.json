@@ -1,0 +1,39 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemon app.js",
+    "start2": "pm2 start app.js",
+    "monitor": "pm2 monitor",
+    "stop": "pm2 stop all",
+    "watch": "pm2 set pm2:sysmonit true",
+    "watch2": "pm2 update",
+    "log": "pm2 logs --lines 50"
+  },
+  "keywords": [],
+  "author": "ArtComputer - Goffin Ph.",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "moment": "^2.30.1",
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.6.5",
+    "nodemailer": "^6.9.13",
+    "nodemon": "^3.0.1",
+    "pm2": "^5.4.3",
+    "say": "^0.16.0",
+    "selenium-webdriver": "^4.17.0",
+    "systemjs": "^6.14.3",
+    "vue-clipboard3": "^2.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "@types/node": "^22.15.16"
+  }
+}

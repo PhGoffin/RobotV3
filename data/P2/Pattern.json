@@ -1,0 +1,234 @@
+{
+    "Dictionaries": [
+        {
+            "id": "1",
+            "name": "Menu",
+            "path": "Root",
+            "tag": "DIV",
+            "attribute": "DIV@id=smenu0@name=smenu0@display=True",
+            "result": "//div[<LENGTH> (contains(translate(text(),\"'\", '*'), '<PARAM>') or contains(translate(@value, \"'\", '*'), '<PARAM>') or contains(translate(@placeholder, \"'\", '*'), '<PARAM>')) and not(contains(@style,'display: none')) and not(ancestor::*[contains(@style,'display: none')])]",
+            "weight": "100",
+            "comment": "Added by AI on 17/02/2022 09:55:54"
+        },
+        {
+            "id": "2",
+            "name": "Menu",
+            "path": "Root/Ancestor",
+            "tag": "A/DIV",
+            "attribute": "A/DIV@id=smenu0@name=smenu0@display=True",
+            "result": "//a[<LENGTH> (contains(translate(text(),\"'\", '*'), '<PARAM>') or contains(translate(@value, \"'\", '*'), '<PARAM>') or contains(translate(@placeholder, \"'\", '*'), '<PARAM>'))]/ancestor::div[1] [ not(contains(@style,'display: none')) and not(ancestor::*[contains(@style,'display: none')])]",
+            "weight": "100",
+            "comment": "Added by AI on 17/02/2022 09:55:54"
+        },
+        {
+            "id": "4",
+            "name": "Input Field",
+            "path": "Root/Ancestor/*Following-sibling/Descendant",
+            "tag": "A/TD/TD/INPUT",
+            "attribute": "A/TD/TD/INPUT@type=text@display=True",
+            "result": "//a[<LENGTH> (contains(translate(text(),\"'\", '*'), '<PARAM>') or contains(translate(@value, \"'\", '*'), '<PARAM>') or contains(translate(@placeholder, \"'\", '*'), '<PARAM>'))]/ancestor::*[1] [self::td]/following-sibling::*[2] [self::td]/descendant::input[1] [ not(contains(@style,'display: none')) and not(ancestor::*[contains(@style,'display: none')])]",
+            "weight": "100",
+            "comment": "Added by AI on 17/02/2022 10:37:14"
+        },
+        {
+            "id": "5",
+            "name": "Input Field",
+            "path": "Root/Ancestor/Following-sibling/Descendant",
+            "tag": "A/TD/TD/INPUT",
+            "attribute": "A/TD/TD/INPUT@type=text@display=True",
+            "result": "//a[<LENGTH> (contains(translate(text(),\"'\", '*'), '<PARAM>') or contains(translate(@value, \"'\", '*'), '<PARAM>') or contains(translate(@placeholder, \"'\", '*'), '<PARAM>'))]/ancestor::*[1] [self::td]/following-sibling::*[1] [self::td]/descendant::input[1] [ not(contains(@style,'display: none')) and not(ancestor::*[contains(@style,'display: none')])]",
+            "weight": "100",
+            "comment": "Added by AI on 17/02/2022 10:37:14"
+        },
+        {
+            "id": "6",
+            "name": "Input Field",
+            "path": "Root/Ancestor/Following-sibling/Descendant",
+            "tag": "A/TD/TD/TEXTAREA",
+            "attribute": "A/TD/TD/TEXTAREA@type=textarea@display=True@class=txtArea",
+            "result": "//a[<LENGTH> (contains(translate(text(),\"'\", '*'), '<PARAM>') or contains(translate(@value, \"'\", '*'), '<PARAM>') or contains(translate(@placeholder, \"'\", '*'), '<PARAM>'))]/ancestor::*[1] [self::td]/following-sibling::*[1] [self::td]/descendant::textarea[1] [ not(contains(@style,'display: none')) and not(ancestor::*[contains(@style,'display: none')])]",
+            "weight": "100",
+            "comment": "Added by AI on 17/02/2022 10:46:30"
+        },
+        {
+            "id": "7",
+            "name": "Input Field",
+            "path": "Root/*Ancestor/Following-sibling/Descendant",
+            "tag": "STRONG/TD/TD/TEXTAREA",
+            "attribute": "STRONG/TD/TD/TEXTAREA@type=textarea@display=True@class=txtArea",
+            "result": "//strong[<LENGTH> (contains(translate(text(),\"'\", '*'), '<PARAM>') or contains(translate(@value, \"'\", '*'), '<PARAM>') or contains(translate(@placeholder, \"'\", '*'), '<PARAM>'))]/ancestor::*[2] [self::td]/following-sibling::*[1] [self::td]/descendant::textarea[1] [ not(contains(@style,'display: none')) and not(ancestor::*[contains(@style,'display: none')])]",
+            "weight": "100",
+            "comment": "Added by AI on 17/02/2022 10:46:30"
+        },
+        {
+            "id": "8",
+            "name": "Button",
+            "path": "Root",
+            "tag": "INPUT",
+            "attribute": "INPUT@type=submit||button||reset@display=True",
+            "result": "//input[<LENGTH> (contains(translate(text(),\"'\", '*'), '<PARAM>') or contains(translate(@value, \"'\", '*'), '<PARAM>') or contains(translate(@placeholder, \"'\", '*'), '<PARAM>')) and not(contains(@style,'display: none')) and not(ancestor::*[contains(@style,'display: none')])]",
+            "weight": "100",
+            "comment": "Added by AI on 17/02/2022 10:58:47"
+        },
+        {
+            "id": "9",
+            "name": "Tab",
+            "path": "Root/Ancestor",
+            "tag": "CENTER/TD",
+            "attribute": "CENTER/TD@display=True@class=tab",
+            "result": "//center[<LENGTH> (contains(translate(text(),\"'\", '*'), '<PARAM>') or contains(translate(@value, \"'\", '*'), '<PARAM>') or contains(translate(@placeholder, \"'\", '*'), '<PARAM>'))]/ancestor::td[1] [ not(contains(@style,'display: none')) and not(ancestor::*[contains(@style,'display: none')])]",
+            "weight": "100",
+            "comment": "Added by AI on 18/02/2022 08:58:43"
+        },
+        {
+            "id": "10",
+            "name": "Tab",
+            "path": "Root/Ancestor",
+            "tag": "B/DIV",
+            "attribute": "B/DIV@id=button_text@display=True",
+            "result": "//b[<LENGTH> (contains(translate(text(),\"'\", '*'), '<PARAM>') or contains(translate(@value, \"'\", '*'), '<PARAM>') or contains(translate(@placeholder, \"'\", '*'), '<PARAM>'))]/ancestor::div[1] [ not(contains(@style,'display: none')) and not(ancestor::*[contains(@style,'display: none')])]",
+            "weight": "100",
+            "comment": "Added by AI on 18/02/2022 09:06:05"
+        },
+        {
+            "id": "11",
+            "name": "Display Field",
+            "path": "Root/*Ancestor/Following-sibling/Descendant",
+            "tag": "STRONG/TD/TD/INPUT",
+            "attribute": "STRONG/TD/TD/INPUT@type=hidden||radio",
+            "result": "//strong[<LENGTH> (contains(translate(text(),\"'\", '*'), '<PARAM>') or contains(translate(@value, \"'\", '*'), '<PARAM>') or contains(translate(@placeholder, \"'\", '*'), '<PARAM>'))]/ancestor::*[2] [self::td]/following-sibling::*[1] [self::td]/descendant::input[1]",
+            "weight": "100",
+            "comment": "Added by AI on 21/02/2022 07:33:41"
+        },
+        {
+            "id": "12",
+            "name": "Display Field",
+            "path": "Root/Ancestor/Following-sibling/Descendant",
+            "tag": "A/TD/TD/INPUT",
+            "attribute": "A/TD/TD/INPUT@type=hidden||radio",
+            "result": "//a[<LENGTH> (contains(translate(text(),\"'\", '*'), '<PARAM>') or contains(translate(@value, \"'\", '*'), '<PARAM>') or contains(translate(@placeholder, \"'\", '*'), '<PARAM>'))]/ancestor::*[1] [self::td]/following-sibling::*[1] [self::td]/descendant::input[1]",
+            "weight": "100",
+            "comment": "Added by AI on 21/02/2022 07:51:32"
+        },
+        {
+            "id": "13",
+            "name": "Display Field",
+            "path": "Root/Following-sibling/Descendant",
+            "tag": "TD/TD/A",
+            "attribute": "TD/TD/A@display=True",
+            "result": "//td[<LENGTH> (contains(translate(text(),\"'\", '*'), '<PARAM>') or contains(translate(@value, \"'\", '*'), '<PARAM>') or contains(translate(@placeholder, \"'\", '*'), '<PARAM>'))]/following-sibling::*[1] [self::td]/descendant::a[1] [ not(contains(@style,'display: none')) and not(ancestor::*[contains(@style,'display: none')])]",
+            "weight": "100",
+            "comment": "Added by AI on 21/02/2022 07:57:15"
+        },
+        {
+            "id": "14",
+            "name": "Display Field",
+            "path": "Root/**Ancestor/Following-sibling/Descendant",
+            "tag": "STRONG/TD/TD/INPUT",
+            "attribute": "STRONG/TD/TD/INPUT@type=hidden@display=False",
+            "result": "//strong[<LENGTH> (contains(translate(text(),\"'\", '*'), '<PARAM>') or contains(translate(@value, \"'\", '*'), '<PARAM>') or contains(translate(@placeholder, \"'\", '*'), '<PARAM>'))]/ancestor::*[3] [self::td]/following-sibling::*[1] [self::td]/descendant::input[1]",
+            "weight": "100",
+            "comment": "Added by AI on 21/02/2022 08:03:26"
+        },
+        {
+            "id": "15",
+            "name": "Display Field",
+            "path": "Root/*Ancestor/Following-sibling/Descendant",
+            "tag": "A/TD/TD/INPUT",
+            "attribute": "A/TD/TD/INPUT@type=hidden@display=False",
+            "result": "//a[<LENGTH> (contains(translate(text(),\"'\", '*'), '<PARAM>') or contains(translate(@value, \"'\", '*'), '<PARAM>') or contains(translate(@placeholder, \"'\", '*'), '<PARAM>'))]/ancestor::*[2] [self::td]/following-sibling::*[1] [self::td]/descendant::input[1]",
+            "weight": "100",
+            "comment": "Added by AI on 21/02/2022 08:52:30"
+        },
+        {
+            "id": "25",
+            "name": "Display Field",
+            "path": "Root/Ancestor/*Following-sibling/Descendant",
+            "tag": "A/TD/TD/INPUT",
+            "attribute": "A/TD/TD/INPUT@type=hidden@display=False",
+            "result": "//a[<LENGTH> (contains(translate(text(),\"'\", '*'), '<PARAM>') or contains(translate(@value, \"'\", '*'), '<PARAM>') or contains(translate(@placeholder, \"'\", '*'), '<PARAM>'))]/ancestor::*[1] [self::td]/following-sibling::*[2] [self::td]/descendant::input[1]",
+            "weight": "100",
+            "comment": "Added by AI on 25/02/2022 10:08:35"
+        },
+        {
+            "id": "20",
+            "name": "Right Display Field",
+            "path": "Root/Ancestor/Following-sibling",
+            "tag": "STRONG/A/INPUT",
+            "attribute": "STRONG/A/INPUT@type=hidden@display=False",
+            "result": "//strong[<LENGTH> (contains(translate(text(),\"'\", '*'), '<PARAM>') or contains(translate(@value, \"'\", '*'), '<PARAM>') or contains(translate(@placeholder, \"'\", '*'), '<PARAM>'))]/ancestor::*[1] [self::a]/following-sibling::input[1]",
+            "weight": "100",
+            "comment": "Added by AI on 23/02/2022 11:11:17"
+        },
+        {
+            "id": "16",
+            "name": "Table",
+            "path": "Root/Ancestor",
+            "tag": "A/TABLE",
+            "attribute": "A/TABLE@display=True",
+            "result": "//a[<LENGTH> (contains(translate(text(),\"'\", '*'), '<PARAM>') or contains(translate(@value, \"'\", '*'), '<PARAM>') or contains(translate(@placeholder, \"'\", '*'), '<PARAM>'))]/ancestor::table[1] [ not(contains(@style,'display: none')) and not(ancestor::*[contains(@style,'display: none')])]",
+            "weight": "100",
+            "comment": "Added by AI on 21/02/2022 11:49:12"
+        },
+        {
+            "id": "21",
+            "name": "Table",
+            "path": "Root/Ancestor",
+            "tag": "STRONG/TABLE",
+            "attribute": "STRONG/TABLE@display=True",
+            "result": "//strong[<LENGTH> (contains(translate(text(),\"'\", '*'), '<PARAM>') or contains(translate(@value, \"'\", '*'), '<PARAM>') or contains(translate(@placeholder, \"'\", '*'), '<PARAM>'))]/ancestor::table[1] [ not(contains(@style,'display: none')) and not(ancestor::*[contains(@style,'display: none')])]",
+            "weight": "95",
+            "comment": "Added by AI on 23/02/2022 13:30:44"
+        },
+        {
+            "id": "22",
+            "name": "Table",
+            "path": "Root/Ancestor",
+            "tag": "TH/TABLE",
+            "attribute": "TH/TABLE@display=True",
+            "result": "//th[<LENGTH> (contains(translate(text(),\"'\", '*'), '<PARAM>') or contains(translate(@value, \"'\", '*'), '<PARAM>') or contains(translate(@placeholder, \"'\", '*'), '<PARAM>'))]/ancestor::table[1] [ not(contains(@style,'display: none')) and not(ancestor::*[contains(@style,'display: none')])]",
+            "weight": "90",
+            "comment": "Added by AI on 23/02/2022 14:44:47"
+        },
+        {
+            "id": "23",
+            "name": "Table",
+            "path": "Root/Ancestor",
+            "tag": "TD/TABLE",
+            "attribute": "TD/TABLE@display=True",
+            "result": "//td[<LENGTH> (contains(translate(text(),\"'\", '*'), '<PARAM>') or contains(translate(@value, \"'\", '*'), '<PARAM>') or contains(translate(@placeholder, \"'\", '*'), '<PARAM>'))]/ancestor::table[1] [ not(contains(@style,'display: none')) and not(ancestor::*[contains(@style,'display: none')])]",
+            "weight": "95",
+            "comment": "Added by AI on 24/02/2022 09:53:56"
+        },
+        {
+            "id": "24",
+            "name": "Table",
+            "path": "Root/Ancestor",
+            "tag": "CENTER/TABLE",
+            "attribute": "CENTER/TABLE@display=True",
+            "result": "//center[<LENGTH> (contains(translate(text(),\"'\", '*'), '<PARAM>') or contains(translate(@value, \"'\", '*'), '<PARAM>') or contains(translate(@placeholder, \"'\", '*'), '<PARAM>'))]/ancestor::table[1] [ not(contains(@style,'display: none')) and not(ancestor::*[contains(@style,'display: none')])]",
+            "weight": "100",
+            "comment": "Added by AI on 25/02/2022 09:25:04"
+        },
+        {
+            "id": "18",
+            "name": "Sub Menu",
+            "path": "Root/ancestor::div[contains(@name, 'smenu')]/descendant::a",
+            "tag": "A/DIV/A",
+            "attribute": "A/DIV/A@display=True",
+            "result": "//a[<LENGTH> (contains(translate(text(),\"'\", '*'), '<PARAM>') or contains(translate(@value, \"'\", '*'), '<PARAM>') or contains(translate(@placeholder, \"'\", '*'), '<PARAM>'))]/ancestor::div[contains(@name, 'smenu')][self::div]/descendant::a[1] [ not(contains(@style,'display: none')) and not(ancestor::*[contains(@style,'display: none')])]",
+            "weight": "100",
+            "comment": "Added by AI on 22/02/2022 10:38:43"
+        },
+        {
+            "id": "19",
+            "name": "Section",
+            "path": "Root",
+            "tag": "TD",
+            "attribute": "TD@display=True@class=tab_title",
+            "result": "//td[<LENGTH> (contains(translate(text(),\"'\", '*'), '<PARAM>') or contains(translate(@value, \"'\", '*'), '<PARAM>') or contains(translate(@placeholder, \"'\", '*'), '<PARAM>')) and not(contains(@style,'display: none')) and not(ancestor::*[contains(@style,'display: none')])]",
+            "weight": "100",
+            "comment": "Added by AI on 22/02/2022 12:05:52"
+        }
+    ]
+}

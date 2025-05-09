@@ -1,0 +1,52 @@
+/*
+ * @Author: Philippe Goffin 
+ * @Email: artcomputer123@gmail.com
+ * @Date: 2024-01-10 
+ * @Last Modified by: 
+ * @Last Modified time: 2024-01-11 09:40:57
+ * @Description: Load all the free users (users not linked to a project)
+ */
+
+
+import { ref } from 'vue'
+import { consoleLog}  from '../../util/debug';
+
+
+const getFreeUsersByProject = (workspaceID, projectID) => {
+
+    const error = ref(null)
+
+    const loadFreeUsers = async (freeUsers, trace) => {
+        try {
+
+            // simulate delay
+            // await new Promise(resolve => {
+            //   setTimeout(resolve, 2000)
+            // })
+
+            if (process.env.VUE_APP_DATABASE == 'LOCAL') {
+                consoleLog('getFreeUsersByProject.js/loadFreeUsers', 3, 'LOCAL Database getAllUserByWorkspace is not implemented', trace)
+            } else {
+                consoleLog('getFreeUsersByProject.js/loadFreeUsers', 3,' workspaceID ' + workspaceID +  ' - projectID: ' + projectID, trace)
+                const url = process.env.VUE_APP_MYSQL_API
+                let data = await fetch(url + 'user/freeUsersByProject', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 'workspaceID': workspaceID, 'projectID': projectID})
+                })
+                if (!data.ok) {
+                    throw Error('no free user available')
+                }
+                freeUsers.value = await data.json()
+            }
+
+        } catch (err) {
+            error.value = err.message
+            consoleLog('getFreeUsersByProject.js/loadFreeUsers', 3, err, trace)
+        }
+    }
+
+    return { error, loadFreeUsers }
+}
+
+export default getFreeUsersByProject

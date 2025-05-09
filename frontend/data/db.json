@@ -1,0 +1,33 @@
+{
+    "workflow": [
+        {
+          "workflowID": 1,
+          "workflow": "INTPA-R5"
+        }
+      ],    
+    "project": [
+      {
+        "id": 1,
+        "projectID": 1,
+        "project": "OPSYS"
+      },
+      {
+        "id": 2,
+        "projectID": 2,
+        "project": "CRIS"
+      }
+    ],
+    "subproject": [
+        {
+          "projectID": 1,
+          "subprojectID": 1,
+          "subproject": "Pre-award"
+        },
+        {
+            "projectID": 1,
+            "subprojectID": 2,
+            "subproject": "Post-award"
+          }
+      ]
+  
+  }

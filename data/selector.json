@@ -1,0 +1,77 @@
+{
+    "Dictionaries": [
+        {
+            "id": "1",
+            "name": "Button",
+            "endTag": "button|input|div",
+            "comment": "Label of the button"
+        },
+        {
+            "id": "2",
+            "name": "Menu",
+            "endTag": "div",
+            "comment": "Label of the menu"
+        },
+        {
+            "id": "3",
+            "name": "Sub Menu",
+            "endTag": "a",
+            "comment": "Label of the sub menu"
+        },
+        {
+            "id": "4",
+            "name": "Input Field",
+            "endTag": "input|textarea",
+            "comment": "Label of the field"
+        },
+        {
+            "id": "5",
+            "name": "Right Input Field",
+            "endTag": "input",
+            "comment": "Right label of the field"
+        },
+        {
+            "id": "9",
+            "name": "Listbox",
+            "endTag": "select",
+            "comment": "Label of the listbox"
+        },
+        {
+            "id": "6",
+            "name": "Display Field",
+            "endTag": "input|a",
+            "comment": "Label of the field"
+        },
+        {
+            "id": "7",
+            "name": "Right Display Field",
+            "endTag": "input",
+            "comment": "Right label of the field"
+        },
+        {
+            "id": "8",
+            "name": "Navigation",
+            "endTag": "div|span",
+            "comment": "Name of the navigation menu"
+        },
+        {
+            "id": "16",
+            "name": "Tab",
+            "endTag": "td|div",
+            "comment": "Name of the tab"
+        },
+        {
+            "id": "10",
+            "name": "Table",
+            "endTag": "table",
+            "comment": "Name of a header in the table"
+        },
+        {
+            "id": "14",
+            "name": "Section",
+            "endTag": "td",
+            "comment": "Name of the section"
+        }
+    ]
+}
+
