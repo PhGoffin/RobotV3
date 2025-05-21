@@ -1,3 +1,4 @@
+const { time } = require('console');
 
 module.exports = {
 
@@ -6,7 +7,7 @@ module.exports = {
   * @Email: artcomputer123@gmail.com
   * @Date: 2025-05-08
   * @Last Modified by: Someone
-  * @Last Modified time: 2025-05-08 11:50:29
+  * @Last Modified time: 2025-05-21 14:21:38
   * @Description: All the Playwright services available for robot
   */
 
@@ -25,11 +26,13 @@ module.exports = {
 
     return new Promise(async (resolve, reject) => {
 
-      const { chromium } = require('playwright');
+      const { chromium } = require('playwright'); // firefox or webkit
+      const { test } = require('@playwright/test')
       const robot = require("../library/robot.library.js")
       const { getScenarioById } = require("../../scenario/scenario.service.js");
       const { getTestByScenario } = require("../../test/test.service.js");
       const { deleteLogfile } = require("../../logfile/logfile.service.js");
+      const { getReferenceByCode } = require("../../reference/reference.service.js");
 
       console.log('**********  Playwright ****************')
 
@@ -44,6 +47,7 @@ module.exports = {
       variables.setVariable('$Scenario', data.scenarioName)
 
       let ret = 0
+      let timeout = 30 // 30 seconds by default
 
       if (data.scenarioID == undefined || data.subprojectID == undefined || data.userID == undefined) {
         variables.displayLog(1, 1, 'Invalid data!')
@@ -82,8 +86,43 @@ module.exports = {
 
       //test(data.scenarioName, async ({ browser }) => {
 
-      const browser = await chromium.launch({headless: false});
+
+      const browser = await chromium.launch({ headless: false });
+      //const browser = await firefox.launch({ headless: false });
+      //const browser = await webkit.launch({ headless: false });
+
+      /* We can also use the context to be more specific:
+
+            const { firefox, devices } = require('playwright');
+
+
+              const browser = await firefox.launch({ headless: false });
+              const context = await browser.newContext({
+                ...devices['Pixel 5'], // Apply the Pixel 5 device settings
+              });
+              const page = await context.newPage();
+              await page.goto('https://www.example.com'); // Replace with your desired URL
+              await page.screenshot({ path: 'pixel5-screenshot.png' }); // Take a screenshot
+              await browser.close();
+
+      */
+
+
+
       const page = await browser.newPage();
+
+      // Get the timeout (if any)
+      const dataAPI = { projectID: data.projectID, userID: data.userID, code: 'TimeOut' }
+      const reference = await getReferenceByCode(dataAPI);
+      if (reference.length) {
+        if (reference[0].label != '<N/A>') {
+          timeout = reference[0].label * 1
+        }
+      }
+      console.log('TimeOut: ' + timeout)
+      page.setDefaultTimeout(timeout * 1000)
+      await robot.evaluateFunction(page, variables, 'logfile', data, 'Info', "Timeout is set to " + timeout + " second(s)")
+
 
       // write the scenario name in the reference for the title in the logfile
       ret = await robot.evaluateFunction(page, variables, 'setReference', data, 'Scenario Name', data.scenarioName, 'Name of the current scenario')
@@ -119,10 +158,11 @@ module.exports = {
         return resolve(ret);
       }
 
-      //}) // end test playwright
+    })
+
+    //}) // end test playwright
 
 
-    });
   },
 
 

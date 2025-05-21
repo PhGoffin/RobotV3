@@ -6,7 +6,7 @@ let Frames = [];
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TbR>
 *   switchToDefaultContent: Switch to the default window
 *
 * @param {object} driver:     selenium driver
@@ -35,7 +35,7 @@ async function switchToDefaultContent(driver, variables, verbose) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *   dictionary: get a value from the dictionary
 *
 * @param {object} variables:  array of all the variables
@@ -95,166 +95,8 @@ async function dictionary(variables, data, code, language, variable) {
 
 
 /**
-* ---------------------------------------------------------------------------- 
-* @function
-*   getElementDummy: get html element by xpath or by css - Just for debug purpose
-*
-* @param {object} driver:     selenium driver
-* @param {object} variables:  array of all the variables
-* @param {object} data:       all the parameters
-* @param {string} tag:        tag of the element
-*
-*/
-async function getElementDummy(driver, variables, data, tag, verbose) {
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
-    const { Left } = require("./string.library.js");
-    let element = []
-    let ret
-
-    //variables.displayLog(1, 1, 'getElementDummy()')
-
-    if (tag == undefined) {
-        return { success: 0, message: 'tag is undefined in the function getElement!', stop: 1 }
-    }
-
-
-    // remove the first and the last character if it's a quote
-    if (tag[0] == "'") {
-        tag = tag.substring(1, tag.length)
-    }
-    if (tag.substring(tag.length, tag.length - 1) == "'") {
-        tag = tag.substring(0, tag.length - 1)
-    }
-
-
-    // Check if the tag is not on the dictionary
-    if (tag[0] == '@') {
-        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tag = result[0].label
-            //console.log (link)
-        } else {
-            variables.displayLog(1, 1, 'Data: ' + tag + ' not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-        }
-    }
-
-    tag = variables.evaluateVariable(tag)
-    tag = tag.replace(/''/g, "'");
-
-    // detect the position (if any)
-    // s.substr(a, b) is the same as s.substring(a, a+b)
-    let myOccurence = 0;
-    if (tag[0] == "(") {
-        // tag contains the occurence (in the case of non unique identifier)
-        let j = tag.indexOf(')', 0);
-        myOccurence = tag.substring(1, j);
-        //myOccurence--;
-        if (Left(myOccurence, 2) != '$$') { // $$ means the last element
-            if (Left(myOccurence, 1) == '$') {
-                myOccurence = variables.evaluateVariable(myOccurence);
-            }
-            myOccurence--;
-        }
-        tag = tag.substring(j + 1);
-    }
-
-    element.push({ id: 1, test: 'dummy test' });
-
-    variables.displayLog(1, 2, '-----------------------------------------------')
-    variables.displayLog(1, 2, '=====   tag: ' + tag + ', occurence: ', myOccurence + 1)
-    variables.displayLog(1, 2, '-----------------------------------------------')
-
-    return { success: 1, message: 'elementDummy OK', element: element, stop: 0 }
-
-}
-
-
-
-/**
-* ---------------------------------------------------------------------------- 
-* @function
-*   setValueDummy: key a value in a dummy field - Just for debug purpose
-*
-* @param {object} driver:          selenium driver
-* @param {object} data:            all the parameters
-* @param {object} variables:       array of all the variables
-* @param {string} value:           value to key in the field (by default with a TAB key at the end )
-*
-*/
-async function setValueDummy(driver, data, variables, tag, value) {
-    const { getDatasetByCode } = require("../../dataset/dataset.service.js");
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
-    let ret
-
-    //variables.displayLog(1, 1, 'setValueDummy()')
-
-    // Evaluate the value
-    if (value == undefined) {
-        value = ''
-    } else {
-        value = variables.evaluateVariable(value)
-        value = value.replace(/'/g, "");
-    }
-
-    // Evaluate special keywords (if any)
-    value = variables.dataValue(value)
-
-    // Evaluate the dataset (if any)
-    if (value[0] == '#') {
-        value = variables.evaluateVariable(value)
-        value = value.replace(/'/g, "");
-        const dataAPI = { subprojectID: data.subprojectID, code: value, language: '*', active: 1 }
-        const result = await getDatasetByCode(dataAPI);
-        if (result.length) {
-            value = result[0].label
-            value = variables.evaluateVariable(value)
-            value = value.replace(/'/g, "");
-        } else {
-            variables.displayLog(1, 1, 'Data not found in the dataset! - value: ' + value)
-            return { success: 0, message: "Cannot find the code: " + value + " in the dataset!", stop: 1 }
-        }
-    }
-
-    if (tag == undefined) {
-        return { success: 0, message: "Setvalue: tag cannot be empty!", stop: 1 }
-    } else if (tag[0] == '@') {
-        // Search the tag in the dictionary
-        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tag = result[0].label
-            //console.log (link)
-        } else {
-            variables.displayLog(1, 1, 'Data not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-        }
-    }
-    tag = variables.evaluateVariable(tag)
-
-    // Get the element for the tag
-    try {
-        ret = await getElementDummy(driver, variables, data, tag)
-    }
-    catch (err) {
-        variables.displayLog(1, 1, 'setValueDummy: Fatal error: Browser not responding!')
-        return { success: 0, message: ret.message, stop: 1 }
-    }
-    variables.displayLog(1, 1, '-----------------------------------------------')
-    variables.displayLog(1, 1, '     setValueDummy')
-    variables.displayLog(1, 1, '    Value: ' + value)
-    variables.displayLog(1, 1, '    Ret: ', ret)
-    variables.displayLog(1, 1, '-----------------------------------------------')
-
-
-    return { success: 1, message: 'setValueDummy OK', stop: 0 }
-}
-
-
-/**
  * ---------------------------------------------------------------------------- 
- * @function
+ * @function <OK>
  *  debug: define the level of detail in the console of the server
  * 
  * @param {object} variables:  array of all the variables
@@ -267,7 +109,7 @@ async function debug(variables, verbose) {
 
 /**
  * ---------------------------------------------------------------------------- 
- * @function
+ * @function <TbR>
  *  ask: Ask the user to key a value
  * 
  * @param {object} driver:     selenium driver
@@ -334,7 +176,7 @@ async function ask(driver, variables, myMessage, myDefault, myVariable, myTimeou
 
 /**
  * ---------------------------------------------------------------------------- 
- * @function
+ * @function <OK>
  *   email: Send email
  *
  * @param {object} variables:    array of all the variables
@@ -497,7 +339,7 @@ async function email(variables, data, myEmailTo, mySubject, myBody, myAttachment
 
 /**
  * ---------------------------------------------------------------------------- 
- * @function
+ * @function <OK>
  *  stopTest: stop the test if the condition is true
  * 
  * @param {object} variables:  array of all the variables
@@ -538,7 +380,7 @@ async function stopTest(variables, condition, message) {
 
 /**
  * ---------------------------------------------------------------------------- 
- * @function
+ * @function <TbR>
  *  detectFrame: Recursive function to detect all the frames
  * 
  * @param {object} driver:     selenium driver
@@ -586,7 +428,7 @@ async function detectFrame(driver, variables, framePath) {
 
 /**
  * ---------------------------------------------------------------------------- 
- * @function
+ * @function <TbR>
  *  checkFrame: Check if a frame path exists
  * 
  * @param {object} driver:     selenium driver
@@ -632,7 +474,7 @@ async function checkFrame(driver, variables, framePath) {
 
 /**
  * ---------------------------------------------------------------------------- 
- * @function
+ * @function <TbR>
  *  SwitchToBrowserTab:  Switch to the last tab of the browser
  *
  * @param {object} driver:     selenium driver
@@ -669,7 +511,7 @@ async function switchToBrowserTab(driver, tabID) {
 
 /**
  * ---------------------------------------------------------------------------- 
- * @function
+ * @function <TbR>
  *  CloseBrowserTab:  Close the last tab of the browser
  *  
  * @param {object} driver:     selenium driver
@@ -703,7 +545,7 @@ async function closeBrowserTab(driver) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TbR>
 *  switchToFrame:  Switch to an Frame
 * 
 * @param {object} driver:     selenium driver
@@ -760,7 +602,7 @@ async function switchToFrame(driver, variables, data, frameId) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   getElement: get html element by xpath or by css
 *
 * @param {object} driver:     selenium driver
@@ -978,7 +820,7 @@ async function getElement(driver, variables, data, tag) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   getAllElements: get html element by xpath or by css
 *
 * @param {object} driver:     selenium driver
@@ -1210,37 +1052,63 @@ async function getAllElements(driver, variables, data, tag) {
 }
 
 
+
 /**
 * ---------------------------------------------------------------------------- 
-* @function
-*   countElement: count the number of element(s) and store the result into a variable
+* @function <OK>
+*   countElement: count the number of element
 *
-* @param {object} driver:       selenium driver
+* @param {object} page:         playwright page
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
-* @param {string} tagElement:   tag element
-* @param {string} variableName: name of the variable to store the result
+* @param {number} tagElement:   tag of the element to be checked
+* @param {string} variable:     name of the variable to store the number of elements
+* @param {number} delay:        delay in seconds
+* @param {number} action:       action in case element is not found: continue (0) or stop all the tests (1) or skip the It (2)
 *
 */
-async function countElement(driver, data, variables, tagElement, variableName) {
-    let ret
-    let countElt = 0
-    //variables.displayLog(1, 1,'----- countElement')
+async function countElement(page, data, variables, tagElement, variable, delay, action) {
 
-    ret = await getAllElements(driver, variables, data, tagElement)
-
-    if (!ret.success) {
-        variables.displayLog(1, 2, '>>>>> countElement: Cannot find the element(s): ' + tagElement)
-        // // Return a warning, not an error
-        // ret.stop = 1
-        // variables.setVariable(variableName, -1)
-        // return ret
-    } else countElt = ret.element.length
-
-    variables.setVariable(variableName, countElt)
+    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
 
-    return { success: 1, message: "countElement OK!", elements: ret.elements, value: countElt, stop: 0 }
+    // Check if the tag is not on the dictionary
+    if (tagElement[0] == '@') {
+        const dataAPI = { projectID: data.projectID, code: tagElement, language: '*', active: 1 }
+        const result = await getDictionaryByCode(dataAPI);
+        if (result.length) {
+            tagElement = result[0].label
+        } else {
+            variables.displayLog(1, 1, 'Data: ' + tagElement + ' not found in the dictionary!')
+            return { success: 0, message: "Cannot find the code: " + tagElement + " in the dictionary!", stop: 1 }
+        }
+    }
+
+
+    try {
+        if (delay == undefined) delay = 10    // delay = number of loop (or second) to wait for the element
+
+        page.setDefaultTimeout(delay * 1000);
+        await page.locator(tagElement).first().waitFor()
+        const count = await page.locator(tagElement).count()
+        // store the value into the variable
+        variables.setVariable(variable, count)
+        variables.displayLog(1, 2, 'countElement: ' + count)
+
+        return { success: 1, message: "countElement", stop: 0 }
+    }
+    catch (err) {
+        console.log('countElement error............')
+        variables.setVariable('$Error', "1")
+        if (action == undefined) action = 0
+        // action: 0 = continue, 1 = stop all the tests, 2 = skip the It
+
+        let ret = { success: 0, message: 'countElement KO', stop: 0 }
+        if (action == 1) { ret.stop = 1 }
+        else if (action == 0) { ret.success = 1 }
+        else { ret.success = 0 }
+        return ret
+    }
 
 }
 
@@ -1303,7 +1171,7 @@ async function computeGUIDistanceV2(myPath) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   detectGUI: Detect an element on a webpage (based on a pattern generated by Artificial Intelligence)
 * @param {object} driver:      selenium driver
 * @param {object} variables:   array of all the variables
@@ -1640,7 +1508,7 @@ async function detectGUI(driver, variables, data, selectorID, myCriteria, myPosi
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *  checkExactMatch: Check attribute of the GUI Element
 * 
 * @param {object} variables:    array of all the variables
@@ -1688,7 +1556,7 @@ async function checkExactMatch(variables, ret, myCriteria) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *  checkAttribute: Check attribute of the GUI Element
 * 
 * @param {object} driver:       selenium driver
@@ -1882,7 +1750,7 @@ async function checkAttribute(driver, variables, data, myXpath, myAttributes, my
 
 /**
  * ---------------------------------------------------------------------------- 
- * @function
+ * @function <OK>
  *  Private startPromises: function to start a promise
  *
  * @param  resolve: 
@@ -1897,7 +1765,7 @@ function startPromises() {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *   url: get a webpage
 *
 * @param {object} page:         playwright page
@@ -1909,12 +1777,6 @@ function startPromises() {
 async function url(page, variables, projectID, link) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     let ret
-
-    // await playPage(page)
-    // return { success: 1, message: 'Url OK', stop: 0 }
-
-
-
 
     // evaluate the link
     link = variables.evaluateVariable(link)
@@ -1949,7 +1811,7 @@ async function url(page, variables, projectID, link) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *  getUrl:  Get the current URL and store it into the variable $currentURL
 * 
 * @param {object} driver:       selenium driver
@@ -1958,7 +1820,7 @@ async function url(page, variables, projectID, link) {
 *
 */
 async function getUrl(driver, variables, myVariable) {
-    console.log ('getUrl...................')
+    console.log('getUrl...................')
     // const { Left } = require("./string.library.js")
 
     // try {
@@ -1980,7 +1842,7 @@ async function getUrl(driver, variables, myVariable) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *  newTab:  Open a new tab and switch to it 
 * 
 * @param {object} driver:       selenium driver
@@ -2000,7 +1862,7 @@ async function newTab(driver) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *  newWindow:  Open a new window and switch to it 
 * 
 * @param {object} driver:       selenium driver
@@ -2020,10 +1882,10 @@ async function newWindow(driver) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *   loginUser: Key the dummy user in the login
 *
-* @param {object} driver:       selenium driver
+* @param {object} page:         playwright page
 * @param {object} variables:    array of all the variables
 * @param {object} data:         all the parameters
 * @param {string} dummyUser:    user in the dummy user database
@@ -2031,10 +1893,11 @@ async function newWindow(driver) {
 * @param {string} tagSubmit:    tag of the submit
 *
 */
-async function loginUser(driver, variables, data, dummyUser, tagUser, tagSubmit) {
+async function loginUser(page, variables, data, dummyUser, tagUser, tagSubmit) {
     const { getDummyuserByUser } = require("../../dummyuser/dummyuser.service.js");
     let ret
     let user = ''
+    let delay = 0
 
     variables.displayLog(1, 2, 'Dummy user: ' + dummyUser)
 
@@ -2066,46 +1929,18 @@ async function loginUser(driver, variables, data, dummyUser, tagUser, tagSubmit)
         return { success: 0, message: "Cannot find the user: " + dummyUser + " in the dummy users!", stop: 1 }
     }
 
-    // wait for the login page
+     // Enter the user in the field
     try {
-        ret = await waitFor(driver, data, variables, tagUser, 10, 1)
-        if (!ret.success) {
-            if (ret.stop == 99) return { success: 0, message: "Browser not responding!", stop: 99 }
-            return { success: 0, message: "Cannot detect the login page, skip It", stop: 1 }
-        }
-    } catch (err) {
-        variables.displayLog(1, 1, 'loginUser: Fatal error: Browser not responding!')
-        return { success: 0, message: "Browser not responding!", stop: 99 }
-    }
-
-    variables.displayLog(1, 1, '     Login page detected!')
-    await pause(driver, variables, data.subprojectID, 2);
-
-    // Enter the user in the field
-    try {
-        ret = await setValue(driver, data, variables, tagUser, user)
+        ret = await setValue(page, data, variables, tagUser, user)
 
         if (!ret.success) {
             variables.displayLog(1, 1, '>>>>> Error during the setValue!')
             return { success: 0, message: "Cannot key a value in the function loginUser!", stop: 1 }
         }
 
-        // Check if the tagSubmit is available (after 5 seconds)
+        // Submit the login ( if necessary )
         if (tagSubmit != undefined && tagSubmit != '<N/A>') {
-            ret = await waitFor(driver, data, variables, tagSubmit, 5, 2)
-            if (ret.success) {
-                // Click on the submit element (element is returned by the function waitFor)
-                ret.element.click()
-                variables.displayLog(1, 1, '     click Ok')
-                return { success: 1, message: "login User OK!", stop: 0 }
-            } else {
-                if (ret.stop) {
-                    if (ret.stop == 99) return { success: 0, message: "Browser not responding!", stop: 99 }
-                    else return ret
-                } else {
-                    return { success: 1, message: "No need to submit the login User", stop: 0 }
-                }
-            }
+           ret = await click(page, data, variables, tagSubmit, delay)
         } else {
             return { success: 1, message: "No need to submit the login User", stop: 0 }
         }
@@ -2121,10 +1956,10 @@ async function loginUser(driver, variables, data, dummyUser, tagUser, tagSubmit)
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *   loginPassword: Key the dummy user password
 *
-* @param {object} driver:       selenium driver
+* @param {object} page:         playwright page
 * @param {object} variables:    array of all the variables
 * @param {object} data:         all the parameters
 * @param {string} dummyUser:    user in the dummy user database
@@ -2132,7 +1967,7 @@ async function loginUser(driver, variables, data, dummyUser, tagUser, tagSubmit)
 * @param {string} tagSubmit:    tag of the submit
 *
 */
-async function loginPassword(driver, variables, data, dummyUser, tagPassword, tagSubmit) {
+async function loginPassword(page, variables, data, dummyUser, tagPassword, tagSubmit) {
     const { getDummyuserByUser } = require("../../dummyuser/dummyuser.service.js");
     const { decryptPassword } = require("./password.library.js")
 
@@ -2141,6 +1976,7 @@ async function loginPassword(driver, variables, data, dummyUser, tagPassword, ta
 
         let ret
         let password = ''
+        let delay = 0
 
         // Evaluate the dummyUser
         if (dummyUser == undefined) {
@@ -2180,23 +2016,14 @@ async function loginPassword(driver, variables, data, dummyUser, tagPassword, ta
         }
 
 
-        ret = await setValue(driver, data, variables, tagPassword, password)
+        ret = await setValue(page, data, variables, tagPassword, password)
         if (!ret.success) {
             variables.displayLog(1, 1, '>>>>> Error during the setValue!')
             return { success: 0, message: "Cannot key a value in the function loginPassword!", stop: 99 }
         }
-        // Check if the tagSubmit is available (after 5 seconds)
+        // Submit the password (if necessary)
         if (tagSubmit != undefined && tagSubmit != '<N/A>') {
-            ret = await waitFor(driver, data, variables, tagSubmit, 5, 2)
-            if (ret.success) {
-                // Click on the submit element
-                ret.element.click()
-                variables.displayLog(1, 1, '     click Ok')
-                //console.log ('ready to click on the submit button')
-            } else {
-                if (ret.stop == 99) return { success: 0, message: "Browser not responding!", stop: 99 }
-                else return { success: 1, message: "No need to submit the login User", stop: 0 }
-            }
+           ret = await click(page, data, variables, tagSubmit, delay)
         } else {
             return { success: 1, message: "No need to submit the login User", stop: 0 }
         }
@@ -2212,17 +2039,17 @@ async function loginPassword(driver, variables, data, dummyUser, tagPassword, ta
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *   dummyLogin: Get the login of a dummy user
 *
-* @param {object} driver:       selenium driver
+* @param {object} page:         playwright page
 * @param {object} variables:    array of all the variables
 * @param {object} data:         all the parameters
 * @param {string} dummyUser:    user in the dummy user database (or <ME> for the connected user)
 * @param {string} variable:     name of the variable to store the extra information
 *
 */
-async function dummyLogin(driver, variables, data, dummyUser, variable) {
+async function dummyLogin(page, variables, data, dummyUser, variable) {
     const { getDummyuserByUser } = require("../../dummyuser/dummyuser.service.js");
     let ret
     let dummyLogin = ''
@@ -2266,17 +2093,17 @@ async function dummyLogin(driver, variables, data, dummyUser, variable) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *   dummyExtraInfo: Get the extra information of a dummy user
 *
-* @param {object} driver:       selenium driver
+* @param {object} page:         playwright page
 * @param {object} variables:    array of all the variables
 * @param {object} data:         all the parameters
 * @param {string} dummyUser:    user in the dummy user database (or <ME> for the connected user)
 * @param {string} variable:     name of the variable to store the extra information
 *
 */
-async function dummyExtraInfo(driver, variables, data, dummyUser, variable) {
+async function dummyExtraInfo(page, variables, data, dummyUser, variable) {
     const { getDummyuserByUser } = require("../../dummyuser/dummyuser.service.js");
     let ret
     let extraInfo = ''
@@ -2319,16 +2146,16 @@ async function dummyExtraInfo(driver, variables, data, dummyUser, variable) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *   pause: wait for a few seconds
 *
-* @param {object} driver:           selenium driver
-* @param {object} variables:  array of all the variables
+* @param {object} page:             playwright page
+* @param {object} variables:        array of all the variables
 * @param {number} subprojectID:     subprojectID
 * @param {string} delay:            delay in seconds
 *
 */
-async function pause(driver, variables, subprojectID, delay) {
+async function pause(page, variables, subprojectID, delay) {
     const { getDatasetByCode } = require("../../dataset/dataset.service.js");
     let ret
 
@@ -2350,10 +2177,7 @@ async function pause(driver, variables, subprojectID, delay) {
     }
 
     try {
-        //variables.displayLog(1, 1,'---- pause wait for ' + delay + ' seconds')
-        //console.log('pause: ' + delay)
-        delay = delay * 1000
-        await driver.sleep(delay);
+        await page.waitForTimeout(delay * 1000);
         ret = { success: 1, message: 'Pause OK', stop: 0 }
         return ret
     } catch (err) {
@@ -2364,25 +2188,19 @@ async function pause(driver, variables, subprojectID, delay) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *   waitFor: check if an element is available
 *
-* @param {object} driver:       selenium driver
+* @param {object} page:         playwright page
+* @param {object} variables:    array of all the variables
 * @param {object} data:         all the parameters
 * @param {number} tagElement:   tag of the element to be checked
 * @param {number} delay:        delay in seconds
 * @param {number} action:       action in case element is not found: continue (0) or stop all the tests (1) or skip the It (2)
 *
 */
-async function waitFor(driver, data, variables, tagElement, delay, action) {
+async function waitFor(page, data, variables, tagElement, delay, action) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
-    let count
-
-    //variables.displayLog(1, 1,'*******----- waitFor: ' + tagElement + ' for ' + delay + ' sec')
-    ret = { success: 0, message: 'waitFor not enter in the loop', stop: 0 }
-    if (delay == undefined) delay = 10    // delay = number of loop (or second) to wait for the element
-    if (action == undefined) action = 0     // action = continue (0) or stop all the tests (1) or skip the It (2) in case of elementy not found
-    let found = 0
 
     // Check if the tag is not on the dictionary
     if (tagElement[0] == '@') {
@@ -2396,52 +2214,34 @@ async function waitFor(driver, data, variables, tagElement, delay, action) {
         }
     }
 
-    let myCount = 0
-    for (count = 1; count <= delay && !found; count++) {
-        //variables.displayLog(1, 1,'looking for element: ' + tagElement + ' --> ' + count + ' on ' + delay)
-        myCount++
-        variables.displayLog(1, 2, 'wait for: ' + count + ' / ' + delay)
 
-        try {
-            ret = await getElement(driver, variables, data, tagElement)
-        }
-        catch (err) {
-            variables.displayLog(1, 1, 'waitFor: Fatal error: Browser not responding!')
-            return { success: 0, message: "Browser not responding!", stop: 99 }
-        }
-        //variables.displayLog(1, 3, 'wait for: after getElement - success: ' + ret.success)
+    try {
+        if (delay == undefined) delay = 10    // delay = number of second(s) to wait for the element
 
-        found = ret.success
-        if (ret.stop) {
-            variables.displayLog(1, 1, 'Fatal error: Browser not responding!')
-            return { success: 0, message: ret.message, stop: 1 }
-        }
-        if (!found) {
-            await pause(driver, variables, data.subprojectID, 1);
-        }
+        page.setDefaultTimeout(delay * 1000);
+        await page.locator(tagElement).first().waitFor()
+        return { success: 1, message: "waitFor", stop: 0 }
     }
-    if (!found) {
-        // store the value into the variable
+    catch (err) {
+        console.log('waitFor error............')
         variables.setVariable('$Error', "1")
-        ret.stop = 0
+        if (action == undefined) action = 0
+        // action: 0 = continue, 1 = stop all the tests, 2 = skip the It
+
+        let ret = { success: 0, message: 'WaitFor KO', stop: 0 }
         if (action == 1) { ret.stop = 1 }
         else if (action == 0) { ret.success = 1 }
         else { ret.success = 0 }
-        variables.displayLog(1, 1, 'waitFor not found with action: ' + action + ', success: ' + ret.success + ', stop: ' + ret.stop)
-        variables.displayLog(1, 2, tagElement)
-    } else {
-        variables.setVariable('$Error', "0")
-        if ((myCount / delay) > 0.6) {
-            await logfile(data.userID, "Watch", "waitFor: detected after " + myCount + " on " + delay)
-        }
+        return ret
     }
-    return ret
+
 }
+
 
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   waitForNot: check if an element is not available
 *
 * @param {object} driver:       selenium driver
@@ -2524,7 +2324,7 @@ async function waitForNot(driver, data, variables, tagElement, delay, action) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *   skipIt: Skip the It section if the expression is true
 *
 * @param {object} variables:    array of all the variables
@@ -2568,7 +2368,7 @@ async function skipIt(variables, expression, message) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *   skipDescribe: Skip the Describe section if the expression is true
 *
 * @param {object} variables:    array of all the variables
@@ -2615,10 +2415,10 @@ async function skipDescribe(variables, expression, message) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   setValue: key a value in a field
 *
-* @param {object} driver:          selenium driver
+* @param {object} page:            playwright page
 * @param {object} data:            all the parameters
 * @param {object} variables:       array of all the variables
 * @param {string} tag:             tag to the element
@@ -2626,7 +2426,7 @@ async function skipDescribe(variables, expression, message) {
 * @param {string} delay:           time in second(s) before the <TAB> or the <ENTER> or after keying the value
 *
 */
-async function setValue(driver, data, variables, tag, value, delay) {
+async function setValue(page, data, variables, tag, value, delay) {
     const { getDatasetByCode } = require("../../dataset/dataset.service.js");
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
@@ -2635,8 +2435,8 @@ async function setValue(driver, data, variables, tag, value, delay) {
 
         let ret
 
-        if (delay == undefined) delay = 0
-        else delay = delay * 1000
+        //TBD if (delay == undefined) delay = 0
+        //TBD else delay = delay * 1000
 
 
         // Evaluate the value
@@ -2652,24 +2452,27 @@ async function setValue(driver, data, variables, tag, value, delay) {
 
         value = variables.evaluateVariable(value)
         value = value.replace(/'/g, "");
-        let clearFlag = 0
-        let enterFlag = 0
-        let tabFlag = 0
 
-        // check if <CLEAR> or <CLEAN> is used
-        if (value.indexOf('<CLEAR>', 0) >= 0 || value.indexOf('<CLEAN>', 0) >= 0) {
-            clearFlag = 1
-            value = value.replace('<CLEAR>', '')
-            value = value.replace('<CLEAN>', '')
-        }
-
-        if (value.indexOf('<ENTER>', 0) >= 0) {
-            enterFlag = 1
-            value = value.replace('<ENTER>', '')
-        } else if (value.indexOf('<TAB>', 0) >= 0) {
-            tabFlag = 1
-            value = value.replace('<TAB>', '')
-        }
+        /*        
+                let clearFlag = 0
+                let enterFlag = 0
+                let tabFlag = 0
+        
+                // check if <CLEAR> or <CLEAN> is used
+                if (value.indexOf('<CLEAR>', 0) >= 0 || value.indexOf('<CLEAN>', 0) >= 0) {
+                    clearFlag = 1
+                    value = value.replace('<CLEAR>', '')
+                    value = value.replace('<CLEAN>', '')
+                }
+        
+                if (value.indexOf('<ENTER>', 0) >= 0) {
+                    enterFlag = 1
+                    value = value.replace('<ENTER>', '')
+                } else if (value.indexOf('<TAB>', 0) >= 0) {
+                    tabFlag = 1
+                    value = value.replace('<TAB>', '')
+                }
+        */
         value = value.trim()
 
         // Evaluate the dataset (if any)
@@ -2682,9 +2485,6 @@ async function setValue(driver, data, variables, tag, value, delay) {
                 value = variables.dataValue(value)
                 value = variables.evaluateVariable(value)
                 value = value.replace(/'/g, "");
-                // if (clearFlag == 1) value = value + '<CLEAR>'
-                // if (enterFlag == 1) value = value + '<ENTER>'
-                // if (tabFlag == 1) value = value + '<TAB>'
             } else {
                 variables.displayLog(1, 1, 'Data not found in the dataset! - value: ' + value)
                 return { success: 0, message: "Cannot find the code: " + value + " in the dataset!", stop: 1 }
@@ -2697,9 +2497,12 @@ async function setValue(driver, data, variables, tag, value, delay) {
             return ret
         }
 
-        if (clearFlag == 1) value = value + '<CLEAR>'
-        if (enterFlag == 1) value = value + '<ENTER>'
-        if (tabFlag == 1) value = value + '<TAB>'
+        // To be improved
+        // if (clearFlag == 1) value = value + '<CLEAR>'
+        // if (enterFlag == 1) value = value + '<ENTER>'
+        // if (tabFlag == 1) value = value + '<TAB>'
+
+
 
 
         if (tag == undefined) {
@@ -2716,61 +2519,74 @@ async function setValue(driver, data, variables, tag, value, delay) {
                 return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
             }
         }
-        //tag = variables.evaluateVariable(tag)
 
-        // Get the element for the tag
-        try {
-            //console.log('debug: getElement from setValue')
-            ret = await getElement(driver, variables, data, tag)
-        } catch (err) {
-            variables.displayLog(1, 1, 'setValue: Fatal error: Browser not responding!')
-            return { success: 0, message: 'Browser not responding!', stop: 1 }
-        }
 
-        if (!ret.success) {
-            variables.displayLog(1, 1, '>>>>> Warning: Tag not found! - tag: ' + tag)
-            //variables.displayLog(1, 1, ret)
-            return { success: 0, message: "setValue: Cannot detect the element ! " + tag, stop: 99 }
-        }
+        /*        
+                // Get the element for the tag
+                try {
+                    //console.log('debug: getElement from setValue')
+                    ret = await getElement(page, variables, data, tag)
+                } catch (err) {
+                    variables.displayLog(1, 1, 'setValue: Fatal error: Browser not responding!')
+                    return { success: 0, message: 'Browser not responding!', stop: 1 }
+                }
+                 
+        
+                if (!ret.success) {
+                    variables.displayLog(1, 1, '>>>>> Warning: Tag not found! - tag: ' + tag)
+                    //variables.displayLog(1, 1, ret)
+                    return { success: 0, message: "setValue: Cannot detect the element ! " + tag, stop: 99 }
+                }
+        
+        
+        
+                //variables.displayLog(1, 2, 'set element ok ' + value)
+        
+        
+                // Special clear when the normal function doesn't work!
+                if (value.indexOf('<CLEAR>', 0) >= 0 || value.indexOf('<CLEAN>', 0) >= 0) {
+                    value = value.replace('<CLEAR>', '')
+                    value = value.replace('<CLEAN>', '')
+                    variables.displayLog(1, 1, '---- Clear field')
+                    page.actions().keyDown(Key.CONTROL)
+                        .sendKeys("a")
+                        .keyUp(Key.CONTROL)
+                        .sendKeys(Key.BACK_SPACE)
+                        .perform();
+                    await page.sleep(2000)
+                }
+                if (value.indexOf('<ENTER>', 0) >= 0) {
+                    value = value.replace('<ENTER>', '')
+                    await ret.element.clear();
+                    await ret.element.sendKeys(value.trim());
+                    variables.displayLog(1, 1, '----' + value.trim() + '(' + value.trim().length + ')---- Press Enter')
+                    if (delay > 0) await page.sleep(delay)
+                    page.actions().sendKeys(10).sendKeys(13).perform();
+                } else if (value.indexOf('<TAB>', 0) >= 0) {
+                    value = value.replace('<TAB>', '')
+                    await ret.element.clear();
+                    await ret.element.sendKeys(value.trim());
+                    if (delay > 0) await page.sleep(delay)
+                    page.actions().sendKeys(9).perform();
+                } else {
+                    await ret.element.clear();
+                    await ret.element.sendKeys(value);
+                    if (delay > 0) await page.sleep(delay)
+                    //page.actions().sendKeys(9).perform();
+                }
+                //variables.displayLog(1, 1, '---- setValue: OK!: ' + value)
+                ret = { success: 1, message: 'setValue OK', value: value, stop: 0 }
+                return ret
+        */
 
-        //variables.displayLog(1, 2, 'set element ok ' + value)
 
-        //try {
-
-        // Special clear when the normal function doesn't work!
-        if (value.indexOf('<CLEAR>', 0) >= 0 || value.indexOf('<CLEAN>', 0) >= 0) {
-            value = value.replace('<CLEAR>', '')
-            value = value.replace('<CLEAN>', '')
-            variables.displayLog(1, 1, '---- Clear field')
-            driver.actions().keyDown(Key.CONTROL)
-                .sendKeys("a")
-                .keyUp(Key.CONTROL)
-                .sendKeys(Key.BACK_SPACE)
-                .perform();
-            await driver.sleep(2000)
-        }
-        if (value.indexOf('<ENTER>', 0) >= 0) {
-            value = value.replace('<ENTER>', '')
-            await ret.element.clear();
-            await ret.element.sendKeys(value.trim());
-            variables.displayLog(1, 1, '----' + value.trim() + '(' + value.trim().length + ')---- Press Enter')
-            if (delay > 0) await driver.sleep(delay)
-            driver.actions().sendKeys(10).sendKeys(13).perform();
-        } else if (value.indexOf('<TAB>', 0) >= 0) {
-            value = value.replace('<TAB>', '')
-            await ret.element.clear();
-            await ret.element.sendKeys(value.trim());
-            if (delay > 0) await driver.sleep(delay)
-            driver.actions().sendKeys(9).perform();
-        } else {
-            await ret.element.clear();
-            await ret.element.sendKeys(value);
-            if (delay > 0) await driver.sleep(delay)
-            //driver.actions().sendKeys(9).perform();
-        }
-        //variables.displayLog(1, 1, '---- setValue: OK!: ' + value)
+        //console.log('tag', tag)
+        //console.log('value', value)
+        await page.locator(tag).fill(value)
+        //await page.pause()
         ret = { success: 1, message: 'setValue OK', value: value, stop: 0 }
         return ret
+
     } catch (err) {
         //console.log('debug: setValue catch')
         variables.displayLog(1, 1, err.message)
@@ -2783,22 +2599,19 @@ async function setValue(driver, data, variables, tag, value, delay) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *   getValue: key a value in a field
 *
-* @param {object} driver:          selenium driver
+* @param {object} page:            playwright page
 * @param {object} data:            all the parameters
 * @param {object} variables:       array of all the variables
 * @param {string} tag:             tag to the element
 * @param {string} variableName:    Name of the result to store the value
 *
 */
-async function getValue(driver, data, variables, tag, variableName) {
+async function getValue(page, data, variables, tag, variableName) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     let ret
-
-    variables.displayLog(1, 1, 'getValue')
-
 
     if (tag == undefined) {
         return { success: 0, message: "getValue: tag cannot be empty!", stop: 1 }
@@ -2818,60 +2631,21 @@ async function getValue(driver, data, variables, tag, variableName) {
 
     // Get the element for the tag
     try {
-        ret = await getElement(driver, variables, data, tag)
+        let text = await page.locator(tag).textContent()
+        variables.setVariable(variableName, text)
+        variables.displayLog(1, 1, 'getValue: ' + text)
+        return { success: 1, message: 'getValue OK', value: text, stop: 0 }
     }
     catch (err) {
         variables.displayLog(1, 1, 'getValue: Fatal error: Browser not responding!')
         return { success: 0, message: ret.message, stop: 1 }
     }
 
-    if (!ret.success) {
-        variables.displayLog(1, 2, '>>>>> Warning: Tag not found! - tag: ' + tag)
-        variables.displayLog(1, 2, ret)
-        return { success: 0, message: "getValue: Cannot detect the element ! " + tag, stop: 1 }
-    }
-
-    variables.displayLog(1, 2, 'get element ok')
-
-    try {
-        // Get the value by the text()
-        await ret.element.getText().then((value) => {
-            if (value == '' || value == undefined) {
-                value = '<EMPTY>'
-            }
-            return value
-        }).then(value => {
-            if (value == undefined || value.length == 0 || value == '<EMPTY>') {
-                // get the value by getValue                        
-                ret.element.getAttribute('value').then((value) => {
-                    if (value == '' || value == undefined) {
-                        value = '<EMPTY>';
-                    }
-                    return value
-                })
-            }
-            return value
-        }).then(value => {
-            // store the value into the variable
-            variables.displayLog(1, 2, 'getvalue: value', value)
-
-            variables.setVariable(variableName, value)
-            ret = { success: 1, message: 'getValue OK', value: value, stop: 0 }
-
-        })
-    } catch (err) {
-        variables.displayLog(1, 1, err.message)
-        variables.setVariable(variableName, '<ERROR>')
-        ret = { success: 0, message: err.message, value: '<ERROR>', stop: 1 }
-    }
-
-    variables.displayLog(1, 2, 'getvalue ret', ret)
-    return ret
 }
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   select: select a value from a list
 *
 * @param {object} driver:       selenium driver
@@ -3024,7 +2798,7 @@ async function select(driver, data, variables, tagElement, value, wait, delay) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   selectCount: Count the items (options) from a list
 *
 * @param {object} driver:       selenium driver
@@ -3113,7 +2887,7 @@ async function selectCount(driver, data, variables, tagElement, wait, variable) 
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   uploadFile: Upload a file from the repository uploads of your project
 *
 * @param {object} driver:          selenium driver
@@ -3223,7 +2997,7 @@ async function uploadFile(driver, data, variables, tag, fileName) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   setFocus: set the focus on an element
 *
 * @param {object} driver:       selenium driver
@@ -3282,60 +3056,47 @@ async function setFocus(driver, data, variables, tagElement, wait, delay) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *   click: click on an element
 *
 * @param {object} driver:       selenium driver
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
 * @param {string} tagElement:   tag element
-* @param {number} wait:         Wait for the element before clicking (in seconds)
 * @param {number} delay:        delay after the click (in seconds)
 *
 */
-async function click(driver, data, variables, tagElement, wait, delay) {
+async function click(page, data, variables, tag, delay) {
+    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+
     let ret
-    //variables.displayLog(1, 1,'----- click')
 
-
-    if (wait == undefined || wait == 0) {
-        try {
-            ret = await getElement(driver, variables, data, tagElement)
+    if (tag == undefined) {
+        console.log("click: tag cannot be empty!")
+        return { success: 0, message: "click: tag cannot be empty!", stop: 1 }
+    } else if (tag[0] == '@') {
+        //console.log('In the dictionary.........', data.projectID)
+        // Search the tag in the dictionary
+        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+        const result = await getDictionaryByCode(dataAPI);
+        if (result.length) {
+            tag = result[0].label
+            //console.log("Find the code: " + tag)
+        } else {
+            console.log("Cannot find the code: " + tag)
+            variables.displayLog(1, 1, 'Data not found in the dictionary!')
+            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
         }
-        catch (err) {
-            variables.displayLog(1, 1, 'click: Fatal error: Browser not responding!')
-            return { success: 0, message: "Browser not responding!", stop: 99 }
-        }
-    } else {
-        try {
-            variables.displayLog(1, 3, 'Click: wait before for: ' + wait + ' second(s)')
-            ret = await waitFor(driver, data, variables, tagElement, wait, 2)
-        }
-        catch (err) {
-            variables.displayLog(1, 1, 'click: Fatal error: Browser not responding!')
-            return { success: 0, message: "Browser not responding!", stop: 99 }
-        }
-    }
-
-    if (!ret.success) {
-        if (ret.stop == 99) return { success: 0, message: "Browser not responding!", stop: 99 }
-        variables.displayLog(1, 1, '>>>>> click: Cannot find the element: ' + tagElement)
-        // Return a warning, not an error
-        ret.stop = 1
-        return ret
     }
 
     try {
-        await ret.element.click()
-        ret = { success: 1, message: 'Click OK', stop: 0 }
-        variables.displayLog(1, 1, '     click: wait ' + delay + ' second(s) after the click')
-        await pause(driver, variables, data.subprojectID, delay);
-        return ret
+        await page.locator(tag).click()
+        if (delay != undefined && delay > 0) {
+            await page.waitForTimeout(delay * 1000);
+        }
+        return { success: 1, message: "click ok!", stop: 0 }
     } catch (err) {
-        //variables.displayLog(1, 1,err.message)
-        ret = { success: 0, message: err.message, stop: 0 }
-        variables.displayLog(1, 1, ret)
-        return ret
+        return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
     }
 
 }
@@ -3343,7 +3104,7 @@ async function click(driver, data, variables, tagElement, wait, delay) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   doubleClick: double click on an element
 *
 * @param {object} driver:       selenium driver
@@ -3405,7 +3166,7 @@ async function doubleClick(driver, data, variables, tagElement, wait, delay) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   JSclick: click on an element with JavaScript (not selenium)
 *
 * @param {object} driver:       selenium driver
@@ -3468,7 +3229,7 @@ async function JSclick(driver, data, variables, tagElement, wait, delay) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   getTableData: Read a table to get a value from a cell identified by a row and a column
 *
 * @param {object} driver:       selenium driver
@@ -3570,7 +3331,7 @@ async function getTableData(driver, data, variables, tagElement, row, column, va
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   getTableHeader: Read a table to get a header identified by a row and a column
 *
 * @param {object} driver:       selenium driver
@@ -3675,7 +3436,7 @@ async function getTableHeader(driver, data, variables, tagElement, row, column, 
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   setTableData: set a value into a cell of a table identified by a row and a column
 *
 * @param {object} driver:       selenium driver
@@ -3810,7 +3571,7 @@ async function setTableData(driver, data, variables, tagElement, row, column, va
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   countTableRow: Count the number of row of a table
 *
 * @param {object} driver:       selenium driver
@@ -3867,7 +3628,7 @@ async function countTableRow(driver, data, variables, tagElement, variable) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   searchTableData: Search for a value in a cell of a table
 *
 * @param {object} driver:       selenium driver
@@ -4010,7 +3771,7 @@ async function searchTableData(driver, data, variables, tagElement, column, sear
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   clickCell: Click on a cell identified by a row and a column
 *
 * @param {object} driver:       selenium driver
@@ -4086,7 +3847,7 @@ async function clickCell(driver, data, variables, tagElement, row, column, delay
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   enable: remove the attribute disabled from an element
 *
 * @param {object} driver:       selenium driver
@@ -4137,7 +3898,7 @@ async function enable(driver, data, variables, tagElement, wait) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   removeAttribute: remove an attribute from an element
 *
 * @param {object} driver:       selenium driver
@@ -4191,7 +3952,7 @@ async function removeAttribute(driver, data, variables, tagElement, wait, attrib
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   setAttribute: set a value to a specific attribute of an element
 *
 * @param {object} driver:       selenium driver
@@ -4233,7 +3994,7 @@ async function setAttribute(driver, data, variables, tagElement, attribute, valu
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   readAttribute: read a specific attribute of an element
 *
 * @param {object} driver:       selenium driver
@@ -4277,7 +4038,7 @@ async function readAttribute(driver, data, variables, tagElement, attribute, var
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   isExist: detect if an element exist on the page
 *
 * @param {object} driver:         selenium driver
@@ -4321,7 +4082,7 @@ async function isExist(driver, data, variables, tagElement, wait, variableName) 
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   isCheck: detect if an element is checked
 *
 * @param {object} driver:         selenium driver
@@ -4374,7 +4135,7 @@ async function isCheck(driver, data, variables, tagElement, wait, variableName) 
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   isEnable: detect if an element is disabled
 *
 * @param {object} driver:         selenium driver
@@ -4430,7 +4191,7 @@ async function isEnable(driver, data, variables, tagElement, wait, variableName)
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   isVisible: detect if an element is visible (displayed)
 *
 * @param {object} driver:         selenium driver
@@ -4484,7 +4245,7 @@ async function isVisible(driver, data, variables, tagElement, wait, variableName
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   waitInvisible: Wait for an element to be invisible
 *
 * @param {object} driver:         selenium driver
@@ -4539,7 +4300,7 @@ async function waitInvisible(driver, data, variables, tagElement, wait, timeout)
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   check: check an element if it is not already done
 *
 * @param {object} driver:         selenium driver
@@ -4574,7 +4335,7 @@ async function check(driver, data, variables, tagElement, wait) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   uncheck: Uncheck an element if it is not already the case
 *
 * @param {object} driver:         selenium driver
@@ -4609,7 +4370,7 @@ async function uncheck(driver, data, variables, tagElement, wait) {
 
 /**
  * ---------------------------------------------------------------------------- 
- * @function
+ * @function <TBR>
  *  acceptPopup: function to accept a javascript popup window
  *
  * @param {object} driver:       selenium driver
@@ -4633,7 +4394,7 @@ async function acceptPopup(driver, variables) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *  cancelPopup: function to cancel (dismiss) a javascript popup window
 *
 * @param {object} driver:       selenium driver
@@ -4657,7 +4418,7 @@ async function cancelPopup(driver, variables) {
 
 /**
  * ---------------------------------------------------------------------------- 
- * @function
+ * @function <TBR>
  *  pressTab:  Press the TAB key
  *  
  * @param {object} driver:  selenium driver
@@ -4697,7 +4458,7 @@ async function pressTab(driver, count) {
 
 /**
  * ---------------------------------------------------------------------------- 
- * @function
+ * @function <TBR>
  *  pressEnter:  Press the ENTER key
  * 
  * @param {object} driver:  selenium driver
@@ -4716,7 +4477,7 @@ async function pressEnter(driver) {
 
 /**
  * ---------------------------------------------------------------------------- 
- * @function
+ * @function <TBR>
  *  pressEscape:  Press the ESCAPE key
  * 
  * @param {object} driver:  selenium driver
@@ -4734,7 +4495,7 @@ async function pressEscape(driver) {
 
 /**
  * ---------------------------------------------------------------------------- 
- * @function
+ * @function <TBR>
  *  keyboard:  send character with the JavaScript sendKeys
  * 
  * @param {object} driver:      selenium driver
@@ -4779,7 +4540,7 @@ async function keyboard(driver, data, variables, text) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *   speaking: Speech to text
 *
 * @param {string} myText: text to say
@@ -4801,7 +4562,7 @@ async function speaking(myText) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *   logfile: write into the logfile
 *   message (alias): write into the logfile
 *
@@ -4843,7 +4604,7 @@ async function logfile(userID, category, message) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *   setVariable: set a value into a variable
 *
 * @param {object} variables:    array of all the variables
@@ -4887,7 +4648,7 @@ async function setVariable(variables, variable, value) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   refreshURL: refresh the current page (equivalent to F5)
 *
 * @param {number} userID:   userID
@@ -4910,7 +4671,7 @@ async function refreshURL(userID, variables) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *   listVariable: write all the variables into the logfile
 *
 * @param {number} userID:   userID
@@ -4940,7 +4701,7 @@ async function listVariable(userID, variables) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *   getReference: Get an existing reference by the code
 *
 * @param {object} variables:        array of all the variables
@@ -4995,7 +4756,7 @@ async function getReference(variables, projectID, userID, code, variableName) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *   setReference: write data in the reference
 *
 * @param {number} projectID:    projectID
@@ -5083,7 +4844,7 @@ async function setReference(variables, projectID, userID, code, label, comment) 
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *   getData: Get value of a dataset by a code and a language
 *
 * @param {object} data:             all the parameters
@@ -5133,7 +4894,7 @@ async function getData(data, variables, code, variable) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *   setData: Set a value in a dataset (update or create a new one)
 *
 * @param {object} data:             all the parameters
@@ -5244,7 +5005,7 @@ async function setData(data, variables, code, value, comment) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   JSinput: set a value into an element with JavaScript (not selenium)
 *
 * @param {object} driver:       selenium driver
@@ -5304,26 +5065,20 @@ async function JSinput(driver, data, variables, tagElement, wait, value) {
 
 /**
  * ---------------------------------------------------------------------------- 
- * @function
+ * @function <OK>
  *  printScreen:  take a print screen
  * 
- * @param {object} driver:      selenium driver
+ * @param {object} page:        playwright page
  * @param {object} data:        all the parameters
  * @param {string} slotID:      slot number = 0: Error, 1 --> 5 User print screen 
  *  
  */
-async function printScreen(driver, data, slotID) {
+async function printScreen(page, data, slotID) {
     let fs = require("fs")
 
     try {
         let picture = './printscreen/' + data.userID + '_image' + slotID + '.png'
-        driver.takeScreenshot().then(function (data) {
-            var base64Data = data.replace(/^data:image\/png;base64,/, "")
-            fs.writeFile(picture, base64Data, 'base64', function (err) {
-                if (err) variables.displayLog(1, 1, err);
-            });
-        });
-        return { success: 1, message: 'printScreen OK!', stop: 0 }
+        await page.screenshot({path: picture})        
     } catch (err) {
         return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
     }
@@ -5332,7 +5087,7 @@ async function printScreen(driver, data, slotID) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *  epoch:  return a date converted into epoch (Unix) date and time
 * 
 * @param {object} variables:    array of all the variables
@@ -5356,7 +5111,7 @@ async function epoch(variables, myDate, myFormat, variable) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *  epochDate:  Convert an epoch to a date
 * 
 * @param {object} variables:    array of all the variables
@@ -5380,7 +5135,7 @@ async function epochDate(variables, myEpoch, myFormat, variable) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *  epochAddHour:  return a date + a value converted into epoch (Unix) date and time
 * 
 * @param {object} variables:    array of all the variables
@@ -5406,7 +5161,7 @@ async function epochAddHour(variables, myDate, myFormat, myValue, variable) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *  epochAddMinute:  return a date + a value converted into epoch (Unix) date and time
 * 
 * @param {object} variables:    array of all the variables
@@ -5432,7 +5187,7 @@ async function epochAddMinute(variables, myDate, myFormat, myValue, variable) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <OK>
 *  epochAddSecond:  return a date + a value converted into epoch (Unix) date and time
 * 
 * @param {object} variables:    array of all the variables
@@ -5458,7 +5213,7 @@ async function epochAddSecond(variables, myDate, myFormat, myValue, variable) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *  isBrowserAlive:  Check if the browser is still alive - return a boolean 
 * 
 * @param {object} driver:       selenium driver
@@ -5503,7 +5258,7 @@ async function isBrowserAlive(driver) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *   executeRules: Execute a set of rules
 *
 * @param {object} driver:       selenium driver
@@ -5630,7 +5385,7 @@ async function executeRules(driver, variables, data, ruleName, param1, param2, p
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *  startTimer:  Store a user time to measure performance
 * 
 * @param {object} driver:       selenium driver
@@ -5651,7 +5406,7 @@ async function startTimer(data, driver, variables, topic) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function
+* @function <TBR>
 *  stopTimer:  Store the elspased time since the last userStartTime() 
 * 
 * @param {object} driver:       selenium driver
@@ -5754,7 +5509,7 @@ async function stopTimer(data, driver, variables, space, topic) {
 
 /**
 * ---------------------------------------------------------------------------- 
- * @function
+ * @function <TBR>
  *   evaluateFunction: convert a function name into a selenium function
  *
  * @param {object} driver:      selenium driver
@@ -5871,7 +5626,7 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 return ret
 
             case 'click':
-                ret = await click(page, data, variables, param1, param2, param3)
+                ret = await click(page, data, variables, param1, param2)
                 return ret
 
             case 'JSclick':
@@ -5963,10 +5718,15 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 if (ret.success == 1) await logfile(data.userID, 'Info', ret.value)
                 return ret
 
+            // case 'countElement':
+            //     ret = await countElement(page, data, variables, param1, param2)
+            //     if (ret.success == 1) await logfile(data.userID, 'Info', ret.value)
+            //     return ret
+
             case 'countElement':
-                ret = await countElement(page, data, variables, param1, param2)
-                if (ret.success == 1) await logfile(data.userID, 'Info', ret.value)
+                ret = await countElement(page, data, variables, param1, param2, param3, param4)
                 return ret
+
 
             case 'getValue':
                 ret = await getValue(page, data, variables, param1, param2)
@@ -6158,6 +5918,15 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 ret = await stopTimer(data, page, variables, param1, param2)
                 return ret
 
+            case 'promptAI':
+                ret = await promptAI(page, data, variables, param1, param2)
+                if (ret.success == 1) {
+                    await logfile(data.userID, 'Info', param1)
+                    await logfile(data.userID, 'Info', ret.value)
+                }
+                return ret
+
+
             default:
                 variables.displayLog(1, 1, 'No function with the name: ' + name)
                 ret = { success: 0, message: 'function: ' + name + ' unknown!', stop: 1 }
@@ -6174,6 +5943,7 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
 }
 
 // -----------------------------------------------------------
+// @function <TBR>
 // Call a scenario from its ID
 //
 // @param {number} data.projectID     ID of the project
@@ -6248,6 +6018,7 @@ async function callScenario(data, driver, variables, scenarioID) {
 
 
 // -----------------------------------------------------------
+// @function <TBR>
 // Call a suite from its ID
 //
 // @param {number} data.projectID     ID of the project
@@ -6366,6 +6137,62 @@ async function callSuite(data, driver, variables, suiteheaderID) {
 
 
 // -----------------------------------------------------------
+// @function <TBR>
+// promptAI: prompt to AI and store the result into a variable
+//
+// API AI Playwright: 
+// API Key: 0step:674b447d-ce7f-4173-ae87-4a9611a652c2
+// API login: pgoffin
+// -----------------------------------------------------------
+// @param {object} page:              playwright page
+// @param {object} data:              set of data
+// @param {object} variables:         array of all the variables
+// @param {string} prompt:            prompt to send to AI
+// @param {string} variable:          name of the variable
+// -----------------------------------------------------------
+
+async function promptAI(page, data, variables, prompt, variableName) {
+    console.log('promptAI', prompt)
+
+    try {
+        console.log('promptAI 0')
+        const { ai } = require("@zerostep/playwright")
+
+        // Create a mock 'test' object that includes a 'step' function.
+        const mockTest = {
+            step: async (description, callback) => {
+                console.log(`AI Step: ${description}`);
+                try {
+                    await callback(); // Execute the action within the step
+                } catch (error) {
+                    console.error(`AI Step Error: ${error}`);
+                    throw error; // Re-throw the error to be caught by the outer try/catch
+                }
+            },
+            log: (message) => {
+                console.log(`AI Log: ${message}`);
+            },
+        };
+
+
+        console.log('promptAI 1')
+        const text = await ai(prompt, { page, test: mockTest })
+        variables.setVariable(variableName, text)
+        console.log('Answer:', text)
+
+        ret = { success: 1, message: "promptAI OK!", value: text, stop: 0 }
+        return ret
+    } catch (err) {
+        variables.displayLog(1, 1, 'promptAI:', err.message)
+        ret = { success: 0, message: err.message, stop: 1 }
+        return ret
+    }
+
+}
+
+
+// -----------------------------------------------------------
+// @function <TBR>
 // Execute a scenario to execute the test
 //
 // @param {string} data.scenarioName  Name of the scenario
@@ -6871,8 +6698,6 @@ module.exports = {
     keyboard: keyboard,
     click: click,
     doubleClick: doubleClick,
-    getElementDummy: getElementDummy,
-    setValueDummy: setValueDummy,
     detectGUI: detectGUI,
     getUrl: getUrl,
     countElement: countElement,
@@ -6916,5 +6741,7 @@ module.exports = {
     callScenario: callScenario,
     callSuite: callSuite,
     startTimer: startTimer,
-    stopTimer: stopTimer
+    stopTimer: stopTimer,
+    promptAI: promptAI,
+
 };

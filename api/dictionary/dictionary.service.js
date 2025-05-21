@@ -7,7 +7,7 @@ module.exports = {
    * @Email: artcomputer123@gmail.com
    * @Date: 2024-02-01
  * @Last Modified by: Someone
-   * @Last Modified time: 2025-02-06 11:56:14
+   * @Last Modified time: 2025-05-09 14:01:23
    * @Description: All the database services available for the API dictionary
    */
 
@@ -69,6 +69,7 @@ module.exports = {
   // Get dictionary by full code and language (optional) and active (optional)
   // ---------------------------------------------------------------------
   getDictionaryByCode: (data) => {
+    //console.log ('getDictionaryByCode', data)
     return new Promise((resolve, reject) => {
       mysql.query(
         `SELECT D.dictionaryID, D.label, D.createdby, D.created, D.updatedby, D.updated 
