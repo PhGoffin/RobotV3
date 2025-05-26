@@ -7,9 +7,10 @@ module.exports = {
   * @Email: artcomputer123@gmail.com
   * @Date: 2025-05-08
   * @Last Modified by: Someone
-  * @Last Modified time: 2025-05-21 14:21:38
+  * @Last Modified time: 2025-05-23 14:18:33
   * @Description: All the Playwright services available for robot
   */
+
 
   // -----------------------------------------------------------
   // Call a scenario to execute the test
@@ -26,13 +27,14 @@ module.exports = {
 
     return new Promise(async (resolve, reject) => {
 
-      const { chromium } = require('playwright'); // firefox or webkit
-      const { test } = require('@playwright/test')
+      //const { chromium, firefox, webkit, devices } = require('playwright'); // chromium, firefox or webkit
+      //const { test } = require('@playwright/test')
       const robot = require("../library/robot.library.js")
       const { getScenarioById } = require("../../scenario/scenario.service.js");
       const { getTestByScenario } = require("../../test/test.service.js");
       const { deleteLogfile } = require("../../logfile/logfile.service.js");
       const { getReferenceByCode } = require("../../reference/reference.service.js");
+      const { startBrowser } = require("../library/browser.library.js")
 
       console.log('**********  Playwright ****************')
 
@@ -48,6 +50,8 @@ module.exports = {
 
       let ret = 0
       let timeout = 30 // 30 seconds by default
+      let headless = 0 // 0 by default (browser is visible)
+      let browserName = 'chrome'
 
       if (data.scenarioID == undefined || data.subprojectID == undefined || data.userID == undefined) {
         variables.displayLog(1, 1, 'Invalid data!')
@@ -84,44 +88,35 @@ module.exports = {
 
       console.log('***** before test playwright')
 
-      //test(data.scenarioName, async ({ browser }) => {
+      let retBrowser = await startBrowser(data)
+      console.log('RetBrowser', retBrowser)
+      if (!retBrowser.success) {
+        ret = { success: 0, message: "No way to start the browser: " + retBrowser.message }
+        return resolve(ret);
+      }
 
+      //----------------------------------
+      // launch the browser
+      // ----------------------------------
+      headless = retBrowser.headless // 0 by default (browser is visible)
+      browserName = retBrowser.browserName
+      let device = retBrowser.device
+      let page = retBrowser.page
+      let browser = retBrowser.browser
 
-      const browser = await chromium.launch({ headless: false });
-      //const browser = await firefox.launch({ headless: false });
-      //const browser = await webkit.launch({ headless: false });
-
-      /* We can also use the context to be more specific:
-
-            const { firefox, devices } = require('playwright');
-
-
-              const browser = await firefox.launch({ headless: false });
-              const context = await browser.newContext({
-                ...devices['Pixel 5'], // Apply the Pixel 5 device settings
-              });
-              const page = await context.newPage();
-              await page.goto('https://www.example.com'); // Replace with your desired URL
-              await page.screenshot({ path: 'pixel5-screenshot.png' }); // Take a screenshot
-              await browser.close();
-
-      */
-
-
-
-      const page = await browser.newPage();
 
       // Get the timeout (if any)
-      const dataAPI = { projectID: data.projectID, userID: data.userID, code: 'TimeOut' }
-      const reference = await getReferenceByCode(dataAPI);
-      if (reference.length) {
-        if (reference[0].label != '<N/A>') {
-          timeout = reference[0].label * 1
+      const dataAPI4 = { projectID: data.projectID, userID: data.userID, code: 'TimeOut' }
+      const reference4 = await getReferenceByCode(dataAPI4);
+      if (reference4.length) {
+        if (reference4[0].label != '<N/A>') {
+          timeout = reference4[0].label * 1
         }
       }
       console.log('TimeOut: ' + timeout)
       page.setDefaultTimeout(timeout * 1000)
-      await robot.evaluateFunction(page, variables, 'logfile', data, 'Info', "Timeout is set to " + timeout + " second(s)")
+      await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "Timeout is set to " + timeout + " second(s)")
+      await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "Browser is: " + browserName + " - Headless: " + headless + " - Device is: " + device)
 
 
       // write the scenario name in the reference for the title in the logfile
@@ -160,8 +155,6 @@ module.exports = {
 
     })
 
-    //}) // end test playwright
-
 
   },
 
@@ -180,14 +173,17 @@ module.exports = {
 
     return new Promise(async (resolve, reject) => {
 
-      const { Builder, By, Key, ChromeOptions } = require("selenium-webdriver")
+      //const { Builder, By, Key, ChromeOptions } = require("selenium-webdriver")
       const robot = require("../library/robot.library.js")
       const { getScenarioById } = require("../../scenario/scenario.service.js");
       const { getTestByScenario } = require("../../test/test.service.js");
       const { getSuiteByHeader } = require("../../suite/suite.service.js");
       const { deleteLogfile } = require("../../logfile/logfile.service.js");
       const { getReferenceByCode } = require("../../reference/reference.service.js");
-      const { startBrowser, stopBrowser } = require("../browser/browser.service.js")
+      //const { startBrowser, stopBrowser } = require("../browser/browser.service.js")
+      const { startBrowser } = require("../library/browser.library.js")
+
+
 
       const Variables = require('../library/variable.library.js');
       let variables = new Variables();
@@ -203,6 +199,9 @@ module.exports = {
 
       let scenarioID = 0
       let ret = 0
+      let timeout = 30 // 30 seconds by default
+      let headless = 0 // 0 by default (browser is visible)
+      let browserName = 'chrome'
 
       if (data.suiteID == undefined || data.subprojectID == undefined || data.userID == undefined) {
         variables.displayLog(1, 1, 'Invalid data!')
@@ -238,46 +237,56 @@ module.exports = {
       //----------------------------------
       // launch the browser
       // ----------------------------------
-
-      // let chrome = require("selenium-webdriver/chrome")
-      // let options = new chrome.Options()
-
-      // // Connect to the Chrome driver
-      // let driver = 0
-      // try {
-      //   driver = await new Builder().forBrowser("chrome").build()
-      // } catch (err) {
-      //   variables.displayLog(1, 1, err.message)
-      //   return { success: 0, message: err.message }
-      // }
-      ret = await startBrowser(data.projectID)
-      //console.log ('Ret: ', ret)
-      if (!ret.success) {
-        ret = ({ success: 0, message: "Error during the start of the browser" })
+      let retBrowser = await startBrowser(data)
+      console.log('RetBrowser', retBrowser)
+      if (!retBrowser.success) {
+        ret = { success: 0, message: "No way to start the browser: " + retBrowser.message }
         return resolve(ret);
       }
-      driver = ret.driver
+
+
+      headless = retBrowser.headless // 0 by default (browser is visible)
+      browserName = retBrowser.browserName
+      let device = retBrowser.device
+      let page = retBrowser.page
+      let browser = retBrowser.browser
+
+
+      // Get the timeout (if any)
+      const dataAPI4 = { projectID: data.projectID, userID: data.userID, code: 'TimeOut' }
+      const reference4 = await getReferenceByCode(dataAPI4);
+      if (reference4.length) {
+        if (reference4[0].label != '<N/A>') {
+          timeout = reference4[0].label * 1
+        }
+      }
+      console.log('TimeOut: ' + timeout)
+      page.setDefaultTimeout(timeout * 1000)
+      await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "Timeout is set to " + timeout + " second(s)")
+      await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "Browser is: " + browserName + " - Headless: " + headless + " - Device is: " + device)
+
+
 
 
       // write the scenario name in the reference for the title in the logfile
       let today = new Date()
       let date = variables.formatDate(today, 'dd/mm/year hh:mi')
-      ret = await robot.evaluateFunction(driver, variables, 'setReference', data, 'Scenario Name', data.suiteName, 'Name of the current suite')
-      ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Execute', '**************************************')
-      ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Execute', "Executing suite: " + data.suiteName)
-      ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Execute', "Date: " + date)
-      ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Execute', '**************************************')
+      ret = await robot.evaluateFunction(page, variables, 'setReference', data, 'Scenario Name', data.suiteName, 'Name of the current suite')
+      ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Execute', '**************************************')
+      ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Execute', "Executing suite: " + data.suiteName)
+      ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Execute', "Date: " + date)
+      ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Execute', '**************************************')
       // Reset the mergency stop
-      ret = await robot.evaluateFunction(driver, variables, 'setReference', data, 'Emergency Stop', 0, 'Emergency stop: 1 or 0')
+      ret = await robot.evaluateFunction(page, variables, 'setReference', data, 'Emergency Stop', 0, 'Emergency stop: 1 or 0')
 
 
       // Get the position of the suite in error (if any)
-      const dataAPI2 = { projectID: data.projectID, userID: data.userID, code: 'Suite Error ' + suiteheaderID }
-      const reference = await getReferenceByCode(dataAPI2);
-      if (reference.length) {
-        if (reference[0].label != '<N/A>') {
+      const dataAPI5 = { projectID: data.projectID, userID: data.userID, code: 'Suite Error ' + suiteheaderID }
+      const reference5 = await getReferenceByCode(dataAPI5);
+      if (reference5.length) {
+        if (reference5[0].label != '<N/A>') {
           // split the label to extract the suiteErrorID and the context in the scenario
-          let dataRef = reference[0].label.split("=");
+          let dataRef = reference5[0].label.split("=");
           suiteErrorID = dataRef[0]
           context = dataRef[1]
           data.context = context
@@ -339,36 +348,38 @@ module.exports = {
           variables.displayLog(1, 1, 'Before execute scenario: ', data.context)
 
 
-          ret = await robot.executeScenario(data, driver, tests)
+          ret = await robot.executeScenario(data, page, tests)
 
 
           if (!ret.success) {
             stop = true
             context = ret.context
-            await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
-            await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', "Error detected in the suite ")
-            await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
-            await robot.evaluateFunction(driver, variables, 'logfile', data, 'Error', "Error detected in the suite, stop the tests!")
+            await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
+            await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', "Error detected in the suite ")
+            await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
+            await robot.evaluateFunction(page, variables, 'logfile', data, 'Error', "Error detected in the suite, stop the tests!")
             // write the suiteheaderID/suiteID in error in the reference
-            await robot.evaluateFunction(driver, variables, 'setReference', data, 'Suite Error ' + suiteheaderID, suiteID + '=' + context, 'Position in the suite in case of error')
+            await robot.evaluateFunction(page, variables, 'setReference', data, 'Suite Error ' + suiteheaderID, suiteID + '=' + context, 'Position in the suite in case of error')
           }
         }
       } // end for suites
 
-      await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
-      await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', "End suite: " + data.suiteName)
-      await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+      await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
+      await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', "End suite: " + data.suiteName)
+      await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
 
       if (!stop) {
         // Reset the suite error in the reference
-        await robot.evaluateFunction(driver, variables, 'setReference', data, 'Suite Error ' + suiteheaderID, '<N/A>', 'Position in the suite in case of error')
-        await robot.evaluateFunction(driver, variables, 'setReference', data, 'Execution Status', 1, 'Test OK')
-      } else await robot.evaluateFunction(driver, variables, 'setReference', data, 'Execution Status', 0, 'Error during the execuction')
+        await robot.evaluateFunction(page, variables, 'setReference', data, 'Suite Error ' + suiteheaderID, '<N/A>', 'Position in the suite in case of error')
+        await robot.evaluateFunction(page, variables, 'setReference', data, 'Execution Status', 1, 'Test OK')
+      } else await robot.evaluateFunction(page, variables, 'setReference', data, 'Execution Status', 0, 'Error during the execuction')
 
       //await robot.evaluateFunction(driver, variables, 'listVariable', data, '', '')
       // close the browser
-      await robot.evaluateFunction(driver, variables, 'pause', 3)
-      await stopBrowser()
+      await robot.evaluateFunction(page, variables, 'pause', 3)
+      //await stopBrowser()
+      await browser.close();
+
       return resolve(ret);
 
     });
@@ -391,7 +402,8 @@ module.exports = {
 
     return new Promise(async (resolve, reject) => {
 
-      const { Builder, By, Key, ChromeOptions } = require("selenium-webdriver")
+      //const { chromium, firefox, webkit, devices } = require('playwright'); // chromium, firefox or webkit
+      //const { Builder, By, Key, ChromeOptions } = require("selenium-webdriver")
       const robot = require("../library/robot.library.js")
       const { getScenarioById } = require("../../scenario/scenario.service.js");
       const { getTestByScenario } = require("../../test/test.service.js");
@@ -399,7 +411,9 @@ module.exports = {
       const { getStory } = require("../../story/story.service.js");
       const { deleteLogfile } = require("../../logfile/logfile.service.js");
       const { getReferenceByCode } = require("../../reference/reference.service.js");
-      const { startBrowser, stopBrowser } = require("../browser/browser.service.js")
+      //const { startBrowser, stopBrowser } = require("../browser/browser.service.js")
+      const { startBrowser } = require("../library/browser.library.js")
+
 
       const Variables = require('../library/variable.library.js');
       let variables = new Variables();
@@ -450,23 +464,48 @@ module.exports = {
         const log = await deleteLogfile(data.userID);
       }
 
-      ret = await startBrowser(data.projectID)
-      //console.log ('Ret: ', ret)
-      if (!ret.success) {
-        ret = ({ success: 0, message: "Error during the start of the browser" })
+      //----------------------------------
+      // launch the browser
+      // ----------------------------------
+      let retBrowser = await startBrowser(data)
+      console.log('RetBrowser', retBrowser)
+      if (!retBrowser.success) {
+        ret = { success: 0, message: "No way to start the browser: " + retBrowser.message }
         return resolve(ret);
       }
-      driver = ret.driver
+
+
+      headless = retBrowser.headless // 0 by default (browser is visible)
+      browserName = retBrowser.browserName
+      let device = retBrowser.device
+      let page = retBrowser.page
+      let browser = retBrowser.browser
+
+
+      // Get the timeout (if any)
+      const dataAPI4 = { projectID: data.projectID, userID: data.userID, code: 'TimeOut' }
+      const reference4 = await getReferenceByCode(dataAPI4);
+      if (reference4.length) {
+        if (reference4[0].label != '<N/A>') {
+          timeout = reference4[0].label * 1
+        }
+      }
+      console.log('TimeOut: ' + timeout)
+      page.setDefaultTimeout(timeout * 1000)
+      await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "Timeout is set to " + timeout + " second(s)")
+      await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "Browser is: " + browserName + " - Headless: " + headless + " - Device is: " + device)
+
+
 
       // write the scenario name in the reference for the title in the logfile
       let today = new Date()
       let date = variables.formatDate(today, 'dd/mm/year hh:mi')
-      ret = await robot.evaluateFunction(driver, variables, 'setReference', data, 'Scenario Name', data.storyName, 'Name of the current story')
-      ret = await robot.evaluateFunction(driver, variables, 'setReference', data, 'Story Name', data.storyName, 'Name of the current story')
-      ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Title', '**************************************')
-      ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Title', "Executing Story: " + data.storyName)
-      ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Title', "Date: " + date)
-      ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Title', '**************************************')
+      ret = await robot.evaluateFunction(page, variables, 'setReference', data, 'Scenario Name', data.storyName, 'Name of the current story')
+      ret = await robot.evaluateFunction(page, variables, 'setReference', data, 'Story Name', data.storyName, 'Name of the current story')
+      ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', '**************************************')
+      ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "Executing Story: " + data.storyName)
+      ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "Date: " + date)
+      ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', '**************************************')
 
       // if we not start from the setup scenario, remember the latest status of the story execution
       if (!data.resetLog) {
@@ -484,10 +523,10 @@ module.exports = {
             suiteErrorID = dataRef[2]
             context = dataRef[3]
             data.context = context
-            ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Warning', ' if not a setup, Test will restart from the last error detected!')
+            ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Warning', ' if not a setup, Test will restart from the last error detected!')
             variables.displayLog(1, 1, 'storyStatus:', storyStatus, 'StoryErrorId:', storyErrorID, 'suiteErrorID: ', suiteErrorID, 'context: ', context)
           } else {
-            ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Warning', ' Test will restart from the last execution detected!')
+            ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Warning', ' Test will restart from the last execution detected!')
             variables.displayLog(1, 1, 'No previous error in the story detected, start from the begining')
             storyErrorID = ''
             suiteErrorID = ''
@@ -502,7 +541,7 @@ module.exports = {
         storyErrorID = ''
         suiteErrorID = ''
       }
-
+   
       variables.startTime()
 
       let fatalError = 0
@@ -546,13 +585,13 @@ module.exports = {
             }
 
             // Execute the scenario
-            ret = await robot.executeScenario(data, driver, tests)
+            ret = await robot.executeScenario(data, page, tests)
             if (!ret.success && ret.stop) {
               fatalError = 1
               context = ret.context
-              await robot.evaluateFunction(driver, variables, 'logfile', data, 'Error', "Error detected in the Story, stop the test!")
+              await robot.evaluateFunction(page, variables, 'logfile', data, 'Error', "Error detected in the Story, stop the test!")
               // write the ERROR/storyheaderID/storyID/0/context in error in the reference
-              await robot.evaluateFunction(driver, variables, 'setReference', data, 'Story Status ' + data.subprojectID + '/' + storyheaderID, 'ERROR=' + storyID + '=' + 0 + '=' + context, 'Position in the story (Error)')
+              await robot.evaluateFunction(page, variables, 'setReference', data, 'Story Status ' + data.subprojectID + '/' + storyheaderID, 'ERROR=' + storyID + '=' + 0 + '=' + context, 'Position in the story (Error)')
             }
           } // end of scenario        
 
@@ -600,14 +639,14 @@ module.exports = {
                 }
 
                 // Execute the scenario
-                ret = await robot.executeScenario(data, driver, tests)
+                ret = await robot.executeScenario(data, page, tests)
                 variables.displayLog(1, 1, 'Suite ret:', ret)
                 if (!ret.success && ret.stop) {
                   fatalError = 1
                   context = ret.context
-                  await robot.evaluateFunction(driver, variables, 'logfile', data, 'Error', "Error detected in the Story, stop the test!")
+                  await robot.evaluateFunction(page, variables, 'logfile', data, 'Error', "Error detected in the Story, stop the test!")
                   // write the storyheaderID/storyID/suiteID/context in error in the reference
-                  await robot.evaluateFunction(driver, variables, 'setReference', data, 'Story Status ' + data.subprojectID + '/' + storyheaderID, 'ERROR=' + storyID + '=' + suiteID + '=' + context, 'Position in the story (Error)')
+                  await robot.evaluateFunction(page, variables, 'setReference', data, 'Story Status ' + data.subprojectID + '/' + storyheaderID, 'ERROR=' + storyID + '=' + suiteID + '=' + context, 'Position in the story (Error)')
                 }
 
               } // if fatal error
@@ -620,34 +659,20 @@ module.exports = {
 
       } // end for suites
 
-      await robot.evaluateFunction(driver, variables, 'logfile', data, 'Title', '**************************************')
-      await robot.evaluateFunction(driver, variables, 'logfile', data, 'Title', "End of the Story: " + data.storyName)
-      await robot.evaluateFunction(driver, variables, 'logfile', data, 'Title', '**************************************')
+      await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', '**************************************')
+      await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "End of the Story: " + data.storyName)
+      await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', '**************************************')
 
-      await robot.evaluateFunction(driver, variables, 'setReference', data, 'Story Last ' + data.subprojectID, storyheaderID + '=' + storyID, 'Last story executed')
+      await robot.evaluateFunction(page, variables, 'setReference', data, 'Story Last ' + data.subprojectID, storyheaderID + '=' + storyID, 'Last story executed')
       if (!fatalError) {
         // Reset the suite error in the reference
-        if (suiteheaderID) await robot.evaluateFunction(driver, variables, 'setReference', data, 'Suite Error ' + suiteheaderID, '<N/A>', 'Position in the suite in case of error')
-        await robot.evaluateFunction(driver, variables, 'setReference', data, 'Story Status ' + data.subprojectID + '/' + storyheaderID, 'OK=' + storyID + '=' + 0 + '=', 'Position in the story (Success)')
-        await robot.evaluateFunction(driver, variables, 'setReference', data, 'Execution Status', 1, 'Test OK')
-      } else await robot.evaluateFunction(driver, variables, 'setReference', data, 'Execution Status', 0, 'Error during the execuction')
+        if (suiteheaderID) await robot.evaluateFunction(page, variables, 'setReference', data, 'Suite Error ' + suiteheaderID, '<N/A>', 'Position in the suite in case of error')
+        await robot.evaluateFunction(page, variables, 'setReference', data, 'Story Status ' + data.subprojectID + '/' + storyheaderID, 'OK=' + storyID + '=' + 0 + '=', 'Position in the story (Success)')
+        await robot.evaluateFunction(page, variables, 'setReference', data, 'Execution Status', 1, 'Test OK')
+      } else await robot.evaluateFunction(page, variables, 'setReference', data, 'Execution Status', 0, 'Error during the execuction')
 
-
-      // try {
-      //   // close the browser
-      //   await robot.evaluateFunction(driver, variables, 'pause', 3)
-      //   await driver.close()
-      //   await driver.quit()
-      //   return resolve(ret);
-      // } catch (err) {
-      //   variables.displayLog(1, 1, 'End story Error:', err.message)
-      //   ret = { success: 0, message: err.message }
-      //   return resolve(ret);
-      // }
-      await stopBrowser()
+      browser.close()   
       return resolve(ret);
-
-
 
     });
   },
@@ -667,7 +692,7 @@ module.exports = {
 
     return new Promise(async (resolve, reject) => {
 
-      const { Builder, By, Key, ChromeOptions } = require("selenium-webdriver")
+      //const { Builder, By, Key, ChromeOptions } = require("selenium-webdriver")
       const robot = require("../library/robot.library.js")
       const { getScenarioById } = require("../../scenario/scenario.service.js");
       const { getTestByScenario } = require("../../test/test.service.js");
@@ -675,7 +700,9 @@ module.exports = {
       const { getStoryByHeader } = require("../../story/story.service.js");
       const { getReferenceByCode } = require("../../reference/reference.service.js");
       const { deleteLogfile } = require("../../logfile/logfile.service.js");
-      const { startBrowser, stopBrowser } = require("../browser/browser.service.js")
+      //const { startBrowser, stopBrowser } = require("../browser/browser.service.js")
+      const { startBrowser } = require("../library/browser.library.js")
+
 
       const Variables = require('../library/variable.library.js');
       let variables = new Variables();
@@ -696,6 +723,10 @@ module.exports = {
       let ret = 0
       let context = ''
       data.context = ''
+
+      let timeout = 30 // 30 seconds by default
+      let headless = 0 // 0 by default (browser is visible)
+      let browserName = 'chrome'
 
 
       if (data.storyID == undefined || data.subprojectID == undefined || data.userID == undefined) {
@@ -722,20 +753,40 @@ module.exports = {
       // ----------------------------------
       const log = await deleteLogfile(data.userID);
 
+
       //----------------------------------
       // launch the browser
       // ----------------------------------
-      // let chrome = require("selenium-webdriver/chrome")
-      // let options = new chrome.Options()
+      let retBrowser = await startBrowser(data)
+      console.log('RetBrowser', retBrowser)
+      if (!retBrowser.success) {
+        ret = { success: 0, message: "No way to start the browser: " + retBrowser.message }
+        return resolve(ret);
+      }
 
-      // // Connect to the Chrome driver
-      // let driver = 0
-      // try {
-      //   driver = await new Builder().forBrowser("chrome").build()
-      // } catch (err) {
-      //   variables.displayLog(1, 1, err.message)
-      //   return { success: 0, message: err.message }
-      // }
+
+      headless = retBrowser.headless // 0 by default (browser is visible)
+      browserName = retBrowser.browserName
+      let device = retBrowser.device
+      let page = retBrowser.page
+      let browser = retBrowser.browser
+
+
+      // Get the timeout (if any)
+      const dataAPI4 = { projectID: data.projectID, userID: data.userID, code: 'TimeOut' }
+      const reference4 = await getReferenceByCode(dataAPI4);
+      if (reference4.length) {
+        if (reference4[0].label != '<N/A>') {
+          timeout = reference4[0].label * 1
+        }
+      }
+      console.log('TimeOut: ' + timeout)
+      page.setDefaultTimeout(timeout * 1000)
+      await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "Timeout is set to " + timeout + " second(s)")
+      await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "Browser is: " + browserName + " - Headless: " + headless + " - Device is: " + device)
+
+
+
       ret = await startBrowser(data.projectID)
       //console.log ('Ret: ', ret)
       if (!ret.success) {
@@ -915,17 +966,7 @@ module.exports = {
         await robot.evaluateFunction(driver, variables, 'setReference', data, 'Execution Status', 1, 'Test OK')
       } else await robot.evaluateFunction(driver, variables, 'setReference', data, 'Execution Status', 0, 'Error during the execuction')
 
-      // // close the browser
-      // try {
-      //   await robot.evaluateFunction(driver, variables, 'pause', 3)
-      //   await driver.quit()
-      //   return resolve(ret);
-      // } catch (err) {
-      //   variables.displayLog(1, 1, err.message)
-      //   ret = { success: 0, message: err.message }
-      //   return resolve(ret);
-      // }
-      await stopBrowser()
+      browser.close()   
       return resolve(ret);
 
 

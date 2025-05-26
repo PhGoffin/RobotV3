@@ -1,197 +1,139 @@
+
+
 /**
 * @author 	Philippe Goffin
 * @name   	browser utility
-* @property	class 
+* @property	javascript 
 *
 * @description 
-*  Store driver information
+*  Playwright browser functions
 *
 * @version 
-* V1.0 PGO	25/04/2024	Initial version   
+* V1.0 PGO	23/05/2025	Initial version   
 *
 */
 
-const { Builder, By, Key, ChromeOptions } = require("selenium-webdriver")
 
 
-class BrowserUtility {
-    constructor() {
-        this.chrome = require("selenium-webdriver/chrome")
-        this.driver = 0
-        //this.options = new this.chrome.Options()
-        //console.log('browser constructor')
-    }
+/**
+ * @function
+ *   startBrowser: start a browser and return the page
+ *
+ *  @param {number} data.projectID     ID of the project
+ *  @param {number} data.subprojectID  ID of the subproject
+ *  @param {number} data.userID        ID of the user* 
+ * 
+ */
+async function startBrowser(data) {
+    const { chromium, firefox, webkit, devices } = require('playwright'); // chromium, firefox or webkit
+    const { getReferenceByCode } = require("../../reference/reference.service.js");
 
 
-    /**
-     * @function
-     *   startBrowser: Start the browser (Obsolete version)
-     *
-     */
-    async startBrowser_Old() {
+    let ret = 0
+    let headless = 0 // 0 by default (browser is visible)
+    let browserName = 'chrome'
 
-        //----------------------------------
-        // launch the browser
-        // ----------------------------------
-        try {
-            this.driver = new Builder()
-            this.driver = await this.driver.forBrowser("chrome").build()
-            //console.log('DRIVER: ', this.driver)
-
-            //this.driver.get("https://webgate.acceptance.ec.testa.eu/mwp/home ?1fa")
-
-            return { success: 1, message: 'Driver started!', driver: this.driver }
-
-        } catch (err) {
-            console.log(err.message)
-            return { success: 0, message: err.message }
+    // Get the headless (if any)
+    const dataAPI1 = { projectID: data.projectID, userID: data.userID, code: 'Headless' }
+    const reference1 = await getReferenceByCode(dataAPI1);
+    if (reference1.length) {
+        if (reference1[0].label != '<N/A>') {
+            headless = reference1[0].label * 1
         }
     }
+    if (headless == 1) headless = true
+    else headless = false
+
+    console.log('Headless: ' + headless)
 
 
-    /**
-     * @function
-     *   startBrowser: Start the browser with a proxy
-     *
-     */
-    async startBrowser(projectID) {
-        const proxy = require('selenium-webdriver/proxy');
-        const { getParametersByCode } = require("../../parameter/parameter.service.js");
-        const { getDummyuserByUser } = require("../../dummyuser/dummyuser.service.js");
-        const { decryptPassword } = require("./password.library.js")
+    // Get the BrowserName (if any)
+    const dataAPI2 = { projectID: data.projectID, userID: data.userID, code: 'Browser' }
+    const reference2 = await getReferenceByCode(dataAPI2);
+    if (reference2.length) {
+        if (reference2[0].label != '<N/A>') {
+            browserName = reference2[0].label
+            browserName = browserName.toLowerCase()
 
-
-        let proxyDummy = ''
-        // get the Proxy dumy user
-        let dataAPI = { projectID: projectID, code: 'Proxy' }
-        const result1 = await getParametersByCode(dataAPI);
-        if (result1.length) {
-            proxyDummy = result1[0].paramValue
-        } else {
-            proxyDummy = '<N/A>'
-        }
-
-        console.log ('startBrowser - proxyDummy: ' + proxyDummy)
-
-
-        if (proxyDummy != '<N/A>') {
-            // Process with proxy
-            // ------------------
-            console.log ('startBrowser - getDummyuserByUser')
-            dataAPI = { projectID: projectID, dummy: proxyDummy, active: 1 }
-            const result1 = await getDummyuserByUser(dataAPI);
-            if (result1.length) {
-                // get the login
-                let proxyUsername = result1[0].user
-                // get the password
-                let proxyPassword = result1[0].password
-                // Decrypt the password
-                if (result1[0].crypted) {
-                    ret = await decryptPassword(proxyPassword)
-                    if (ret.success) {
-                        proxyPassword = ret.password
-                    } else {
-                        return { success: 0, message: "Cannot decrypt the password!", stop: 1 }
-                    }
-                }
-                // get the url
-                let proxyurl = result1[0].extraInfo
-                //console.log('Dummy login: ' + proxyUsername + ', password: ' + proxyPassword + ' proxyurl: ' + proxyurl)
-                let proxyhttp = `http://${proxyUsername}:${proxyPassword}@${proxyurl}`;
-                let proxyhttps = `https://${proxyUsername}:${proxyPassword}@${proxyurl}`;
-
-                //----------------------------------
-                // launch the browser with Proxy
-                // ----------------------------------
-                try {
-                    console.log ('startBrowser - launch the browser with Proxy')
-                    this.driver = new Builder()
-                    this.driver = await this.driver
-                        .forBrowser("chrome")
-                        //.setChromeOptions(this.options)
-                        .setProxy(proxy.manual({
-                            http: proxyhttp,
-                            https: proxyhttps,
-                        }))
-                        .build()
-                    console.log('start browser with proxy ok!')
-                    return { success: 1, message: 'Driver with proxy started!', driver: this.driver }
-
-                } catch (err) {
-                    console.log(err.message)
-                    return { success: 0, message: err.message }
-                }
-
-            } else {
-                console.log('Error: Cannot find the dummy user: ' + proxyDummy)
-                return { success: 0, message: 'Error: Cannot find the dummy user: ' + proxyDummy, stop: 1 }
+            if (!"*chrome*firefox*safari*".includes(browserName)) {
+                console.log('Invalid browser name, reset to Chrome')
+                browserName = 'chrome'
             }
 
-
-        } else {
-            //----------------------------------
-            // launch the browser without proxy
-            // ----------------------------------
-            try {
-                console.log ('before new Builder')
-                this.driver = new Builder()
-                console.log ('before build')
-                this.driver = await this.driver.forBrowser("chrome").build()
-                console.log('start browser without proxy ok!')
-                return { success: 1, message: 'Driver started!', driver: this.driver }
-            } catch (err) {
-                console.log(err.message)
-                return { success: 0, message: err.message }
-            }
         }
     }
+    console.log('Browser: ' + browserName)
 
+    let browser
 
-    /**
-     * @function
-     *   quitBrowser: Quit the browser
-     *
-     */
-    async quitBrowser() {
+    switch (browserName) {
+        case 'chrome':
+            browser = await chromium.launch({ headless: headless });
+            break
+        case 'firefox':
+            browser = await firefox.launch({ headless: headless });
+            break
+        case 'safari':
+            browser = await webkit.launch({ headless: headless });
+            break
 
-        //console.log ('debug: browser.library quitBrowser')
+    }
+
+    // Get the Device (if any) iPhone 6, Pixel 5
+    /*
+        Mobile Devices:
+        ---------------
+        Android: Galaxy S7, Galaxy S8, Galaxy S9, Galaxy Note 9, Galaxy Note 20, Pixel 6, Pixel 6 Pro, Pixel 7, Pixel 8, Pixel 8 Pro, OnePlus, Moto G9 Play, Moto G7 Play, Moto G71 5G, Huawei P30 
+        iOS: iPhone 7 Plus, iPhone 12 Mini, iPhone 13 Mini, iPhone 11 Pro 
+        iPad: iPad Mini, iPad (gen 6), iPad (gen 7), iPad Pro 11, Galaxy Tab S4, Galaxy Tab S5e, Galaxy Tab S6, Galaxy Tab S7, Galaxy Tab S8, Galaxy Tab S9 
         
-        if (this.driver == 0) {
-            console.log('Browser is already closed!')
-            return { success: 1, message: 'Browser already stopped!' }
-        }
+        Desktop Browsers:
+        -----------------
+        Chrome: Desktop Chrome, Google Chrome (with various channels like stable, beta, dev, canary)
+        Firefox: Desktop Firefox
+        Safari: Desktop Safari
+        Edge: Microsoft Edge (with channels like stable, beta, dev, canary) 
+        
+        Other:
+        ------
+        BlackBerry PlayBook, BlackBerry Z30, Galaxy Note 3, Galaxy Note II, Galaxy S5, Galaxy S8, iPhone 7 Plus, iPhone 12 Mini, iPhone 13 Mini    
 
-        try {
-            //console.log ('debug: browser.library before url')
-            //let url = await this.driver.getCurrentUrl()
-            //console.log ('debug: browser.library url:', url)
-            //console.log ('debug: browser.library before close')
-            await this.driver.close()
-            //console.log ('debug: browser.library after close')
-            await this.driver.quit()
-            this.driver = 0 // just to free the memory
-            return { success: 1, message: 'Driver stopped!' }
-        } catch (err) {
-            console.log ('quitBrowser fatal error detected!')
-            //console.log(err.message)
-            return { success: 0, message: err.message }
+    */
+    let device = '<N/A>'
+    const dataAPI3 = { projectID: data.projectID, userID: data.userID, code: 'Device' }
+    const reference3 = await getReferenceByCode(dataAPI3);
+    if (reference3.length) {
+        if (reference3[0].label != '<N/A>') {
+            device = reference3[0].label
+
         }
+    }
+    console.log('Device: ' + device)
+
+
+    let page = await browser.newPage();
+
+    if (device != '<N/A>') {
+        const context = await browser.newContext({
+            ...devices[device], // Apply the device settings
+        });
+        page = await context.newPage();
     }
 
 
-    /**
-     * @function
-     *   getBrowser: get the browser
-     *
-     */
-    async getBrowser() {
-        console.log('in getBrowser')
-        return { success: 1, driver: this.driver }
-    }
+
+    ret = { success: 1, message: "Browser started!", page: page, browser: browser, headless: headless, browserName: browserName, device: device }
+
+    return (ret)
+
+}
 
 
-} // end class   
 
 
-// Export BrowserUtility
-module.exports = BrowserUtility;
+
+module.exports = {
+    startBrowser: startBrowser
+};
+
+

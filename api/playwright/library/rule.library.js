@@ -123,8 +123,8 @@ async function specialFunction(driver, variables, data, rulePosition, functionNa
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
             return ret
         case '#click':
-            ret = await click(driver, data, variables, param1, param2, param3)
-            //await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
+            ret = await click(driver, data, variables, param1, param2)
+            //await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 )
             return ret
         case '#JSclick':
             ret = await JSclick(driver, data, variables, param1, param2, param3)
@@ -196,16 +196,16 @@ async function specialFunction(driver, variables, data, rulePosition, functionNa
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
             return ret
         case '#setValue':
-            ret = await setValue(driver, data, variables, param1, param2)
-            await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2)
+            ret = await setValue(driver, data, variables, param1, param2, param3)
+            await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
             return ret
         case '#getValue':
             ret = await getValue(driver, data, variables, param1, param2)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2)
             return ret
         case '#select':
-            ret = await select(driver, data, variables, param1, param2, param3, param4)
-            await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3 + ' : ' + param4)
+            ret = await select(driver, data, variables, param1, param2, param3)
+            await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
             return ret
         case '#selectCount':
             ret = await selectCount(driver, data, variables, param1, param2, param3)

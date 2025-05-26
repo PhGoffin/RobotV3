@@ -25,7 +25,7 @@ const executeAllStories = (storyName, storyID, projectID, subprojectID, userID, 
                 consoleLog('executeAllStories.js/execStory', 3, 'storyID: ' + storyID + " - " + storyName, trace)
 
                     const url = process.env.VUE_APP_MYSQL_API
-                    let data = await fetch(url + 'Selenium/robot/allstory', {
+                    let data = await fetch(url + 'playwright/robot/allstory', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({  'storyName': storyName, 'storyID': storyID, 'projectID': projectID, 'subprojectID': subprojectID, 'userID': userID, 'userName': userName })
@@ -34,7 +34,7 @@ const executeAllStories = (storyName, storyID, projectID, subprojectID, userID, 
                         throw Error('Error during the execution of the story')
                     }
                     selenium.value = await data.json()
-                    consoleLog('executeAllStories.js/execStory', 3, '--- seleniumstory ---' + url + 'Selenium/robot/story', trace)
+                    consoleLog('executeAllStories.js/execStory', 3, '--- seleniumstory ---' + url + 'playwright/robot/story', trace)
                     consoleLog('executeAllStories.js/execStory', 3, selenium.value, trace)
             }
 

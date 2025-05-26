@@ -296,7 +296,7 @@ export default {
         const activeID = ref(1)
         const actives = ref([{ activeID: '1', active: 'Active' }, { activeID: '0', active: 'Not Active' }, { activeID: '2', active: 'Comment' }])
         const selectedActive = ref({ id: activeID.value })
-        const naturals1 = ref([{ naturalID: 'value:text' }, { naturalID: 'value:number' }, { naturalID: 'expression:text' }, { naturalID: 'data:text' }, { naturalID: 'data:number' },
+        const naturals1 = ref([{ naturalID: '' }, { naturalID: 'value:text' }, { naturalID: 'value:number' }, { naturalID: 'expression:text' }, { naturalID: 'data:text' }, { naturalID: 'data:number' },
         { naturalID: 'variable:text' }, { naturalID: 'dictionary:text' }, {naturalID: 'position:number'}, {naturalID: 'wait:number'}, {naturalID: 'before:number'},
         { naturalID: 'codevalue:text'}, { naturalID: 'comment:text'}, {naturalID: 'reference:text'}, {naturalID: 'element:text'}])
         const natural1ID = ref('value:text')

@@ -59,12 +59,13 @@ const attributeRouter = require("./api/ai_attribute/attribute.router");
 const tagelementRouter = require("./api/ai_tagelement/tagelement.router");
 const tagattributeRouter = require("./api/ai_tagattribute/tagattribute.router");
 const trainingRouter = require("./api/ai_training/training.router");
-const browserRouter = require("./api/Selenium/browser/browser.router");
+//const browserRouter = require("./api/Selenium/browser/browser.router");
+//const browserRouter = require("./api/playwright/browser/browser.router");
 
 
 
 // Selenium
-const robotRouter = require("./api/Selenium/robot/robot.router");
+//const robotRouter = require("./api/Selenium/robot/robot.router");
 //Playwright
 const playwrightRouter = require("./api/playwright/robot/robot.router");
 
@@ -79,7 +80,7 @@ app.use(cors());
 
 //<router-link :to="{ name: 'AIAttributeEdit', params: { id: attributeID } }">
 
-app.use("/api/browser", browserRouter );
+//app.use("/api/browser", browserRouter );
 // browser.getBrowser()
 // browser.setBrowser()
 // browser.getBrowser()
@@ -132,7 +133,7 @@ app.use("/api/aitagelement", tagelementRouter);
 app.use("/api/aitagattribute", tagattributeRouter);
 app.use("/api/aitraining", trainingRouter);
 
-app.use("/api/Selenium/robot", robotRouter);
+//app.use("/api/Selenium/robot", robotRouter);
 app.use("/api/playwright/robot", playwrightRouter);
 
 
