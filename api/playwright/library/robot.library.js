@@ -9,28 +9,14 @@ let Frames = [];
 * @function <TbR>
 *   switchToDefaultContent: Switch to the default window
 *
-* @param {object} driver:     selenium driver
-* @param {object} variables:  array of all the variables
-* @param {number} verbose:    level of detail in the debug messages
+* @param {object} page:         playwright page
+* @param {object} variables:    array of all the variables
 *
 */
-async function switchToDefaultContent(driver, variables, verbose) {
+async function switchToDefaultContent(page, variables) {
 
-    // Check if the driver is still alive
-    try {
-        // PGO 14/06/2024
-        // let url = await driver.getCurrentUrl()
-        // //variables.displayLog(1, 1, 'Switch Url: ', url)
-        // if (url == null) {
-        //     variables.displayLog(1, 1, 'Switch Browser not responding(1)!')
-        //     return { success: 0, message: 'Browser not responding!', stop: 1 }
-        // }
-        await driver.switchTo().defaultContent();  //switches back to main page 
-        return { success: 1, message: 'Switch to default content ok!', stop: 0 }
-    } catch (err) {
-        variables.displayLog(1, 1, 'switchToDefaultContent not responding(2)!')
-        return { success: 0, message: 'Browser not responding!', stop: 1 }
-    }
+    await page.mainFrame().parentFrame() ? page.mainFrame().parentFrame().switchTo() : page.mainFrame().switchTo();
+
 }
 
 /**
@@ -380,19 +366,19 @@ async function stopTest(variables, condition, message) {
 
 /**
  * ---------------------------------------------------------------------------- 
- * @function <TbR>
+ * @function <TbR> ???? To be tested
  *  detectFrame: Recursive function to detect all the frames
  * 
- * @param {object} driver:     selenium driver
+ * @param {object} page:       playwright page
  * @param {object} variables:  array of all the variables
  * @param {string} framePath:  Level of the frame
  */
 
-async function detectFrame(driver, variables, framePath) {
+async function detectFrame(page, variables, framePath) {
 
     let mySeparator = "-";
     let frameOk = 1;
-    frameOk = await checkFrame(driver, variables, framePath);
+    frameOk = await checkFrame(page, variables, framePath);
     if (frameOk == 1) {
         if (framePath != undefined && framePath != "") {
             Frames[frameID] = '0' + framePath;
@@ -401,24 +387,45 @@ async function detectFrame(driver, variables, framePath) {
         }
 
         try {
-            return driver.findElements(By.xpath("//*[self::frame or self::iframe]")).then(async (result) => {
-                //return element.all(by.xpath("//*[self::frame or self::iframe]")).then(async (result) => {
-                //console.log ('debug: detectFrame', result)
-                if (result.length >= 0) {
-                    frameCount = frameCount + result.length;
-                    let nextLevel = 1;
-                    for (var item in result) {
-                        let frameNextPath = framePath + mySeparator + nextLevel;
-                        nextLevel = nextLevel + 1;
-                        await detectFrame(driver, variables, frameNextPath);
-                    }
-                    return 1;
-                } else {
+            let tag = "//*[self::frame or self::iframe]"
+            await page.locator(tag).first().waitFor()
+            const count = await page.locator(tag).count()
+            if (count >= 0) {
+                frameCount = frameCount + count;
+                let nextLevel = 1;
+                for (let i = 0; i < count; i++) {
+                    let frameNextPath = framePath + mySeparator + nextLevel;
+                    nextLevel = nextLevel + 1;
+                    await detectFrame(page, variables, frameNextPath);
                 }
-            });
+                return 1;
+            } else {
+            }
+
         } catch (err) {
-            return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
+            return 0
         }
+
+
+        // try {
+        //     return driver.findElements(By.xpath("//*[self::frame or self::iframe]")).then(async (result) => {
+        //         //return element.all(by.xpath("//*[self::frame or self::iframe]")).then(async (result) => {
+        //         //console.log ('debug: detectFrame', result)
+        //         if (result.length >= 0) {
+        //             frameCount = frameCount + result.length;
+        //             let nextLevel = 1;
+        //             for (var item in result) {
+        //                 let frameNextPath = framePath + mySeparator + nextLevel;
+        //                 nextLevel = nextLevel + 1;
+        //                 await detectFrame(page, variables, frameNextPath);
+        //             }
+        //             return 1;
+        //         } else {
+        //         }
+        //     });
+        // } catch (err) {
+        //     return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
+        // }
 
     } else {
         throw new Error("Internal error during detection of the frame (" + framePath + ")!");
@@ -428,27 +435,20 @@ async function detectFrame(driver, variables, framePath) {
 
 /**
  * ---------------------------------------------------------------------------- 
- * @function <TbR>
+ * @function <OK>
  *  checkFrame: Check if a frame path exists
  * 
- * @param {object} driver:     selenium driver
- * @param {object} variables:  array of all the variables
- * @param {string} framePath:  Level of the frame
+ * @param {object} page:        playwright page
+ * @param {object} variables:   array of all the variables
+ * @param {string} framePath:   Level of the frame
  */
 
-async function checkFrame(driver, variables, framePath) {
+async function checkFrame(page, variables, framePath) {
 
-
-    try {
-        //await driver.switchTo().defaultContent();  //switches back to main page     
-        let ret = await switchToDefaultContent(driver, variables)
-        if (!ret.success) return 1
-    } catch (err) {
-        return 1
-    }
+    let frameLocator
 
     if (framePath == undefined || framePath == "") {
-        return 1
+        return { success: 99, message: 'No frame!', stop: 0 }
     }
 
     let myArray = framePath.split("-")
@@ -459,12 +459,14 @@ async function checkFrame(driver, variables, framePath) {
         try {
             frameId = myArray[item] - 1
             if (frameId >= 0) {
-                await driver.switchTo().frame(frameId)  //switch to frame    
+                frameLocator = page.frameLocator(frameId)
+                await frameLocator.waitFor();
                 frameOK = 1
+                return { success: 1, message: 'checkFrame OK!', frame: frameLocator, stop: 0 }
             }
         }
         catch (err) {
-            frameOK = 1
+            return { success: 99, message: 'checkFrame KO!', stop: 0 }
         }
     }  // end for
 
@@ -474,72 +476,66 @@ async function checkFrame(driver, variables, framePath) {
 
 /**
  * ---------------------------------------------------------------------------- 
- * @function <TbR>
+ * @function <OK>
  *  SwitchToBrowserTab:  Switch to the last tab of the browser
  *
- * @param {object} driver:     selenium driver
- * @param {number} tabID:      browser tab id (0 for the last one)
+ * @param {object} page:        playwright page
+ * @param {number} tabID:       browser tab id (0 for the last one)
  *   
  */
-async function switchToBrowserTab(driver, tabID) {
+async function switchToBrowserTab(page, tabID) {
 
     if (tabID != undefined) tabID--
     else tabID = -1
 
     try {
-        //console.log ('before getAllWindowHandles')
-        driver.getAllWindowHandles().then(async (handles) => {
-            let nbHandle = handles.length - 1
-            //console.log ('after getAllWindowHandles')
-            if (nbHandle > 0) {
-                let newWindowHandle = handles[nbHandle]
-                if (tabID >= 0) {
-                    //console.log ('Get a specific handle: ' + tabID)
-                    newWindowHandle = handles[tabID]
-                }
-                await driver.switchTo().window(newWindowHandle)
-                return { success: 1, message: 'Switch to the browser tab', stop: 0 }
-            } else {
-                return { success: 0, message: 'No extra tab open in the browser!', stop: 0 }
+
+        const pages = await page.context().pages();
+        let nbHandle = pages.length - 1; // Playwright uses pages, not window handles
+
+        if (nbHandle > 0) {
+            let newPage = pages[nbHandle];
+            if (tabID >= 0 && tabID < pages.length) { // Check if tabID is valid
+                newPage = pages[tabID];
             }
-        })
-    } catch (err) {
-        //console.log('switchToBrowserTab Error!', err.messag)
-        return { success: 0, message: err.message, stop: 1 }
+
+            await newPage.bringToFront(); // Bring the page to the front.  No need for switchTo().window()
+            return { success: 1, message: 'Switch to the browser tab', stop: 0 };
+        } else {
+            return { success: 0, message: 'No extra tab open in the browser!', stop: 0 };
+        }
+
+    } catch (error) {
+        console.error("Error switching tab:", error);
+        return { success: 0, message: `Error switching tab: ${error.message}`, stop: 1 };
     }
+
+
 }
 
 /**
  * ---------------------------------------------------------------------------- 
- * @function <TbR>
+ * @function <OK>
  *  CloseBrowserTab:  Close the last tab of the browser
  *  
- * @param {object} driver:     selenium driver
+* @param {object} page:         playwright page
  * 
  */
-async function closeBrowserTab(driver) {
+async function closeBrowserTab(page) {
 
-    try {
-        driver.getAllWindowHandles().then((handles) => {
-            let handleNbr = handles.length - 1
-            if (handleNbr > 0) {
-                driver.switchTo().window(handles[handleNbr]).then(() => {
-                    driver.close().then(() => {
-                        handleNbr = handleNbr - 1
-                        driver.switchTo().window(handles[handleNbr]).then(() => {
-                            return { success: 1, message: 'Close the browser tab and back to the previous one', stop: 0 }
+    const pages = await page.context().pages(); // Get all pages (tabs/windows)
+    const pageCount = pages.length;
 
-                        })
-                    })
-                })
-            } else {
-                return { success: 0, message: 'No extra tab open in the browser!', stop: 0 }
-            }
-        });
-
-    } catch (err) {
-        return { success: 0, message: err.message, stop: 1 }
+    if (pageCount > 1) {
+        const lastPage = pages[pageCount - 1]; // Get the last page
+        await lastPage.close(); // Close the last page
+        const previousPage = pages[pageCount - 2] || pages[0]; // Switch to the previous page or the first if it was the second tab
+        await previousPage.bringToFront(); // Bring the previous page to the front
+        return { success: 1, message: 'Closed the browser tab and returned to the previous one', stop: 0 };
+    } else {
+        return { success: 0, message: 'No extra tab open in the browser!', stop: 0 };
     }
+
 }
 
 
@@ -548,15 +544,16 @@ async function closeBrowserTab(driver) {
 * @function <TbR>
 *  switchToFrame:  Switch to an Frame
 * 
-* @param {object} driver:     selenium driver
-* @param {object} variables:  array of all the variables
-* @param {object} data:       all the parameters
-* @param {string} frameId:    id of the frame starting with 1 - 0 : to back to main page 
+* @param {object} page:         playwright page
+* @param {object} variables:    array of all the variables
+* @param {object} data:         all the parameters
+* @param {string} frameId:      id of the frame starting with 1 - 0 : to back to main page 
 *
 */
-async function switchToFrame(driver, variables, data, frameId) {
+async function switchToFrame(page, variables, data, frameId) {
     variables.displayLog(1, 1, "switchToFrame (" + frameId + ")");
     let myFrame
+    let frameLocator = ""
 
     // Check if the driver is still alive
     // PGO: 14/06/2024
@@ -574,20 +571,21 @@ async function switchToFrame(driver, variables, data, frameId) {
 
     try {
         if (frameId == 0) {
-            //await driver.switchTo().defaultContent();  //switches back to main page
-            let ret = await switchToDefaultContent(driver, variables)
+            let ret = await switchToDefaultContent(page, variables)
             if (!ret.success) return { success: 0, message: ret.message, stop: 1 }
             myFrame = "0";
             variables.setVariable("$myFrame", myFrame);
             data.frameID = 0
-            await driver.sleep(3000);
+            //await driver.sleep(3000);
         } else {
             data.frameID = frameId
             frameId = frameId - 1;
-            await driver.switchTo().frame(frameId);  //switches to frame    
+            frameLocator = page.frameLocator(frameId)
+            await frameLocator.waitFor();
+            frameLocator.switchTo();
             myFrame = myFrame + "-" + (frameId + 1);
             variables.setVariable("$myFrame", myFrame);
-            await driver.sleep(3000);
+            //await driver.sleep(3000);
         }
         return { success: 1, message: 'switchToFrame OK', stop: 0 }
 
@@ -605,13 +603,13 @@ async function switchToFrame(driver, variables, data, frameId) {
 * @function <TBR>
 *   getElement: get html element by xpath or by css
 *
-* @param {object} driver:     selenium driver
-* @param {object} variables:  array of all the variables
-* @param {object} data:       all the parameters
-* @param {string} tag:        tag of the element
+* @param {object} page:         playwright page
+* @param {object} variables:    array of all the variables
+* @param {object} data:         all the parameters
+* @param {string} tag:          tag of the element
 *
 */
-async function getElement(driver, variables, data, tag) {
+async function getElement_OBSOLETE(driver, variables, data, tag) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     const { Left } = require("./string.library.js");
 
@@ -823,13 +821,13 @@ async function getElement(driver, variables, data, tag) {
 * @function <TBR>
 *   getAllElements: get html element by xpath or by css
 *
-* @param {object} driver:     selenium driver
+* @param {object} page:         playwright page
 * @param {object} variables:  array of all the variables
 * @param {object} data:       all the parameters
 * @param {string} tag:        tag of the element
 *
 */
-async function getAllElements(driver, variables, data, tag) {
+async function getAllElements_OBSOLETE(driver, variables, data, tag) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     const { Left } = require("./string.library.js");
 
@@ -1095,7 +1093,7 @@ async function countElement(page, data, variables, tagElement, variable, delay, 
         variables.setVariable(variable, count)
         variables.displayLog(1, 2, 'countElement: ' + count)
 
-        return { success: 1, message: "countElement", stop: 0 }
+        return { success: 1, message: "countElement", value: count, stop: 0 }
     }
     catch (err) {
         console.log('countElement error............')
@@ -1811,32 +1809,31 @@ async function url(page, variables, projectID, link) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function <TBR>
+* @function <OK>
 *  getUrl:  Get the current URL and store it into the variable $currentURL
 * 
-* @param {object} driver:       selenium driver
+* @param {object} page:         playwright page
 * @param {object} variables:    array of all the variables
 * @param {string} myVariable:   name of the variable  
 *
 */
-async function getUrl(driver, variables, myVariable) {
+async function getUrl(page, variables, myVariable) {
     console.log('getUrl...................')
-    // const { Left } = require("./string.library.js")
+    const { Left } = require("./string.library.js")
 
-    // try {
-    //     console.log ('getURL......')
-    //     let url = await driver.getCurrentUrl()
-    //     //  check if the URL contains http
-    //     if (Left(url, 4) == 'http') {
-    //         variables.setVariable(myVariable, url)
-    //     } else {
-    //         variables.setVariable(myVariable, 'N/A')
-    //     }
-    //     return { success: 1, message: "getUrl Ok!", value: url, stop: 0 }
-    // } catch (err) {
-    //     return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
-    // }
-    return { success: 1, message: "getUrl Ok!", value: url, stop: 0 }
+    try {
+        console.log('getURL......')
+        const url = await page.url();
+        //  check if the URL contains http
+        if (Left(url, 4) == 'http') {
+            variables.setVariable(myVariable, url)
+        } else {
+            variables.setVariable(myVariable, 'N/A')
+        }
+        return { success: 1, message: "getUrl Ok!", value: url, stop: 0 }
+    } catch (err) {
+        return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
+    }
 
 }
 
@@ -1845,17 +1842,24 @@ async function getUrl(driver, variables, myVariable) {
 * @function <TBR>
 *  newTab:  Open a new tab and switch to it 
 * 
-* @param {object} driver:       selenium driver
+* @param {object} page:       playwright page
 *
 */
-async function newTab(driver) {
+async function newTab(page) {
 
-    try {
-        await driver.switchTo().newWindow('tab')
-        return { success: 1, message: "newTab Ok!", stop: 0 }
-    } catch (err) {
-        return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
-    }
+    // This function is not yet implemented due to the complexity
+    //
+    // To create a new tab, we need to code the following lines:
+    // const context = await browser.newContext(); // Create a new context to manage the new tab
+    // const page = await context.newPage();    // Create a new page (tab) within that context    
+    // 
+    // the implementation should be done in the browser.library.js
+    // However, for the time being the page is declared only in the robot.service.js
+    // so we need to find a way to replace the value of the page at this level... not so simple!!!!
+
+
+    return { success: 0, message: 'newTab Error: Function not yet implemented!', stop: 1 }
+
 
 }
 
@@ -1870,12 +1874,19 @@ async function newTab(driver) {
 */
 async function newWindow(driver) {
 
-    try {
-        await driver.switchTo().newWindow('window')
-        return { success: 1, message: "newWindow Ok!", stop: 0 }
-    } catch (err) {
-        return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
-    }
+
+    // This function is not yet implemented due to the complexity
+    //
+    // To create a new window, we need to code the following lines:
+    // const newPage = await context.newPage(); // Use context.newPage() to create a new page
+    // await newPage.bringToFront(); // Optional: Bring the new page to the front (similar to switching focus)
+    // 
+    // the implementation should be done in the browser.library.js
+    // However, for the time being the page is declared only in the robot.service.js
+    // so we need to find a way to replace the value of the page at this level... not so simple!!!!
+
+
+    return { success: 0, message: 'newWindow Error: Function not yet implemented!', stop: 1 }
 
 }
 
@@ -2267,24 +2278,20 @@ async function waitFor(page, data, variables, tagElement, delay, action) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function <TBR>
+* @function <OK>
 *   waitForNot: check if an element is not available
 *
-* @param {object} driver:       selenium driver
+* @param {object} page:         playwright page
 * @param {object} data:         all the parameters
 * @param {number} tagElement:   tag of the element to be checked
 * @param {number} delay:        delay in seconds
 * @param {number} action:       action in case element is still available: continue (0) or stop all the tests (1) or skip the It (2)
 *
 */
-async function waitForNot(driver, data, variables, tagElement, delay, action) {
+async function waitForNot(page, data, variables, tagElement, delay, action) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
-    let count
-
-    //variables.displayLog(1, 1,'*******----- waitForNot: ' + tagElement + ' for ' + delay + ' sec')
-    ret = { success: 0, message: 'waitForNot not enter in the loop', stop: 0 }
-    if (delay == undefined) delay = 10    // delay = number of loop (or second) to wait for the element
-    if (action == undefined) action = 0     // action = continue (0) or stop all the tests (1) or skip the It (2) in case of elementy not found
+    const { getReferenceByCode } = require("../../reference/reference.service.js");
+    let timeout = 30 // 30 seconds by default
 
 
     // Check if the tag is not on the dictionary
@@ -2299,50 +2306,52 @@ async function waitForNot(driver, data, variables, tagElement, delay, action) {
         }
     }
 
-    let myCount = 1
-    let found = 1
-    for (count = 1; count <= delay && found; count++) {
-        //variables.displayLog(1, 1,'looking for element: ' + tagElement + ' --> ' + count + ' on ' + delay)
-        myCount++
-        variables.displayLog(1, 2, 'waitForNot: ' + count + ' / ' + delay)
 
-        try {
-            ret = await getElement(driver, variables, data, tagElement)
+    try {
+        // Get the timeout (if any)
+        const dataAPI = { projectID: data.projectID, userID: data.userID, code: 'TimeOut' }
+        const reference = await getReferenceByCode(dataAPI);
+        if (reference.length) {
+            if (reference[0].label != '<N/A>') {
+                timeout = reference[0].label * 1
+            }
         }
-        catch (err) {
-            variables.displayLog(1, 1, 'waitForNot: Fatal error: Browser not responding!')
-            return { success: 0, message: "Browser not responding!", stop: 99 }
-        }
+        console.log('Original TimeOut: ' + timeout)
 
-        found = ret.success
-        if (ret.stop) {
-            variables.displayLog(1, 1, 'Fatal error: Browser not responding!')
-            return { success: 0, message: ret.message, stop: 1 }
-        }
-        if (found) {
-            //variables.displayLog(1, 1, 'wait 1 sec')
-            await pause(driver, variables, data.subprojectID, 1);
-        }
+
+        if (delay == undefined) delay = 10   // delay = number of second(s) to wait for the element
+        delay = delay * 1000
+        page.setDefaultTimeout(delay);
+
+        const locator = page.locator(tagElement).first()
+        await locator.waitFor({ state: 'detached', delay }); // or 'hidden'        
+
+        page.setDefaultTimeout(timeout * 1000) // Back to the original timeout
+        return { success: 1, message: "waitForNot OK", stop: 0 }
     }
-    if (found) {
-        // store the value into the variable
+    catch (err) {
+        page.setDefaultTimeout(timeout * 1000) // Back to the original timeout
+        console.log('waitForNot error', err.message)
         variables.setVariable('$Error', "1")
-        ret.stop = 0
-        if (action == 1) { ret.stop = 1 }
-        else if (action == 0) { ret.success = 1 }
-        else { ret.success = 0 }
-        variables.displayLog(1, 1, 'waitForNot still available - action: ' + action + ', success: ' + ret.success + ', stop: ' + ret.stop)
-        variables.displayLog(1, 2, tagElement)
-    } else {
-        variables.setVariable('$Error', "0")
-        variables.displayLog(1, 2, "waitForNot: disappers after " + myCount + " on " + delay)
-        ret = { success: 1, message: 'waitForNot Ok', stop: 0 }
+        if (action == undefined) action = 0
+        // action: 0 = continue, 1 = stop all the tests, 2 = skip the It
 
-        if ((myCount / delay) > 0.6) {
-            await logfile(data.userID, "Watch", "waitForNot: disappers after " + myCount + " on " + delay)
+        let ret = { success: 0, message: 'WaitForNot KO', stop: 0 }
+        if (action == 1) {
+            ret.stop = 1
+            ret.message = 'WaitForNot KO after ' + delay + ' sec. --> Stop the tests'
         }
+        else if (action == 0) {
+            ret.success = 1
+            ret.message = 'WaitForNot KO after ' + delay + ' sec. --> Continue'
+        }
+        else {
+            ret.success = 0
+            ret.message = 'WaitForNot KO after ' + delay + ' sec. --> Skip IT'
+        }
+        return ret
     }
-    return ret
+
 }
 
 
@@ -2441,7 +2450,7 @@ async function skipDescribe(variables, expression, message) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function <TBR>
+* @function <OK>
 *   setValue: key a value in a field
 *
 * @param {object} page:            playwright page
@@ -2461,8 +2470,8 @@ async function setValue(page, data, variables, tag, value, delay) {
 
         let ret
 
-        //TBD if (delay == undefined) delay = 0
-        //TBD else delay = delay * 1000
+        if (delay == undefined) delay = 0
+        else delay = delay * 1000
 
 
         // Evaluate the value
@@ -2479,26 +2488,26 @@ async function setValue(page, data, variables, tag, value, delay) {
         value = variables.evaluateVariable(value)
         value = value.replace(/'/g, "");
 
-        /*        
-                let clearFlag = 0
-                let enterFlag = 0
-                let tabFlag = 0
-        
-                // check if <CLEAR> or <CLEAN> is used
-                if (value.indexOf('<CLEAR>', 0) >= 0 || value.indexOf('<CLEAN>', 0) >= 0) {
-                    clearFlag = 1
-                    value = value.replace('<CLEAR>', '')
-                    value = value.replace('<CLEAN>', '')
-                }
-        
-                if (value.indexOf('<ENTER>', 0) >= 0) {
-                    enterFlag = 1
-                    value = value.replace('<ENTER>', '')
-                } else if (value.indexOf('<TAB>', 0) >= 0) {
-                    tabFlag = 1
-                    value = value.replace('<TAB>', '')
-                }
-        */
+
+        let clearFlag = 0
+        let enterFlag = 0
+        let tabFlag = 0
+
+        // check if <CLEAR> or <CLEAN> is used
+        if (value.indexOf('<CLEAR>', 0) >= 0 || value.indexOf('<CLEAN>', 0) >= 0) {
+            clearFlag = 1
+            value = value.replace('<CLEAR>', '')
+            value = value.replace('<CLEAN>', '')
+        }
+
+        if (value.indexOf('<ENTER>', 0) >= 0) {
+            enterFlag = 1
+            value = value.replace('<ENTER>', '')
+        } else if (value.indexOf('<TAB>', 0) >= 0) {
+            tabFlag = 1
+            value = value.replace('<TAB>', '')
+        }
+
         value = value.trim()
 
         // Evaluate the dataset (if any)
@@ -2523,12 +2532,9 @@ async function setValue(page, data, variables, tag, value, delay) {
             return ret
         }
 
-        // To be improved
-        // if (clearFlag == 1) value = value + '<CLEAR>'
-        // if (enterFlag == 1) value = value + '<ENTER>'
-        // if (tabFlag == 1) value = value + '<TAB>'
-
-
+        if (clearFlag == 1) value = value + '<CLEAR>'
+        if (enterFlag == 1) value = value + '<ENTER>'
+        if (tabFlag == 1) value = value + '<TAB>'
 
 
         if (tag == undefined) {
@@ -2548,70 +2554,32 @@ async function setValue(page, data, variables, tag, value, delay) {
 
         tag = variables.evaluateVariable(tag)
 
-        /*        
-                // Get the element for the tag
-                try {
-                    //console.log('debug: getElement from setValue')
-                    ret = await getElement(page, variables, data, tag)
-                } catch (err) {
-                    variables.displayLog(1, 1, 'setValue: Fatal error: Browser not responding!')
-                    return { success: 0, message: 'Browser not responding!', stop: 1 }
-                }
-                 
-        
-                if (!ret.success) {
-                    variables.displayLog(1, 1, '>>>>> Warning: Tag not found! - tag: ' + tag)
-                    //variables.displayLog(1, 1, ret)
-                    return { success: 0, message: "setValue: Cannot detect the element ! " + tag, stop: 99 }
-                }
-        
-        
-        
-                //variables.displayLog(1, 2, 'set element ok ' + value)
-        
-        
-                // Special clear when the normal function doesn't work!
-                if (value.indexOf('<CLEAR>', 0) >= 0 || value.indexOf('<CLEAN>', 0) >= 0) {
-                    value = value.replace('<CLEAR>', '')
-                    value = value.replace('<CLEAN>', '')
-                    variables.displayLog(1, 1, '---- Clear field')
-                    page.actions().keyDown(Key.CONTROL)
-                        .sendKeys("a")
-                        .keyUp(Key.CONTROL)
-                        .sendKeys(Key.BACK_SPACE)
-                        .perform();
-                    await page.sleep(2000)
-                }
-                if (value.indexOf('<ENTER>', 0) >= 0) {
-                    value = value.replace('<ENTER>', '')
-                    await ret.element.clear();
-                    await ret.element.sendKeys(value.trim());
-                    variables.displayLog(1, 1, '----' + value.trim() + '(' + value.trim().length + ')---- Press Enter')
-                    if (delay > 0) await page.sleep(delay)
-                    page.actions().sendKeys(10).sendKeys(13).perform();
-                } else if (value.indexOf('<TAB>', 0) >= 0) {
-                    value = value.replace('<TAB>', '')
-                    await ret.element.clear();
-                    await ret.element.sendKeys(value.trim());
-                    if (delay > 0) await page.sleep(delay)
-                    page.actions().sendKeys(9).perform();
-                } else {
-                    await ret.element.clear();
-                    await ret.element.sendKeys(value);
-                    if (delay > 0) await page.sleep(delay)
-                    //page.actions().sendKeys(9).perform();
-                }
-                //variables.displayLog(1, 1, '---- setValue: OK!: ' + value)
-                ret = { success: 1, message: 'setValue OK', value: value, stop: 0 }
-                return ret
-        */
-
-
-        //console.log('tag', tag)
-        console.log('Setvalue before', value)
-        await page.locator(tag).fill(value)
-        console.log('Setvalue after', value)
-        //await page.pause()
+        // Special clear when the normal function doesn't work!
+        if (value.indexOf('<CLEAR>', 0) >= 0 || value.indexOf('<CLEAN>', 0) >= 0) {
+            value = value.replace('<CLEAR>', '')
+            value = value.replace('<CLEAN>', '')
+            variables.displayLog(1, 1, '---- Clear field')
+            await page.keyboard.down('Control'); // Press and hold Control key
+            await page.keyboard.press('a');       // Press 'a' key
+            await page.keyboard.up('Control');   // Release Control key
+            await page.keyboard.press('Backspace'); // Press Backspace key
+        }
+        if (value.indexOf('<ENTER>', 0) >= 0) {
+            value = value.replace('<ENTER>', '')
+            await page.locator(tag).fill(value)
+            variables.displayLog(1, 1, '----' + value.trim() + '(' + value.trim().length + ')---- Press Enter')
+            if (delay != undefined && delay > 0) await page.waitForTimeout(delay * 1000);
+            await page.keyboard.sendCharacter('\r'); // ASCI 10
+            await page.keyboard.sendCharacter('\n'); // ASCI 13"
+        } else if (value.indexOf('<TAB>', 0) >= 0) {
+            value = value.replace('<TAB>', '')
+            await page.locator(tag).fill(value)
+            if (delay != undefined && delay > 0) await page.waitForTimeout(delay * 1000);
+            await page.keyboard.sendCharacter('\t'); // ASCI 9
+        } else {
+            await page.locator(tag).fill(value)
+            if (delay != undefined && delay > 0) await page.waitForTimeout(delay * 1000);
+        }
         ret = { success: 1, message: 'setValue OK', value: value, stop: 0 }
         return ret
 
@@ -2764,87 +2732,53 @@ async function select(page, data, variables, tag, value, delay) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function <TBR>
+* @function <OK>
 *   selectCount: Count the items (options) from a list
 *
-* @param {object} driver:       selenium driver
+* @param {object} page:         playwright page
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
-* @param {string} tagElement:   tag element
-* @param {number} wait:         Wait for the element before clicking (in seconds)
+* @param {string} tag:          tag element
 * @param {string} variable:     name of the variable to store the extra information
 *
 */
-async function selectCount(driver, data, variables, tagElement, wait, variable) {
+async function selectCount(page, data, variables, tag, variable) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
     let ret
-    //variables.displayLog(1, 1,'----- selectCount')
 
-    if (wait == undefined || wait == 0) {
-        try {
-            ret = await getElement(driver, variables, data, tagElement)
-        }
-        catch (err) {
-            variables.displayLog(1, 1, 'selectCount: Fatal error: Browser not responding!')
-            return { success: 0, message: ret.message, stop: 1 }
-        }
-    } else {
-        try {
-            variables.displayLog(1, 2, 'selectCount: wait before for: ' + wait + ' second(s)')
-            ret = await waitFor(driver, data, variables, tagElement, wait, 2)
-        } catch (err) {
-            variables.displayLog(1, 1, 'selectCount: Fatal error: Browser not responding!')
-            return { success: 0, message: "Browser not responding!", stop: 99 }
+    if (tag == undefined) {
+        console.log("select: tag cannot be empty!")
+        return { success: 0, message: "select: tag cannot be empty!", stop: 1 }
+    } else if (tag[0] == '@') {
+        //console.log('In the dictionary.........', data.projectID)
+        // Search the tag in the dictionary
+        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+        const result = await getDictionaryByCode(dataAPI);
+        if (result.length) {
+            tag = result[0].label
+            //console.log("Find the code: " + tag)
+        } else {
+            console.log("Cannot find the code: " + tag)
+            variables.displayLog(1, 1, 'Data not found in the dictionary!')
+            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
         }
     }
 
-    if (!ret.success) {
-        if (ret.stop == 99) return { success: 0, message: "Browser not responding!", stop: 99 }
-        variables.displayLog(1, 1, '>>>>> selectCount: Cannot find the element: ' + tagElement)
-        // Return a warning, not an error
-        ret.stop = 1
-        return ret
-    }
 
     try {
-        await ret.element.click()
-        await pause(driver, variables, data.subprojectID, 1);
+        tag = variables.evaluateVariable(tag)
+        await page.locator(tag).first().waitFor()
 
-        let tag = tagElement
-        if (tag == '$GUI') tag = await variables.getVariable('$GUI')
-        // Check if the tag is not on the dictionary
-        else if (tag[0] == '@') {
-            const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-            const result = await getDictionaryByCode(dataAPI);
-            if (result.length) {
-                tag = result[0].label
-                //console.log (link)
-            } else {
-                variables.displayLog(1, 1, 'Data: ' + tag + ' not found in the dictionary!')
-                return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-            }
-        }
-
-        if (tag[0] == "'") tag = tag.slice(1, -1)
-        tag = tag + '/option'
-
-        ret = await getAllElements(driver, variables, data, tag)
-        if (!ret.success) {
-            variables.displayLog(1, 1, '>>>>> selectCount: Cannot find the option element: ' + tag)
-            ret = { success: 0, message: 'Cannot detect the select option ' + value + '!', stop: 1 }
-            return ret
-        }
-        let size = ret.element.length
+        let tagElement = tag + '/option'
+        const count = await page.locator(tagElement).count()
         // store the size into the variable
-        variables.setVariable(variable, size)
-        ret = { success: 1, message: 'selectCount OK', value: size, stop: 0 }
-        return ret
+        variables.setVariable(variable, count)
+
+        return { success: 1, message: "selectCount Ok!", value: count, stop: 0 }
+
     } catch (err) {
-        //variables.displayLog(1, 1,err.message)
-        ret = { success: 0, message: err.message, stop: 0 }
-        variables.displayLog(1, 1, ret)
-        return ret
+        return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
     }
 
 }
@@ -2856,7 +2790,7 @@ async function selectCount(driver, data, variables, tagElement, wait, variable) 
 * @function <TBR>
 *   uploadFile: Upload a file from the repository uploads of your project
 *
-* @param {object} driver:          selenium driver
+* @param {object} page:            playwright page
 * @param {object} data:            all the parameters
 * @param {object} variables:       array of all the variables
 * @param {string} tag:             tag to the element
@@ -2963,59 +2897,54 @@ async function uploadFile(driver, data, variables, tag, fileName) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function <TBR>
+* @function <OK>
 *   setFocus: set the focus on an element
 *
-* @param {object} driver:       selenium driver
+* @param {object} page:         playwright page
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
-* @param {string} tagElement:   tag element
-* @param {number} wait:         Wait for the element before clicking (in seconds)
+* @param {string} tag:          tag element
 * @param {number} delay:        delay after the click (in seconds)
 *
 */
-async function setFocus(driver, data, variables, tagElement, wait, delay) {
+async function setFocus(page, data, variables, tag, delay) {
+
+    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+
     let ret
-    //variables.displayLog(1, 1,'----- click')
 
-
-    if (wait == undefined || wait == 0) {
-        try {
-            ret = await getElement(driver, variables, data, tagElement)
+    if (tag == undefined) {
+        console.log("setFocus: tag cannot be empty!")
+        return { success: 0, message: "setFocus: tag cannot be empty!", stop: 1 }
+    } else if (tag[0] == '@') {
+        //console.log('In the dictionary.........', data.projectID)
+        // Search the tag in the dictionary
+        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+        const result = await getDictionaryByCode(dataAPI);
+        if (result.length) {
+            tag = result[0].label
+            //console.log("Find the code: " + tag)
+        } else {
+            console.log("Cannot find the code: " + tag)
+            variables.displayLog(1, 1, 'Data not found in the dictionary!')
+            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
         }
-        catch (err) {
-            variables.displayLog(1, 1, 'setFocus: Fatal error: Browser not responding!')
-            return { success: 0, message: ret.message, stop: 1 }
-        }
-    } else {
-        try {
-            variables.displayLog(1, 3, 'setFocus: wait before for: ' + wait + ' second(s)')
-            ret = await waitFor(driver, data, variables, tagElement, wait, 2)
-        } catch (err) {
-            variables.displayLog(1, 1, 'setFocus: Fatal error: Browser not responding!')
-            return { success: 0, message: "Browser not responding!", stop: 99 }
-        }
-    }
-
-    if (!ret.success) {
-        if (ret.stop == 99) return { success: 0, message: "Browser not responding!", stop: 99 }
-        variables.displayLog(1, 1, '>>>>> setFocus: Cannot find the element: ' + tagElement)
-        // Return a warning, not an error
-        ret.stop = 1
-        return ret
     }
 
     try {
-        driver.executeScript('arguments[0].scrollIntoView()', ret.element);
-        variables.displayLog(1, 1, '     setFocus: wait ' + delay + ' second(s) after the click')
-        await pause(driver, variables, data.subprojectID, delay);
-        return ret
+        const locator = page.locator(tag)
+        const elementHandle = await locator.elementHandle()
+        await page.evaluate(element => { element.scrollIntoView(); }, elementHandle)
+
+        if (delay != undefined) {
+            delay = variables.evaluateVariable(delay)
+            console.log('Delay:', delay)
+            await page.waitForTimeout(delay * 1000);
+        }
+        return { success: 1, message: "setFocus OK!", stop: 0 }
 
     } catch (err) {
-        //variables.displayLog(1, 1,err.message)
-        ret = { success: 0, message: err.message, stop: 0 }
-        variables.displayLog(1, 1, ret)
-        return ret
+        return { success: 0, message: "setFocus KO!", stop: 1 }
     }
 
 }
@@ -3126,73 +3055,65 @@ async function doubleClick(page, data, variables, tag, delay) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function <TBR>
+* @function <OK>
 *   JSclick: click on an element with JavaScript (not selenium)
 *
-* @param {object} driver:       selenium driver
+* @param {object} page:         playwright page
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
-* @param {string} tagElement:   tag element
-* @param {number} wait:         Wait for the element before clicking (in seconds)
+* @param {string} tag:          tag element
 * @param {number} delay:        delay after the click (in seconds)
 *
 */
-async function JSclick(driver, data, variables, tagElement, wait, delay) {
+async function JSclick(page, data, variables, tag, delay) {
+    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+
     let ret
-    variables.displayLog(1, 1, '----- JSclick')
 
-
-    if (wait == undefined || wait == 0) {
-        try {
-            ret = await getElement(driver, variables, data, tagElement)
+    if (tag == undefined) {
+        console.log("JSclick: tag cannot be empty!")
+        return { success: 0, message: "JSclick: tag cannot be empty!", stop: 1 }
+    } else if (tag[0] == '@') {
+        //console.log('In the dictionary.........', data.projectID)
+        // Search the tag in the dictionary
+        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+        const result = await getDictionaryByCode(dataAPI);
+        if (result.length) {
+            tag = result[0].label
+            //console.log("Find the code: " + tag)
+        } else {
+            console.log("Cannot find the code: " + tag)
+            variables.displayLog(1, 1, 'Data not found in the dictionary!')
+            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
         }
-        catch (err) {
-            variables.displayLog(1, 1, 'JSclick: Fatal error: Browser not responding!')
-            return { success: 0, message: ret.message, stop: 1 }
-        }
-    } else {
-        try {
-            variables.displayLog(1, 3, 'JSclick: wait before for: ' + wait + ' second(s)')
-            ret = await waitFor(driver, data, variables, tagElement, wait, 2)
-        }
-        catch (err) {
-            variables.displayLog(1, 1, 'JSclick: Fatal error: Browser not responding!')
-            return { success: 0, message: "Browser not responding!", stop: 99 }
-        }
-    }
-
-    if (!ret.success) {
-        if (ret.stop == 99) return { success: 0, message: "Browser not responding!", stop: 99 }
-        variables.displayLog(1, 1, '>>>>> JSclick: Cannot find the element: ' + tagElement)
-        // Force the error
-        ret.stop = 1
-        return ret
     }
 
     try {
-        driver.executeScript('arguments[0].scrollIntoView()', ret.element);
-        driver.executeScript('arguments[0].click()', ret.element);
-        variables.displayLog(1, 1, '     JSclick: wait ' + delay + ' second(s) after the click')
-        delay = delay * 1000
-        await driver.sleep(delay);
-        return ret
+        const locator = page.locator(tag)
+        const elementHandle = await locator.elementHandle()
+        await page.evaluate(element => { element.click(); }, elementHandle)
+
+        if (delay != undefined) {
+            delay = variables.evaluateVariable(delay)
+            console.log('Delay:', delay)
+            await page.waitForTimeout(delay * 1000);
+        }
+        return { success: 1, message: "JSclick OK!", stop: 0 }
 
     } catch (err) {
-        //variables.displayLog(1, 1,err.message)
-        ret = { success: 0, message: err.message, stop: 0 }
-        variables.displayLog(1, 1, ret)
-        return ret
+        return { success: 0, message: "JSclick KO!", stop: 1 }
     }
+
 
 }
 
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function <TBR>
+* @function <OK>
 *   getTableData: Read a table to get a value from a cell identified by a row and a column
 *
-* @param {object} driver:       selenium driver
+* @param {object} page:         playwright page
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
 * @param {string} tagElement:   tag element
@@ -3201,7 +3122,7 @@ async function JSclick(driver, data, variables, tagElement, wait, delay) {
 * @param {string} variable:     name of the variable
 *
 */
-async function getTableData(driver, data, variables, tagElement, row, column, variable) {
+async function getTableData(page, data, variables, tagElement, row, column, variable) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     let ret
     //variables.displayLog(1, 1,'----- getTableData')
@@ -3232,53 +3153,15 @@ async function getTableData(driver, data, variables, tagElement, row, column, va
     if (tagElement[0] == "'") tagElement = tagElement.slice(1, -1)
     tagElement = tagElement + '/tbody/tr[' + row + ']/td[' + column + ']'
 
-    try {
-        let wait = 5
-        variables.displayLog(1, 2, 'getTableData: wait before for: ' + wait + ' second(s)')
-        ret = await waitFor(driver, data, variables, tagElement, wait, 2)
-        if (!ret.success) {
-            if (ret.stop == 99) return { success: 0, message: "Browser not responding!", stop: 99 }
-            variables.displayLog(1, 2, 'getTableData: Cannot find the element: ' + tagElement)
-            // Force the error
-            ret.value = 'ERROR'
-            ret.stop = 1
-            return ret
-        }
-    } catch (err) {
-        variables.displayLog(1, 1, 'getTableData: Fatal error: Browser not responding!')
-        return { success: 0, message: "Browser not responding!", stop: 99 }
-    }
 
     try {
+        let myValue = await page.locator(tagElement).textContent()
+        variables.displayLog(1, 2, "getTableHeader - getText: " + myValue);
 
-        let myValue = await ret.element.getText();
-        variables.displayLog(1, 2, "getTableData - getText: " + myValue);
-        if (myValue == '' || myValue == undefined) {
-            // try to extract a value by the attribute value
-            myValue = await ret.element.getAttribute('value');
-            if (myValue == '' || myValue == undefined) {
-                // Value is empty, send a warning
-                myValue = '<EMPTY>';
-                variables.setVariable(variable, myValue);
-                ret = { success: 1, message: "getTableData: empty value detected!", value: myValue, stop: 1 }
-                return ret
-            } else {
-                // got a value by the attribute value
-                myValue = myValue.replace(/\n/g, '<BR>');
-                myValue = myValue.replace(/\u00A0/g, ' ');  // &nbsp;
-                variables.setVariable(variable, myValue);
-                ret = { success: 1, message: "getTableData OK", value: myValue, stop: 0 }
-                return ret
-            }
-        } else {
-            // got a value by getText()
-            myValue = myValue.replace(/\n/g, '<BR>');
-            myValue = myValue.replace(/\u00A0/g, ' ');  // &nbsp;
-            variables.setVariable(variable, myValue);
-            ret = { success: 1, message: "getTableData OK", value: myValue, stop: 0 }
-            return ret
-        }
+        if (myValue == '' || myValue == undefined) myValue = '<EMPTY>'
 
+        ret = { success: 1, message: "getTableHeader OK", value: myValue, stop: 0 }
+        return ret
 
     } catch (err) {
         //variables.displayLog(1, 1,err.message)
@@ -3291,10 +3174,10 @@ async function getTableData(driver, data, variables, tagElement, row, column, va
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function <TBR>
+* @function <OK>
 *   getTableHeader: Read a table to get a header identified by a row and a column
 *
-* @param {object} driver:       selenium driver
+* @param {object} page:         playwright page
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
 * @param {string} tagElement:   tag element
@@ -3303,7 +3186,7 @@ async function getTableData(driver, data, variables, tagElement, row, column, va
 * @param {string} variable:     name of the variable
 *
 */
-async function getTableHeader(driver, data, variables, tagElement, row, column, variable) {
+async function getTableHeader(page, data, variables, tagElement, row, column, variable) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     let ret
     //variables.displayLog(1, 1,'----- getTableData')
@@ -3335,54 +3218,13 @@ async function getTableHeader(driver, data, variables, tagElement, row, column, 
     tagElement = tagElement + '/tbody/tr[' + row + ']/th[' + column + ']'
 
     try {
-        let wait = 5
-        variables.displayLog(1, 2, 'getTableHeader: wait before for: ' + wait + ' second(s)')
-        ret = await waitFor(driver, data, variables, tagElement, wait, 2)
-
-        if (!ret.success) {
-            if (ret.stop == 99) return { success: 0, message: "Browser not responding!", stop: 99 }
-            variables.displayLog(1, 2, 'getTableHeader: Cannot find the element: ' + tagElement)
-            // Force the error
-            ret.value = 'ERROR'
-            ret.stop = 1
-            return ret
-        }
-
-    } catch (err) {
-        variables.displayLog(1, 1, 'getTableHeader: Fatal error: Browser not responding!')
-        return { success: 0, message: "Browser not responding!", stop: 99 }
-    }
-
-
-    try {
-
-        let myValue = await ret.element.getText();
+        let myValue = await page.locator(tagElement).textContent()
         variables.displayLog(1, 2, "getTableHeader - getText: " + myValue);
-        if (myValue == '' || myValue == undefined) {
-            // try to extract a value by the attribute value
-            myValue = await ret.element.getAttribute('value');
-            if (myValue == '' || myValue == undefined) {
-                // Value is empty, send a warning
-                myValue = '<EMPTY>';
-                variables.setVariable(variable, myValue);
-                ret = { success: 1, message: "getTableHeader: empty value detected!", value: myValue, stop: 1 }
-                return ret
-            } else {
-                // got a value by the attribute value
-                myValue = myValue.replace(/\n/g, '<BR>');
-                myValue = myValue.replace(/\u00A0/g, ' ');  // &nbsp;
-                variables.setVariable(variable, myValue);
-                ret = { success: 1, message: "getTableHeader OK", value: myValue, stop: 0 }
-                return ret
-            }
-        } else {
-            // got a value by getText()
-            myValue = myValue.replace(/\n/g, '<BR>');
-            myValue = myValue.replace(/\u00A0/g, ' ');  // &nbsp;
-            variables.setVariable(variable, myValue);
-            ret = { success: 1, message: "getTableHeader OK", value: myValue, stop: 0 }
-            return ret
-        }
+
+        if (myValue == '' || myValue == undefined) myValue = '<EMPTY>'
+
+        ret = { success: 1, message: "getTableHeader OK", value: myValue, stop: 0 }
+        return ret
 
 
     } catch (err) {
@@ -3396,10 +3238,10 @@ async function getTableHeader(driver, data, variables, tagElement, row, column, 
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function <TBR>
+* @function <OK>
 *   setTableData: set a value into a cell of a table identified by a row and a column
 *
-* @param {object} driver:       selenium driver
+* @param {object} page:         playwright page
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
 * @param {string} tagElement:   tag element
@@ -3471,50 +3313,19 @@ async function setTableData(driver, data, variables, tagElement, row, column, va
     tagElement2 = tagElement + '/tbody/tr[' + row + ']/td[' + column + ']/descendant::input[1]'
 
     try {
-        let wait = 2
-        variables.displayLog(1, 2, 'setTableData: wait before for: ' + wait + ' second(s)')
-        ret = await waitFor(driver, data, variables, tagElement2, wait, 2)
-
-        if (!ret.success) {
-            if (ret.stop == 99) return { success: 0, message: "Browser not responding!", stop: 99 }
-            tagElement2 = tagElement + '/tbody/tr[' + row + ']/td[' + column + ']'
-            variables.displayLog(1, 2, 'setTableData: try witout input tag')
-            ret = await waitFor(driver, data, variables, tagElement2, wait, 2)
-
-            if (!ret.success) {
-                if (ret.stop == 99) return { success: 0, message: "Browser not responding!", stop: 99 }
-                variables.displayLog(1, 2, 'setTableData: Cannot find the element: ' + tagElement)
-                // Force the error
-                ret.value = 'ERROR'
-                ret.stop = 1
-                return ret
-            }
-        }
-
-    } catch (err) {
-        variables.displayLog(1, 1, 'setTableData: Fatal error: Browser not responding!')
-        return { success: 0, message: "Browser not responding!", stop: 99 }
-    }
-
-
-
-    try {
-        await ret.element.click()
+        await page.locator(tagElement2).click()
         if (value.indexOf('<ENTER>', 0) >= 0) {
             value = value.replace('<ENTER>', '')
-            await ret.element.clear();
-            await ret.element.sendKeys(value.trim());
-            //await ret.element.submit();
+            await page.locator(tagElement2).fill(value)
             variables.displayLog(1, 1, '     ----- Press Enter')
-            driver.actions().sendKeys(10).sendKeys(13).perform();
+            await page.keyboard.sendCharacter('\r'); // ASCI 10
+            await page.keyboard.sendCharacter('\n'); // ASCI 13"
         } else if (value.indexOf('<TAB>', 0) >= 0) {
             value = value.replace('<TAB>', '')
-            await ret.element.clear();
-            await ret.element.sendKeys(value.trim());
-            driver.actions().sendKeys(9).perform();
+            await page.locator(tagElement2).fill(value)
+            await page.keyboard.sendCharacter('\t'); // ASCI 9"
         } else {
-            await ret.element.clear();
-            await ret.element.sendKeys(value);
+            await page.locator(tagElement2).fill(value)
         }
         variables.displayLog(1, 1, '---- setTableValue: OK!')
         ret = { success: 1, message: 'setTableValue OK', stop: 0 }
@@ -3590,7 +3401,7 @@ async function countTableRow(page, data, variables, tagElement, variable) {
 * @function <TBR>
 *   searchTableData: Search for a value in a cell of a table
 *
-* @param {object} driver:       selenium driver
+* @param {object} page:         playwright page
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
 * @param {string} tagElement:   tag element of the table
@@ -3599,7 +3410,7 @@ async function countTableRow(page, data, variables, tagElement, variable) {
 * @param {string} position:     position (occurence) of the search (default is 1)
 *
 */
-async function searchTableData(driver, data, variables, tagElement, column, search, position) {
+async function searchTableData(page, data, variables, tagElement, column, search, position) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     const { Left, Right } = require("./string.library.js");
 
@@ -3654,86 +3465,71 @@ async function searchTableData(driver, data, variables, tagElement, column, sear
 
 
     tagElement = tagElement + '/tbody/tr/td[' + column + ']'
-    ret = await getAllElements(driver, variables, data, tagElement)
 
-    if (!ret.success) {
-        variables.displayLog(1, 2, 'searchTableData: Cannot find the element: ' + tagElement)
-        variables.setVariable(variable, '-1');
-        // Force the error
-        ret.value = 'ERROR'
-        ret.stop = 1
-        return ret
-    } else {
-        //console.log ('Elements: ', ret.element)
-        let elements = ret.element
-        let size = elements.length
-        let found = 0
-        let findData = 0
-        variables.displayLog(1, 2, 'searchTableData: Rows: ' + size + ', search method: ' + searchMethod)
+    const locators = page.locator(tagElement)
 
-        for (elt = 0; elt < size && !found; elt++) {
-            // Extract the value of the cell
-            let value = '<EMPTY>'
-            value = await elements[elt].getText();
-            //variables.displayLog(1, 2, "searchTableData - Value 1: " + value)
-            if (caseSensitive == 0) {  // non case sensitive
-                value = value.toUpperCase();
-                search = search.toUpperCase();
-            }
-            let searchResult = 0;
-            switch (searchMethod) {
-                case 1: // classic
-                    searchResult = (value == search);
-                    break;
-                case 2: //right
-                    searchResult = (Right(value, search.length) == search);
-                    break;
-                case 3: // left
-                    searchResult = (Left(value, search.length) == search);
-                    break;
-                case 4: // index of
-                    searchResult = (value.indexOf(search) >= 0);
-                    break;
-            }
+    await locators.first().waitFor()
+    const count = await locators.count()
+    console.log('count: ' + count)
+    for (let i = 0; i < count; i++) {
+        let value = await locators.nth(i).textContent()
+        console.log('data: ' + value)
 
-            if (searchResult) {
-                findData = findData + 1;
-                if (findData == position) {
-                    // Yes, we have found the searched value
-                    driver.executeScript('arguments[0].scrollIntoView()', elements[elt]);
-                    variables.displayLog(1, 2, "searchTableData: " + findData + "/" + position + ") found the right value: " + value + " in the row " + (elt + 1));
-                    variables.setVariable('$Row', elt + 1);
-                    found = elt + 1
-                } else {
-                    variables.displayLog(1, 2, "searchTableData: " + findData + "/" + position + ") found a value: " + value + " in the row " + (elt + 1));
-                }
-            }
-
-
-        } // end for elements
-
-        if (found) {
-            return { success: 1, message: "countTableRow ok", value: found, stop: 0 }
-        } else {
-            // send a warning
-            variables.setVariable('$Row', -1);
-            return { success: 1, message: "countTableRow warning", value: -1, stop: 1 }
+        if (caseSensitive == 0) {  // non case sensitive
+            value = value.toUpperCase();
+            search = search.toUpperCase();
         }
 
+        let searchResult = 0;
+        switch (searchMethod) {
+            case 1: // classic
+                searchResult = (value == search);
+                break;
+            case 2: //right
+                searchResult = (Right(value, search.length) == search);
+                break;
+            case 3: // left
+                searchResult = (Left(value, search.length) == search);
+                break;
+            case 4: // index of
+                searchResult = (value.indexOf(search) >= 0);
+                break;
+        }
+
+        if (searchResult) {
+            findData = findData + 1;
+            if (findData == position) {
+                // Yes, we have found the searched value
+                variables.displayLog(1, 2, "searchTableData: " + findData + "/" + position + ") found the right value: " + value + " in the row " + (elt + 1));
+                variables.setVariable('$Row', elt + 1);
+                found = elt + 1
+                break
+            } else {
+                variables.displayLog(1, 2, "searchTableData: " + findData + "/" + position + ") found a value: " + value + " in the row " + (elt + 1));
+            }
+        }
+
+
+    }
+
+    if (found) {
+        return { success: 1, message: "searchTableData ok", value: found, stop: 0 }
+    } else {
+        // send a warning
+        variables.setVariable('$Row', -1);
+        return { success: 1, message: "searchTableData warning", value: -1, stop: 1 }
     }
 
 }
 
 
 
-
-
 /**
 * ---------------------------------------------------------------------------- 
-* @function <TBR>
+* @function <OK>
 *   clickCell: Click on a cell identified by a row and a column
 *
-* @param {object} driver:       selenium driver
+* @param {object} page:         playwright page
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
 * @param {string} tagElement:   tag element
@@ -3742,7 +3538,7 @@ async function searchTableData(driver, data, variables, tagElement, column, sear
 * @param {string} delay:        delay in second(s) after the click
 *
 */
-async function clickCell(driver, data, variables, tagElement, row, column, delay) {
+async function clickCell(page, data, variables, tagElement, row, column, delay) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     let ret
     //variables.displayLog(1, 1,'----- clickCell')
@@ -3770,30 +3566,15 @@ async function clickCell(driver, data, variables, tagElement, row, column, delay
     tagElement = tagElement + '/tbody/tr[' + row + ']/td[' + column + ']'
 
     try {
-        let wait = 5
-        variables.displayLog(1, 2, 'clickCell: wait before for: ' + wait + ' second(s)')
-        ret = await waitFor(driver, data, variables, tagElement, wait, 2)
-
-        if (!ret.success) {
-            if (ret.stop == 99) return { success: 0, message: "Browser not responding!", stop: 99 }
-            variables.displayLog(1, 2, 'clickCell: Cannot find the element: ' + tagElement)
-            // Force the error
-            ret.stop = 1
-            return ret
-        }
-    } catch (err) {
-        variables.displayLog(1, 1, 'clickCell: Fatal error: Browser not responding!')
-        return { success: 0, message: "Browser not responding!", stop: 99 }
-    }
-
-
-
-    try {
-        await ret.element.click()
+        await page.locator(tag).click()
         ret = { success: 1, message: 'clickCell OK', stop: 0 }
         variables.displayLog(1, 2, 'clickCell: wait ' + delay + ' second(s) after the click')
-        await pause(driver, variables, data.subprojectID, delay);
-        return ret
+        if (delay != undefined) {
+            delay = variables.evaluateVariable(delay)
+            console.log('Delay:', delay)
+            await page.waitForTimeout(delay * 1000);
+        }
+        return { success: 1, message: 'clickCell OK', stop: 0 }
     } catch (err) {
         //variables.displayLog(1, 1,err.message)
         ret = { success: 0, message: err.message, stop: 1 }
@@ -3901,7 +3682,7 @@ async function removeAttribute(page, data, variables, tag, attribute) {
         );
 
         return { success: 1, message: "removeAttribute OK!", stop: 0 }
-        
+
 
     } catch (err) {
         return { success: 0, message: "removeAttribute KO!", stop: 1 }
@@ -4327,54 +4108,82 @@ async function isVisible(page, data, variables, tag, variableName, delay) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function <TBR>
+* @function <OK>
 *   waitInvisible: Wait for an element to be invisible
 *
-* @param {object} driver:         selenium driver
+* @param {object} page:           playwright page
 * @param {object} data:           all the parameters
 * @param {object} variables:      array of all the variables
 * @param {string} tagElement:     tag element
-* @param {number} wait:           wait for the element before clicking (in seconds)
-* @param {number} timeout:        wait for invisible (in seconds)
+* @param {number} delay:        delay in seconds
+* @param {number} action:       action in case element is still available: continue (0) or stop all the tests (1) or skip the It (2)
 *
 */
-async function waitInvisible(driver, data, variables, tagElement, wait, timeout) {
-    let ret
-    //variables.displayLog(1, 1,'----- waitInvisible')
+async function waitInvisible(driver, data, variables, tagElement, delay, action) {
 
-    if (wait == undefined || wait == 0) {
-        try {
-            ret = await getElement(driver, variables, data, tagElement)
-        }
-        catch (err) {
-            variables.displayLog(1, 1, 'waitInvisible: Fatal error: Browser not responding!')
-            return { success: 0, message: ret.message, stop: 1 }
-        }
-    } else {
-        try {
-            variables.displayLog(1, 2, 'waitInvisible: wait before for: ' + wait + ' second(s)')
-            ret = await waitFor(driver, data, variables, tagElement, wait, 2)
-        } catch (err) {
-            variables.displayLog(1, 1, 'waitInvisible: Fatal error: Browser not responding!')
-            return { success: 0, message: "Browser not responding!", stop: 99 }
+    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    const { getReferenceByCode } = require("../../reference/reference.service.js");
+    let timeout = 30 // 30 seconds by default
+
+
+    // Check if the tag is not on the dictionary
+    if (tagElement[0] == '@') {
+        const dataAPI = { projectID: data.projectID, code: tagElement, language: '*', active: 1 }
+        const result = await getDictionaryByCode(dataAPI);
+        if (result.length) {
+            tagElement = result[0].label
+        } else {
+            variables.displayLog(1, 1, 'Data: ' + tagElement + ' not found in the dictionary!')
+            return { success: 0, message: "Cannot find the code: " + tagElement + " in the dictionary!", stop: 1 }
         }
     }
 
-    if (!ret.success) {
-        if (ret.stop == 99) return { success: 0, message: "Browser not responding!", stop: 99 }
-        variables.displayLog(1, 2, '>>>>> waitInvisible: Cannot find the element: ' + tagElement)
-        // Return a warning, not an error
-        ret.stop = 1
+
+    try {
+        // Get the timeout (if any)
+        const dataAPI = { projectID: data.projectID, userID: data.userID, code: 'TimeOut' }
+        const reference = await getReferenceByCode(dataAPI);
+        if (reference.length) {
+            if (reference[0].label != '<N/A>') {
+                timeout = reference[0].label * 1
+            }
+        }
+        console.log('Original TimeOut: ' + timeout)
+
+
+        if (delay == undefined) delay = 10   // delay = number of second(s) to wait for the element
+        delay = delay * 1000
+        page.setDefaultTimeout(delay);
+
+        const locator = page.locator(tagElement).first()
+        await locator.waitFor({ state: 'hidden', delay });
+
+        page.setDefaultTimeout(timeout * 1000) // Back to the original timeout
+        return { success: 1, message: "waitForNot OK", stop: 0 }
+    }
+    catch (err) {
+        page.setDefaultTimeout(timeout * 1000) // Back to the original timeout
+        console.log('waitInvisible error', err.message)
+        variables.setVariable('$Error', "1")
+        if (action == undefined) action = 0
+        // action: 0 = continue, 1 = stop all the tests, 2 = skip the It
+
+        let ret = { success: 0, message: 'waitInvisible KO', stop: 0 }
+        if (action == 1) {
+            ret.stop = 1
+            ret.message = 'waitInvisible KO after ' + delay + ' sec. --> Stop the tests'
+        }
+        else if (action == 0) {
+            ret.success = 1
+            ret.message = 'waitInvisible KO after ' + delay + ' sec. --> Continue'
+        }
+        else {
+            ret.success = 0
+            ret.message = 'waitInvisible KO after ' + delay + ' sec. --> Skip IT'
+        }
         return ret
     }
 
-    try {
-        await driver.wait(until.elementIsNotVisible(ret.element), timeout);
-    } catch (err) {
-        return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
-    }
-
-    return { success: 1, message: "waitInvisible Ok!", stop: 0 }
 }
 
 
@@ -5112,59 +4921,56 @@ async function setData(data, variables, code, value, comment) {
 * @function <TBR>
 *   JSinput: set a value into an element with JavaScript (not selenium)
 *
-* @param {object} driver:       selenium driver
+* @param {object} page:         playwright page
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
-* @param {string} tagElement:   tag element
-* @param {number} wait:         wait for the element before clicking (in seconds)
+* @param {string} tag:          tag element
 * @param {string} value:        value to set into an element
 *
 */
-async function JSinput(driver, data, variables, tagElement, wait, value) {
+async function JSinput(page, data, variables, tag, value) {
+    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+
     let ret
-    //variables.displayLog(1, 1,'----- click')
 
-
-    if (wait == undefined || wait == 0) {
-        try {
-            ret = await getElement(driver, variables, data, tagElement)
+    if (tag == undefined) {
+        console.log("JSinput: tag cannot be empty!")
+        return { success: 0, message: "JSinput: tag cannot be empty!", stop: 1 }
+    } else if (tag[0] == '@') {
+        //console.log('In the dictionary.........', data.projectID)
+        // Search the tag in the dictionary
+        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+        const result = await getDictionaryByCode(dataAPI);
+        if (result.length) {
+            tag = result[0].label
+            //console.log("Find the code: " + tag)
+        } else {
+            console.log("Cannot find the code: " + tag)
+            variables.displayLog(1, 1, 'Data not found in the dictionary!')
+            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
         }
-        catch (err) {
-            variables.displayLog(1, 1, 'JSinput: Fatal error: Browser not responding!')
-            return { success: 0, message: ret.message, stop: 1 }
-        }
-    } else {
-        try {
-            variables.displayLog(1, 3, 'JSinput: wait before for: ' + wait + ' second(s)')
-            ret = await waitFor(driver, data, variables, tagElement, wait, 2)
-        } catch (err) {
-            variables.displayLog(1, 1, 'JSinput: Fatal error: Browser not responding!')
-            return { success: 0, message: "Browser not responding!", stop: 99 }
-        }
-    }
-
-    if (!ret.success) {
-        if (ret.stop == 99) return { success: 0, message: "Browser not responding!", stop: 99 }
-        variables.displayLog(1, 1, '>>>>> JSinput: Cannot find the element: ' + tagElement)
-        // Return a warning, not an error
-        ret.stop = 1
-        return ret
     }
 
     try {
-        driver.executeScript('arguments[0].scrollIntoView()', ret.element);
-        driver.executeScript("arguments[0].setAttribute('value', '" + value + "')", ret.element);
-        return ret
+        tag = variables.evaluateVariable(tag)
 
+        // Set the attribute value
+        const locator = await page.locator(tag).first()
+
+        const elementHandle = await locator.elementHandle();
+        await page.evaluate(
+            (elementData) => {
+                elementData.element.setAttribute(elementData.attribute, elementData.value);
+            },
+            { element: elementHandle, attribute: 'value', value: value }
+        )
+
+        return { success: 1, message: 'JSinput OK!', stop: 0 }
     } catch (err) {
-        //variables.displayLog(1, 1,err.message)
-        ret = { success: 0, message: err.message, stop: 0 }
-        variables.displayLog(1, 1, ret)
-        return ret
+        return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
     }
 
 }
-
 
 
 /**
@@ -5183,6 +4989,7 @@ async function printScreen(page, data, slotID) {
     try {
         let picture = './printscreen/' + data.userID + '_image' + slotID + '.png'
         await page.screenshot({ path: picture })
+        return { success: 1, message: 'Printscreen OK', slot: slotID, stop: 0 }
     } catch (err) {
         return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
     }
@@ -5323,7 +5130,7 @@ async function epochAddSecond(variables, myDate, myFormat, myValue, variable) {
 * @param {object} driver:       selenium driver
 *
 */
-async function isBrowserAlive(driver) {
+async function isBrowserAlive_OBSOLETE(driver) {
 
     variables.displayLog(1, 1, 'isBrowserAlive')
 
@@ -5362,16 +5169,16 @@ async function isBrowserAlive(driver) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function <TBR>
+* @function <OK>
 *   executeRules: Execute a set of rules
 *
-* @param {object} driver:       selenium driver
+* @param {object} page:         playwright page
 * @param {object} variables:    array of all the variables
 * @param {object} data:         all the parameters
 * @param {number} ruleName:     Name of the rule
 *
 */
-async function executeRules(driver, variables, data, ruleName, param1, param2, param3) {
+async function executeRules(page, variables, data, ruleName, param1, param2, param3) {
     const { getDatasetByCode } = require("../../dataset/dataset.service.js");
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     const rule = require("./rule.library.js");
@@ -5478,7 +5285,7 @@ async function executeRules(driver, variables, data, ruleName, param1, param2, p
     variables.setVariable('$P3', param3)
 
     try {
-        return await rule.execRules(driver, variables, data, ruleName);
+        return await rule.execRules(page, variables, data, ruleName);
     }
     catch (err) {
         variables.displayLog(1, 1, 'executeRules: Fatal error: Browser not responding!')
@@ -5492,10 +5299,10 @@ async function executeRules(driver, variables, data, ruleName, param1, param2, p
 * @function <TBR>
 *  startTimer:  Store a user time to measure performance
 * 
-* @param {object} driver:       selenium driver
+* @param {object} page:       playwright page
 *
 */
-async function startTimer(data, driver, variables, topic) {
+async function startTimer(data, page, variables, topic) {
     let userTime = variables.userTime()
     topic = variables.evaluateVariable(topic)
     topic = topic.replace(/'/g, "");
@@ -5510,13 +5317,13 @@ async function startTimer(data, driver, variables, topic) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function <TBR>
+* @function <OK>
 *  stopTimer:  Store the elspased time since the last userStartTime() 
 * 
-* @param {object} driver:       selenium driver
+* @param {object} page:       playwright page
 *
 */
-async function stopTimer(data, driver, variables, space, topic) {
+async function stopTimer(data, dpageiver, variables, space, topic) {
     const { getPerformanceByCode, updatePerformance, updatePerformanceById, createPerformance } = require("../../performance/performance.service.js");
 
 
@@ -5652,7 +5459,6 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
 
         switch (name) {
 
-
             case 'debug':
                 ret = await debug(variables, param1)
                 return ret
@@ -5660,15 +5466,6 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
             case 'url':
                 ret = await url(page, variables, data.projectID, param1)
                 return ret
-            // await pause(driver, variables, data.subprojectID, 2);
-            // try {
-            //     driver.manage().window().maximize();
-            //     return ret
-            // } catch (err) {
-            //     return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
-            // }
-
-
 
             case 'getUrl':
                 ret = await getUrl(page, variables, param1)
@@ -5718,7 +5515,7 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 return ret
 
             case 'setFocus':
-                ret = await setFocus(page, data, variables, param1, param2, param3)
+                ret = await setFocus(page, data, variables, param1, param2)
                 return ret
 
             case 'acceptPopup':
@@ -5734,11 +5531,11 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 return ret
 
             case 'JSclick':
-                ret = await JSclick(page, data, variables, param1, param2, param3)
+                ret = await JSclick(page, data, variables, param1, param2)
                 return ret
 
             case 'doubleClick':
-                ret = await doubleClick(page, data, variables, param1, param2, param3)
+                ret = await doubleClick(page, data, variables, param1, param2)
                 return ret
 
             case 'uploadFile':
@@ -5774,7 +5571,7 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 return ret
 
             case 'enable':
-                ret = await enable(page, data, variables, param1, param2)
+                ret = await enable(page, data, variables, param1)
                 return ret
 
             case 'isExist':
@@ -5820,19 +5617,15 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 return ret
 
             case 'selectCount':
-                ret = await selectCount(page, data, variables, param1, param2, param3)
+                ret = await selectCount(page, data, variables, param1, param2)
                 if (ret.success == 1) await logfile(data.userID, 'Info', ret.value)
                 return ret
 
-            // case 'countElement':
-            //     ret = await countElement(page, data, variables, param1, param2)
-            //     if (ret.success == 1) await logfile(data.userID, 'Info', ret.value)
-            //     return ret
 
             case 'countElement':
                 ret = await countElement(page, data, variables, param1, param2, param3, param4)
+                if (ret.success == 1) await logfile(data.userID, 'Info', ret.value)
                 return ret
-
 
             case 'getValue':
                 ret = await getValue(page, data, variables, param1, param2)
@@ -5910,6 +5703,7 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
 
             case 'printScreen':
                 ret = await printScreen(page, data, param1)
+                if (ret.success == 1) await logfile(data.userID, 'Info', 'Print screen is in the slot: ' + ret.slot)
                 return ret
 
             case 'pause':
@@ -5993,7 +5787,7 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 return ret
 
             case 'removeAttribute':
-                ret = await removeAttribute(page, data, variables, param1, param2, param3)
+                ret = await removeAttribute(page, data, variables, param1, param2)
                 await logfile(data.userID, 'Info', 'Remove attribute - return:' + ret.success)
                 return ret
 
@@ -6050,16 +5844,16 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
 }
 
 // -----------------------------------------------------------
-// @function <TBR>
+// @function <OK>
 // Call a scenario from its ID
 //
 // @param {number} data.projectID     ID of the project
 // @param {number} data.subprojectID  ID of the subproject
 // @param {number} data.userID        ID of the user
-// @param {object} driver:            selenium driver
+// @param {object} page:              playwright page
 // @param {object} variables:         array of all the variables
 // -----------------------------------------------------------
-async function callScenario(data, driver, variables, scenarioID) {
+async function callScenario(data, page, variables, scenarioID) {
     const { getScenarioById } = require("../../scenario/scenario.service");
     const { getTestByScenario } = require("../../test/test.service");
     const robot = require("./robot.library.js")
@@ -6105,14 +5899,14 @@ async function callScenario(data, driver, variables, scenarioID) {
     // Execute the tests of the scenario
     // ----------------------------------
     try {
-        ret = await executeScenario(data, driver, tests)
+        ret = await executeScenario(data, page, tests)
         if (!ret.success) {
-            await robot.evaluateFunction(driver, variables, 'setReference', data, 'Execution Status', 0, 'Test KO')
+            await robot.evaluateFunction(page, variables, 'setReference', data, 'Execution Status', 0, 'Test KO')
         } else {
-            await robot.evaluateFunction(driver, variables, 'setReference', data, 'Execution Status', 1, 'Test OK')
+            await robot.evaluateFunction(page, variables, 'setReference', data, 'Execution Status', 1, 'Test OK')
         }
 
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Execute', '======================================')
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'Execute', '======================================')
         ret = { success: 1, message: "Scenario successfully executed!", value: 'scenarioID: ' + data.scenarioName, stop: 0 }
         return ret;
 
@@ -6125,16 +5919,16 @@ async function callScenario(data, driver, variables, scenarioID) {
 
 
 // -----------------------------------------------------------
-// @function <TBR>
+// @function <OK>
 // Call a suite from its ID
 //
 // @param {number} data.projectID     ID of the project
 // @param {number} data.subprojectID  ID of the subproject
 // @param {number} data.userID        ID of the user
-// @param {object} driver:            selenium driver
+// @param {object} page:              playwright page
 // @param {object} variables:         array of all the variables
 // -----------------------------------------------------------
-async function callSuite(data, driver, variables, suiteheaderID) {
+async function callSuite(data, page, variables, suiteheaderID) {
     const { getScenarioById } = require("../../scenario/scenario.service");
     const { getTestByScenario } = require("../../test/test.service");
     const { getSuiteByHeader } = require("../../suite/suite.service");
@@ -6190,17 +5984,15 @@ async function callSuite(data, driver, variables, suiteheaderID) {
         suiteErrorID = 0
 
 
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Execute', '============== SUITE ==============')
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Execute', '=======> ' + label)
-        //await robot.evaluateFunction(driver, variables, 'logfile', data, 'Execute', '==---==> ' + comment)
-
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'Execute', '============== SUITE ==============')
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'Execute', '=======> ' + label)
 
 
         // Get the detail of the scenario
         const scenario = await getScenarioById(scenarioID);
         if (!scenario.length) {
             ret = { success: 0, message: "No scenario found for the Id: " + scenarioID }
-            await robot.evaluateFunction(driver, variables, 'logfile', data, 'Error', "No scenario found for the Id: " + scenarioID)
+            await robot.evaluateFunction(page, variables, 'logfile', data, 'Error', "No scenario found for the Id: " + scenarioID)
             ret = { success: 0, message: "No scenario found for the Id: " + scenarioID }
             return ret
         }
@@ -6212,7 +6004,7 @@ async function callSuite(data, driver, variables, suiteheaderID) {
         const tests = await getTestByScenario(scenarioID);
         if (!tests.length) {
             ret = { success: 0, message: "No test found in the suite for the Id: " + scenarioID }
-            await robot.evaluateFunction(driver, variables, 'logfile', data, 'Error', "No test found in the suite for the Id: " + scenarioID)
+            await robot.evaluateFunction(page, variables, 'logfile', data, 'Error', "No test found in the suite for the Id: " + scenarioID)
             ret = { success: 0, message: "No test found in the suite for the Id: " + scenarioID }
             return ret
         }
@@ -6220,7 +6012,7 @@ async function callSuite(data, driver, variables, suiteheaderID) {
         data.scenarioID = scenarioID
 
 
-        ret = await robot.executeScenario(data, driver, tests)
+        ret = await robot.executeScenario(data, page, tests)
         if (!ret.success) {
             stop = 1
         }
@@ -6229,22 +6021,20 @@ async function callSuite(data, driver, variables, suiteheaderID) {
 
 
     if (!ret.success) {
-        await robot.evaluateFunction(driver, variables, 'setReference', data, 'Execution Status', 0, 'Test KO')
+        await robot.evaluateFunction(page, variables, 'setReference', data, 'Execution Status', 0, 'Test KO')
     } else {
-        await robot.evaluateFunction(driver, variables, 'setReference', data, 'Execution Status', 1, 'Test OK')
+        await robot.evaluateFunction(page, variables, 'setReference', data, 'Execution Status', 1, 'Test OK')
     }
 
-
-    await robot.evaluateFunction(driver, variables, 'logfile', data, 'Execute', '==============  END SUITE ==============')
+    await robot.evaluateFunction(page, variables, 'logfile', data, 'Execute', '==============  END SUITE ==============')
     ret = { success: 1, message: "Suite successfully executed!", value: 'suiteID: ' + suiteheaderID, stop: 0 }
     return ret;
 
 }
 
 
-
 // -----------------------------------------------------------
-// @function <TBR>
+// @function <TBR> not fully working as we don't have the test() in the API
 // promptAI: prompt to AI and store the result into a variable
 //
 // API AI Playwright: 
@@ -6841,7 +6631,7 @@ module.exports = {
     searchTableData: searchTableData,
     clickCell: clickCell,
     uploadFile: uploadFile,
-    isBrowserAlive: isBrowserAlive,
+    //isBrowserAlive: isBrowserAlive,
     skipIt: skipIt,
     skipDescribe: skipDescribe,
     executeRules: executeRules,

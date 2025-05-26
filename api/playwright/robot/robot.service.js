@@ -7,9 +7,1324 @@ module.exports = {
   * @Email: artcomputer123@gmail.com
   * @Date: 2025-05-08
   * @Last Modified by: Someone
-  * @Last Modified time: 2025-05-23 14:18:33
+  * @Last Modified time: 2025-05-26 14:19:13
   * @Description: All the Playwright services available for robot
   */
+
+
+/*
+  * @Author: Philippe Goffin 
+  * @Email: artcomputer123@gmail.com
+  * @Date: 2024-01-27
+ * @Last Modified by: Someone
+  * @Last Modified time: 2025-02-13 08:42:20
+  * @Description: All the Selenium services available for robot
+  */
+
+  // -----------------------------------------------------------
+  // Analyse a webpage: open the screen into the browser
+  //
+  // @param {number} data.projectID
+  // @param {number} data.subprojectID
+  // @param {number} data.userID
+  // @param {number} data.link  1: URL, 2: Scenario
+  // @param {string} data.targetlink depending of the data.link either a URL or un scenarioID
+  // @param {string} data.selector  name of the selector (that will be used by the function detectGUI)
+  // @param {string} data.criteria  criteria for the detectGUI
+  //
+  // -----------------------------------------------------------
+  AIAnalyseScreen: async (data) => {
+
+    return new Promise(async (resolve, reject) => {
+
+      const robot = require("../library/robot.library")
+      const { getScenarioById } = require("../../scenario/scenario.service");
+      const { getTestByScenario } = require("../../test/test.service");
+      const { deleteLogfile } = require("../../logfile/logfile.service");
+
+      const Variables = require('../library/variable.library');
+      let variables = new Variables();
+
+      variables.displayLog(1, 1, '============================================================================')
+      variables.displayLog(1, 1, "Analysis Opening the browser")
+      variables.displayLog(1, 1, '============================================================================')
+      await robot.speaking('Opening webpage')
+
+      let ret = 0
+      let dataResult = []
+      let value = ''
+      let driver = 0
+
+      if (data.link == undefined || data.targetlink == undefined || data.selector == undefined || data.criteria == undefined) {
+        variables.displayLog(1, 1, 'Invalid data!')
+        variables.displayLog(1, 1, data)
+        ret = { success: 0, message: "Invalid data!", data: dataResult }
+        return resolve(ret);
+      }
+
+      // ----------------------------------
+      // Delete all the logs of a user
+      // ----------------------------------
+      const log = await deleteLogfile(data.userID);
+
+      // ----------------------------------
+      // Start the browser
+      // ----------------------------------
+      const { Builder, By, Key, ChromeOptions } = require("selenium-webdriver")
+      const { startBrowser } = require("../browser/browser.service.js")
+      ret = await startBrowser(data.projectID)
+      variables.displayLog(1, 1, 'Ret: ', ret)
+      if (!ret.success) {
+        ret = ({ success: 0, message: "AI Robot: Error during the start of the browser" })
+        return resolve(ret);
+      }
+      driver = ret.driver
+
+
+
+      // write the scenario name in the reference for the title in the logfile
+      ret = await robot.evaluateFunction(driver, variables, 'setReference', data, 'Scenario Name', 'AI Robot - Analysis', 'Name of the current scenario')
+
+      // Process a scenario
+      if (data.link == 2) {
+        data.scenarioID = data.targetlink
+        // ----------------------------------
+        // Get the detail of the scenario
+        // ----------------------------------
+        const scenario = await getScenarioById(data.scenarioID);
+        if (!scenario.length) {
+          ret = { success: 0, message: "No scenario found for the Id: " + data.scenarioID, data: dataResult }
+        } else {
+          data.scenarioName = scenario[0].scenario
+          // ----------------------------------
+          // Read all the tests of a scenario
+          // ----------------------------------
+          const tests = await getTestByScenario(data.scenarioID);
+          if (!tests.length) {
+            ret = { success: 0, message: "No test found for the scenario Id: " + data.scenarioID, data: dataResult }
+          } else {
+            // Execute the scenario
+            variables.setVariable("$error", "0");
+            ret = await robot.executeScenario(data, driver, tests)
+            if (!ret.success) await robot.evaluateFunction(driver, variables, 'setReference', data, 'Execution Status', 0, 'Error during the execuction')
+            else await robot.evaluateFunction(driver, variables, 'setReference', data, 'Execution Status', 1, 'Test OK')
+            await robot.evaluateFunction(driver, variables, 'listVariable', data, '', '')
+          }
+        }
+      } else {
+        // Process an URL
+        ret = await robot.evaluateFunction(driver, variables, 'url', data, data.targetlink)
+      }
+
+      if (ret.success) {
+        await robot.speaking('Screen is ready')
+        ret = { success: 1, message: "Screen is ready", data: dataResult }
+      } else {
+        await robot.speaking('Opening screen fails!')
+        ret = { success: 0, message: "Opening screen fails!" }
+      }
+      return resolve(ret)
+
+    });
+  },
+
+
+
+
+  // -----------------------------------------------------------
+  // Analyse a webpage
+  //
+  // @param {number} data.projectID
+  // @param {number} data.subprojectID
+  // @param {number} data.userID
+  // @param {number} data.link  1: URL, 2: Scenario
+  // @param {string} data.targetlink depending of the data.link either a URL or un scenarioID
+  // @param {string} data.selector  name of the selector (that will be used by the function detectGUI)
+  // @param {string} data.criteria  criteria for the detectGUI
+  //
+  // -----------------------------------------------------------
+  AIAnalyse: async (data) => {
+
+    return new Promise(async (resolve, reject) => {
+
+      const { Builder, By, Key, ChromeOptions } = require("selenium-webdriver")
+      const robot = require("../library/robot.library")
+      const { getBrowser, stopBrowser } = require("../browser/browser.service.js")
+
+
+      const Variables = require('../library/variable.library');
+      let variables = new Variables();
+      let ret = 0
+      let dataResult = []
+      let value = ''
+
+      variables.displayLog(1, 1, '')
+      variables.displayLog(1, 1, '============================================================================')
+      variables.displayLog(1, 1, "Start a analysis ")
+      variables.displayLog(1, 1, '============================================================================')
+      await robot.speaking('Analysis in progress...')
+      //console.log('Data: ', data)
+
+      //----------------------------------
+      // Get information on the browser
+      // ----------------------------------
+      ret = await getBrowser()
+      if (ret.success) {
+        driver = ret.driver
+      } else {
+        variables.displayLog(1, 1, 'Analysis: Error during the get of the browser!')
+        ret = { success: 0, message: 'Analysis: Error during the start of the browser!' }
+        return resolve(ret);
+      }
+
+      // ----------------------------------
+      // Analyse the webpage
+      // ----------------------------------
+      let today = new Date()
+      let date = variables.formatDate(today, 'dd/mm/year hh:mi')
+      ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Title', '**************************************')
+      ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Title', "AI Analysis: " + data.criteria)
+      ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Title', "Date: " + date)
+      ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Title', '**************************************')
+
+
+      if (data.link == undefined || data.targetlink == undefined || data.selectorID == undefined || data.criteria == undefined) {
+        variables.displayLog(1, 1, 'Invalid data!')
+        variables.displayLog(1, 1, data)
+        ret = { success: 0, message: "Invalid data!", data: dataResult }
+        return resolve(ret);
+      }
+
+
+
+      //await robot.evaluateFunction(driver, variables, 'pause', data, 10)
+      ret = await robot.evaluateFunction(driver, variables, 'detectGUI', data, data.selectorID, data.criteria, data.occurence, 10)
+      await robot.evaluateFunction(driver, variables, 'logfile', data, 'Analysis', ret.message)
+      if (ret.success) {
+        let GUI = ret.GUI
+        let patternID = ret.patternID
+        variables.displayLog(1, 1, 'GUI: ', ret.GUI)
+        // Get all the occurences
+        ret = await robot.evaluateFunction(driver, variables, 'getAllElements', data, '$GUI')
+        if (ret.success) {
+          let elements = ret.element
+          let size = elements.length
+          for (let elt = 0; elt < size; elt++) {
+            // Extract the value of the cell
+            value = await elements[elt].getText();
+            if (value == undefined || value == '') {
+              // try with the value
+              value = await elements[elt].getAttribute('value');
+              if (value == '' || value == undefined) {
+                value = '<EMPTY>'
+              }
+            }
+            if (value.length > 80) value = value.substring(0, 80) + '....'
+            dataResult.push({ 'GUI': GUI, 'Occurence': elt + 1, 'Value': value, 'PatternID': patternID })
+          }
+
+
+          await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+          await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', "Analysis OK")
+          await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+          ret = { success: 1, message: "Analysis OK", data: dataResult }
+          return resolve(ret);
+        }
+      } else {
+        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', ret.message)
+        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+        ret = { success: 0, message: ret.message }
+        return resolve(ret);
+      }
+
+      // ----------------------------------
+      // close the browser
+      // ----------------------------------
+      // await stopBrowser()
+      // variables.displayLog(1, 1, 'Analysis: OK!')
+      // ret = { success: 1, message: 'Analysis: OK!', data: dataResult }
+      // return resolve(ret);
+
+    });
+  },
+
+
+
+  // -----------------------------------------------------------
+  // Train the robot on a webpage
+  //
+  // @param {number} data.projectID
+  // @param {number} data.subprojectID
+  // @param {number} data.userID
+  // @param {number} data.link  1: URL, 2: Scenario
+  // @param {string} data.targetlink depending of the data.link either a URL or un scenarioID
+  // @param {string} data.selector  name of the selector
+  // @param {number} data.selectorID  ID of the selector 
+  // @param {string} data.criteria  criteria for the detectGUI
+  //
+  // -----------------------------------------------------------
+  AITraining: async (data) => {
+
+    return new Promise(async (resolve, reject) => {
+
+      const { Builder, By, Key, ChromeOptions } = require("selenium-webdriver")
+      const robot = require("../library/robot.library")
+      const { getPathByProject } = require("../../ai_path/path.service")
+      const { getSelector } = require("../../ai_selector/selector.service")
+      const { getAttributeByProject } = require("../../ai_attribute/attribute.service")
+      const { getParametersByCode } = require("../../parameter/parameter.service.js");
+      const { createTraining, reorderTraining } = require("../../ai_training/training.service.js");
+      const { createTagAttribute, reorderTagAttribute } = require("../../ai_tagattribute/tagattribute.service")
+      const { createTagElement, reorderTagElement } = require("../../ai_tagelement/tagelement.service.js");
+      const { getBrowser, stopBrowser } = require("../browser/browser.service.js")
+
+
+      const Variables = require('../library/variable.library');
+      let variables = new Variables();
+
+      variables.displayLog(1, 1, '')
+      variables.displayLog(1, 1, '============================================================================')
+      variables.displayLog(1, 1, "Start a training ")
+      variables.displayLog(1, 1, '============================================================================')
+      await robot.speaking('Training in progress...')
+
+      let ret = 0
+      let retTraining = { success: 0, message: "Training fails!" }
+
+      let dataResult = []
+      let AIRoot = ''
+      let value = ''
+      let trainingID = 0
+      let pathID = 0
+      let tagelementID = 0
+      let stop = 0 // stop all the process in cas of fatal error in the training analysis
+
+      const currentDate = new Date();
+      const day = currentDate.getDate();
+      const month = currentDate.getMonth() + 1; // Add 1 as months are zero-based
+      const year = currentDate.getFullYear();
+      const hours = currentDate.getHours();
+      const minutes = currentDate.getMinutes()
+      let today = ('0' + day).slice(-2) + '/' + ('0' + month).slice(-2) + '/' + year + ' ' + ('0' + hours).slice(-2) + ':' + ('0' + minutes).slice(-2)
+
+
+      //----------------------------------
+      // Get information on the browser
+      // ----------------------------------
+      ret = await getBrowser()
+      if (ret.success) {
+        driver = ret.driver
+        retTraining = { success: 1, message: "Training OK", data: dataResult }
+      } else {
+        variables.displayLog(1, 1, 'Training: Error during the get of the browser!')
+        ret = { success: 0, message: 'Training: Error during the start of the browser!' }
+        return resolve(ret);
+      }
+
+
+      ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Title', '**************************************')
+      ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Title', "AI Training: " + data.criteria)
+      ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Title', "Date: " + today)
+      ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Title', '**************************************')
+
+
+      // --------------------------------------
+      // Check the validity of the parameters
+      // --------------------------------------
+      if (data.link == undefined || data.targetlink == undefined || data.selector == undefined || data.criteria == undefined) {
+        variables.displayLog(1, 1, 'Invalid data!')
+        variables.displayLog(1, 1, data)
+        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', "Training KO, Invalid data!")
+        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+        ret = { success: 0, message: "Invalid data!", data: dataResult }
+        return resolve(ret);
+      }
+
+      // --------------------------------------------------------------------------
+      // get the global parameter: AI Root (a generic xpath to detect the criteria)
+      // --------------------------------------------------------------------------
+      let dataAPI = { projectID: 0, code: 'AI Root' }
+      const result1 = await getParametersByCode(dataAPI);
+      if (result1.length) {
+        AIRoot = result1[0].paramValue
+      } else {
+        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', "Training KO, AI Root not found!")
+        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+        variables.displayLog(1, 1, 'AI Training - global parameter AI Root not found!')
+        ret = { success: 0, message: "Cannot find the global parameter AI Root!", stop: 1 }
+        return resolve(ret);
+      }
+
+      // -----------------------------------------
+      // get all the active paths for the project
+      // -----------------------------------------
+      dataAPI = { projectID: data.projectID, active: 1 }
+      const paths = await getPathByProject(dataAPI);
+      if (!paths.length) {
+        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', "Training KO, No paths for the project!")
+        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+        variables.displayLog(1, 1, 'AI Training - paths for the project not found!')
+        ret = { success: 0, message: "Cannot find the paths for the project!", stop: 1 }
+        return resolve(ret);
+      }
+
+      // ---------------------------------------
+      // Get information on the active selectors
+      // ---------------------------------------
+      const selector = await getSelector(data.selectorID)
+      if (!selector.length) {
+        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', "Training KO, No selectors found!")
+        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+        variables.displayLog(1, 1, 'AI Training - selector not found!')
+        ret = { success: 0, message: "Cannot find the selector!", stop: 1 }
+        return resolve(ret);
+      }
+
+      // ----------------------------------------
+      // Get information on the active attributes
+      // ----------------------------------------
+      // PGO: 07/06/2024 1 --> %
+      dataAPI = { projectID: data.projectID, active: '%' }
+      const attributes = await getAttributeByProject(dataAPI)
+      if (!attributes.length) {
+        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', "Training KO, No attributes found!")
+        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+        variables.displayLog(1, 1, 'AI Training - attributes of the project not found!')
+        ret = { success: 0, message: "Cannot find the attributes of the project!", stop: 1 }
+        return resolve(ret)
+      }
+
+      // ---------------------------------------
+      // Write information in the training table
+      // ---------------------------------------
+      dataAPI = { subprojectID: data.subprojectID, selectorID: data.selectorID, criteria: data.criteria, position: 0, active: 0, createdby: data.userName, created: today }
+      const result2 = await createTraining(dataAPI);
+      if (result2.affectedRows) {
+        trainingID = result2.insertId
+        variables.displayLog(2, 1, '@@@@@@@ Training ID: ', trainingID)
+        // Reorder the table
+        let dataAPI = { subprojectID: data.subprojectID }
+        const result3 = await reorderTraining(dataAPI);
+        if (!result3.affectedRows) {
+          await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '*******************************************')
+          await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', "Training KO, Error reordering statistics!")
+          await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '*******************************************')
+          variables.displayLog(1, 1, 'AI Training - Error during the reordered of Training!')
+          variables.displayLog(1, 1, 'Error: ', result3)
+          ret = { success: 0, message: "Error during the reordered of Training!", stop: 1 }
+          return resolve(ret);
+        }
+      } else {
+        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '*****************************************')
+        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', "Training KO, Error inserting a statistic!")
+        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '*****************************************')
+        variables.displayLog(1, 1, 'AI Training - Error during the insert in Training!')
+        variables.displayLog(1, 1, 'Error: ', result3)
+        ret = { success: 0, message: "Error during the insert in Training!", stop: 1 }
+        return resolve(ret);
+      }
+
+
+      // ----------------------------------
+      // Prepare the training on the webpage
+      // ----------------------------------
+      variables.displayLog(1, 1, '------------------------')
+      variables.displayLog(1, 1, '-- Start The Training --')
+      variables.displayLog(1, 1, '------------------------')
+
+
+      // In AI Root, replace <PARAM> by the criteria
+      let AIRoot2 = AIRoot.replace(/<PARAM>/g, data.criteria)
+      variables.displayLog(1, 1, 'AIRoot: ', AIRoot2)
+      // ---------------------------------------------
+      // Get all the occurences of the generic XPath 
+      // ---------------------------------------------
+      ret = await robot.evaluateFunction(driver, variables, 'getAllElements', data, AIRoot2)
+      if (ret.success && ret.element.length > 0) {
+        let elements = ret.element
+        let size = elements.length
+        variables.displayLog(1, 1, size + ' element(s) detected with AIRoot')
+
+        // Loop on each element detected
+        for (let elt = 0; elt < size && !stop; elt++) {
+
+          let elementOK = 0
+
+          variables.displayLog(1, 1, "------------------------------------------------------")
+          variables.displayLog(1, 1, 'Element : ', elt + 1)
+          variables.displayLog(1, 1, "------------------------------------------------------")
+
+          if (data.criteria[0] == '#') {
+            // -----------------------
+            // The criteria is an ID
+            // -----------------------
+            value = await elements[elt].getAttribute('id');
+            if (value == undefined || value == '') value = '<EMPTY>'
+            else value = '#' + value
+            // Check if the ID is matching
+            if (value.trim().toUpperCase() == data.criteria.trim().toUpperCase()) {
+              // Insert the element in a table ???
+              if (value.length > 80) value = value.substring(0, 80) + '....'
+              variables.displayLog(1, 1, 'Value: ', value)
+              dataResult.push({ 'GUI': '', 'Occurence': elt + 1, 'Value': value, 'PatternID': '' })
+              elementOK = 1
+            }
+          } else { // end of ID
+            // -----------------------
+            // Extract the value
+            // -----------------------
+            value = await elements[elt].getText();
+            if (value == undefined || value == '') {
+              // try with the value
+              value = await elements[elt].getAttribute('value');
+              if (value == '' || value == undefined) {
+                // Try with the attribute textContent
+                value = await elements[elt].getAttribute('textContent');
+                if (value == '' || value == undefined) {
+                  value = '<EMPTY>'
+                }
+              }
+            }
+            // --------------------------------------------------------
+            // Check if the text is matching criteria (exact matching)
+            // --------------------------------------------------------
+            if (value.trim().toUpperCase() == data.criteria.trim().toUpperCase()) {
+              // Insert the element in a table ???
+              variables.displayLog(1, 1, '@@@@@@@ Value: ', value)
+              elementOK = 1
+            } else {
+              variables.displayLog(1, 1, 'Element ', elt + 1, ' no matching with the name: ' + data.criteria.trim().toUpperCase() + ' we got: ' + value.trim().toUpperCase().substring(0, 80))
+            }
+          } // end of value
+
+          if (elementOK) {
+            // ---------------------------------------
+            // Check the element versus all the paths
+            // ---------------------------------------
+            for (let path = 0; path < paths.length && !stop; path++) {
+              console.log('------ Path: ', paths[path].fullPath)
+              // --------------------------------------------------
+              // Check if the path is compliant for this selector
+              // --------------------------------------------------
+              pathID = paths[path].pathID
+              elementOK = 1
+              let selectorCondition = paths[path].pathCondition.split("|");
+              if (selectorCondition.includes('*')) {
+                // Check if the selector is not excluded from this path
+                if (selectorCondition.includes('!' + data.selector)) {
+                  // selector is exculde
+                  console.log('     ' + paths[path].fullPath + ' is excluded, selector ' + paths[path].pathCondition + ' is not compliant with ' + data.selector)
+                  elementOK = 0
+                }
+              } else {
+                if (!selectorCondition.includes(data.selector)) {
+                  // path is not defined for this selector
+                  console.log('     ' + paths[path].fullPath + ' is excluded, selector ' + paths[path].pathCondition + ' is not compliant with ' + data.selector)
+                  elementOK = 0
+                }
+              }
+
+              //console.log('----- elementOK: ', elementOK)
+              if (elementOK) {
+                // -------------------------------------------------------------------
+                // path is compliant with the selector, check if xpath returns row(s)
+                // -------------------------------------------------------------------
+                let id = elt + 1
+                let xpath = '(' + AIRoot + ')[' + id + ']' + paths[path].fullPath
+                // Remove the word Root in the xpath
+                xpath = xpath.replace('Root', '')
+                xpath = xpath.trim()
+                // In xpath, replace <PARAM> by the criteria
+                let xpath2 = xpath.replace(/<PARAM>/g, data.criteria)
+
+
+                ret = await robot.evaluateFunction(driver, variables, 'getAllElements', data, xpath2)
+                if (ret.success && ret.element.length) {
+                  //console.log ('@@@@@@@ Path: ', paths[path].fullPath)
+                  console.log('---> xpath return ' + ret.element.length + ' row(s)')
+                  // --------------------------------------------------------------------------
+                  // check if the tag of the path is compliant with the end tag of the selector
+                  // --------------------------------------------------------------------------
+                  let xpathelements = ret.element
+                  for (let xpelt = 0; xpelt < xpathelements.length; xpelt++) {
+
+                    let tag = await xpathelements[xpelt].getAttribute('tagName');
+                    let endtag = selector[0].endTag.toUpperCase().split("|");
+                    if (endtag.includes(tag.toUpperCase())) {
+                      // Extract the value to show to the user to help to decide for the best pattern
+                      let valueEnd = await xpathelements[xpelt].getText();
+                      if (valueEnd == undefined || valueEnd == '') {
+                        // try with the value
+                        valueEnd = await xpathelements[xpelt].getAttribute('value');
+                        if (valueEnd == '' || valueEnd == undefined) {
+                          valueEnd = '<EMPTY>'
+                        }
+                      }
+
+                      // -----------------------------------------------------------
+                      // check if the valueEnd is compliant with the expected value
+                      // -----------------------------------------------------------
+                      if (data.expected != undefined && data.expected != '') {
+                        if (valueEnd.trim().toUpperCase() == data.expected.trim().toUpperCase()) {
+                          dataResult.push({ 'GUI': paths[path].fullPath, 'Occurence': elt + 1, 'Value': value + ' / ' + valueEnd, 'PatternID': paths[path].pathID })
+                          variables.displayLog(1, 1, '====> Xpath: ', paths[path].fullPath, 'Record(s) detected - tag: ' + tag)
+                        } else {
+                          variables.displayLog(1, 1, '----> Xpath: ', paths[path].fullPath, 'Tag: ' + tag + ' Not the expected value: ' + data.expected.trim().toUpperCase() + ' and got: ' + valueEnd.trim().toUpperCase())
+                          elementOK = 0
+                        }
+                      } else {
+                        // No expected value, display the result  
+                        dataResult.push({ 'GUI': paths[path].fullPath, 'Occurence': elt + 1, 'Value': value + ' / ' + valueEnd, 'PatternID': paths[path].pathID })
+                        variables.displayLog(1, 1, '====> Xpath: ', paths[path].fullPath, xpathelements.length + ' record(s) detected - tag: ' + tag)
+                      }
+                      // ----------------------------------------------------------------------------
+                      // Extract all the required attributes 
+                      // ----------------------------------------------------------------------------
+                      if (elementOK) {
+
+                        // ----------------------------------
+                        // Create an entry in the Tag Element
+                        // ----------------------------------
+                        // projectID, trainingID, pathID, selectorID, position, active
+                        let dataAPI = { projectID: data.projectID, trainingID: trainingID, pathID: pathID, selectorID: data.selectorID, position: 0, active: 1 }
+                        const result4 = await createTagElement(dataAPI);
+                        if (result4.affectedRows) {
+                          tagelementID = result4.insertId
+                          variables.displayLog(1, 1, '@@@@@@@ Tag Element ID: ', tagelementID)
+                          // Reorder the table
+                          let dataAPI = { projectID: data.projectID }
+                          const result5 = await reorderTagElement(dataAPI);
+                          if (!result5.affectedRows) {
+                            variables.displayLog(1, 1, 'AI Training - Error during the reordered of Tag Element!')
+                            variables.displayLog(1, 1, 'Error: ', result5)
+                            retTraining = { success: 0, message: "Error during the reordered of tag Tag Element!" }
+                            stop = 1 // Fatal error, stop all the processes
+                          }
+
+                        } else {
+                          variables.displayLog(1, 1, 'AI Training - Error during the creation of Tag Element!')
+                          retTraining = { success: 0, message: "Error during the creation of Tag Element!" }
+                          stop = 1 // Fatal error, stop all the processes
+                        }
+
+                        let pathDepth = paths[path].fullPath.split("/");
+                        // Loop on the levels
+                        //variables.displayLog(1, 1, '---> pathDepth: ' + pathDepth.length)
+
+                        for (let level = 0; level < pathDepth.length && !stop; level++) {
+                          let myLevel = pathDepth.length - level - 1
+                          // Get the ancestor, use the xpath slice it and rebuild it a partial path
+                          if (level > 0) {
+                            let pathArr = xpath.replace('//', '##').split("/")
+                            let xxpath = ''
+                            let sep2 = ''
+                            for (let i = 0; i <= myLevel; i++) {
+                              //console.log ('===%%%%%%% ' + pathArr[i])
+                              xxpath = xxpath + sep2 + pathArr[i]
+                              sep2 = '/'
+                            }
+                            xxpath = xxpath.replace('##', '//')
+                            //console.log ('===@@==@@=== xxpath: ', xxpath)
+                            // In xxpath, replace <PARAM> by the criteria
+                            let xxpath2 = xxpath.replace(/<PARAM>/g, data.criteria)
+
+                            ret = await robot.evaluateFunction(driver, variables, 'getAllElements', data, xxpath2)
+                            if (!ret.success || !ret.element.length) {
+                              elementOK = 0
+                              variables.displayLog(1, 1, 'No element found for the ancestor: ' + xxpath2)
+                              retTraining = { success: 0, message: "No element found for the ancestor!" }
+                            } else {
+                              xpathelements = ret.element
+                              variables.displayLog(1, 1, 'Element found for the ancestor: ' + xxpath2)
+                            }
+                          } // end if level
+
+                          let pathValue = ''
+                          let sep = ''
+                          for (let i = 0; i <= myLevel; i++) {
+                            console.log('===%%%%%%% ' + pathDepth[i])
+                            pathValue = pathValue + sep + pathDepth[i]
+                            sep = '/'
+                          }
+                          variables.displayLog(1, 1, '@@@@@@ PathValue: ', pathValue)
+
+                          let outerHTML = await xpathelements[xpelt].getAttribute('outerHTML');
+                          variables.displayLog(1, 1, 'outerHTML:' + outerHTML)
+
+                          // Loop on the attributes of the project
+                          for (let attr = 0; attr < attributes.length && !stop; attr++) {
+
+                            if (attributes[attr].name == 'display') {
+                              valueAttr = await xpathelements[xpelt].isDisplayed()
+                              if (valueAttr) valueAttr = 'true'
+                              else valueAttr = 'false'
+                            } else if (attributes[attr].name == 'disabled') {
+                              valueAttr = await xpathelements[xpelt].isEnabled()
+                              if (valueAttr) valueAttr = 'false'
+                              else valueAttr = 'true'
+                            } else {
+                              valueAttr = await xpathelements[xpelt].getAttribute(attributes[attr].name);
+
+                              if (attributes[attr].name != 'textContent' && attributes[attr].name != 'tagName') {
+                                // check if the attribute is visible in the outerHTML
+                                if (outerHTML.includes(attributes[attr].name)) {
+                                  variables.displayLog(1, 2, 'Attribute: ' + attributes[attr].name + ' is included in the html')
+                                } else {
+                                  variables.displayLog(1, 2, 'Attribute: ' + attributes[attr].name + ' is NOT INCLUDED in the html')
+                                  valueAttr = undefined
+                                }
+                              }
+                            }
+                            //variables.displayLog(1, 1, 'Attribute before: ' + attributes[attr].name + ' = ' + valueAttr)
+                            if (valueAttr == undefined || valueAttr == null || valueAttr == '' || valueAttr.length > 255) {
+                              valueAttr = '??'
+                            }
+                            variables.displayLog(1, 1, 'Attribute: ' + attributes[attr].name + ' = ' + valueAttr)
+                            // ------------------------------------
+                            // Write attribute in Tag Attribute
+                            // ------------------------------------
+                            // PGO: 07/06/2024: active: 1 --> active: attributes[attr].active
+                            let dataAPI = { projectID: data.projectID, trainingID: trainingID, tagelementID: tagelementID, level: myLevel, pathID: pathID, pathValue: pathValue, attributeID: attributes[attr].attributeID, value: valueAttr, position: 999999, active: attributes[attr].active }
+                            const result6 = await createTagAttribute(dataAPI);
+                            if (result6.affectedRows) {
+                              let tagAttributeID = result6.insertId
+                              variables.displayLog(1, 1, '@@@@@@@ Tag Attribute ID: ', tagAttributeID)
+                              // Reorder the table
+                              let dataAPI = { projectID: data.projectID }
+                              const result7 = await reorderTagAttribute(dataAPI);
+                              if (!result7.affectedRows) {
+                                variables.displayLog(1, 1, 'AI Training - Error during the reordered of Tag Attribute!')
+                                variables.displayLog(1, 1, 'Error: ', result5)
+                                retTraining = { success: 0, message: "Error during the reordered of tag Attribute!" }
+                                stop = 1 // Fatal error, stop all the processes
+                              }
+                            } else {
+                              variables.displayLog(1, 1, 'AI Training - Error during the creation of Tag Attribute!')
+                              retTraining = { success: 0, message: "Error during the creation of Tag Attribute!" }
+                              stop = 1 // Fatal error, stop all the processes
+                            }
+
+                            // } else {
+                            //   variables.displayLog(1, 1, 'No Attribute for ' + attributes[attr].name)
+                            // }
+                          } // end for attr
+                        } // end for level
+                      } else {
+                        console.log('----- 2')
+
+                      } // if elementOK
+
+                    } else {
+                      variables.displayLog(1, 1, '@@@@@@@ Path: ', paths[path].fullPath + ' Tag: ' + tag.toUpperCase() + ' not included in ' + selector[0].endTag.toUpperCase())
+                    }
+
+                  } // end loop for xpathelements
+                } else {
+                  console.log(' no row detected for the path!')
+                }
+              }
+            } // end for path
+          }
+        } // end of elt loop
+        ret = { success: 1, message: "Training OK", data: dataResult }
+      } else {
+        variables.displayLog(1, 1, ' Cannot detect element with AIRoot')
+        variables.displayLog(1, 1, 'Ret:', ret)
+        retTraining = { success: 0, message: "No record found with the generic xpath!" }
+      }
+
+
+      // ----------------------------------
+      // End of the Training
+      // ----------------------------------
+      variables.displayLog(1, 1, '-------------------------')
+      variables.displayLog(1, 1, '-- End of The Training --')
+      variables.displayLog(1, 1, '-------------------------')
+      for (let i = 0; i < dataResult.length; i++) {
+        await robot.evaluateFunction(driver, variables, 'logfile', data, 'info', 'PathID: ' + dataResult[i].PatternID)
+      }
+      await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+      await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', "Training OK!")
+      await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+
+      //await stopBrowser()
+      variables.displayLog(1, 1, 'Training: OK!')
+      return resolve(retTraining);
+
+    });
+  },
+
+
+  // -----------------------------------------------------------
+  // AI Robot: Stop (Quit) the browser
+  //
+  // -----------------------------------------------------------
+  AIStopBrowser: async () => {
+
+    return new Promise(async (resolve, reject) => {
+
+      const { Builder, By, Key, ChromeOptions } = require("selenium-webdriver")
+      const robot = require("../library/robot.library")
+      const { stopBrowser } = require("../browser/browser.service.js")
+
+      const Variables = require('../library/variable.library');
+      let variables = new Variables();
+
+      variables.displayLog(1, 1, '')
+      variables.displayLog(1, 1, '============================================================================')
+      variables.displayLog(1, 1, " AI Robot: Quit the browser")
+      variables.displayLog(1, 1, '============================================================================')
+      await robot.speaking('Close the browser')
+
+      let ret = 0
+
+      //----------------------------------
+      // Quit the browser
+      // ----------------------------------
+      ret = await stopBrowser()
+      variables.displayLog(2, 1, 'Ret: ', ret)
+      if (!ret.success) {
+        ret = ({ success: 0, message: "AI Robot: Error during the closure of the browser" })
+      } else {
+        ret = { success: 1, message: "Browser is closed!" }
+      }
+      return resolve(ret)
+
+    });
+  },
+
+
+  // -----------------------------------------------------------
+  // AI Statistics to refine the patterns
+  //
+  // @param {number} data.projectID
+  // @param {number} data.subprojectID
+  // @param {number} data.userID
+  // @param {string} data.selector  name of the selector
+  // @param {number} data.selectorID  ID of the selector 
+  //
+  // -----------------------------------------------------------
+  AIStatistic: async (data) => {
+
+    return new Promise(async (resolve, reject) => {
+      const { Builder, By, Key, ChromeOptions } = require("selenium-webdriver")
+      const robot = require("../library/robot.library")
+      const { getParametersByCode } = require("../../parameter/parameter.service.js");
+      const { createStatistic, getStatisticByPath, updateStatisticCondition, deleteAllStatistic } = require("../../ai_statistic/statistic.service.js");
+      const { getPathTagElement } = require("../../ai_tagelement/tagelement.service.js");
+      const { getTagAttributeByPath } = require("../../ai_tagattribute/tagattribute.service.js");
+      const { getPatternsByPath, createPattern, reorderPattern, updatePatternStatistic, deleteAllPattern } = require("../../pattern/pattern.service.js");
+      const { Left, Right } = require("../library/string.library")
+
+
+
+
+      const Variables = require('../library/variable.library');
+      let variables = new Variables();
+
+      variables.displayLog(1, 1, '')
+      variables.displayLog(1, 1, '============================================================================')
+      variables.displayLog(1, 1, "Start Statistics ")
+      variables.displayLog(1, 1, '============================================================================')
+
+
+      let ret = 0
+
+      let AIRoot = ''
+      let AIDisplay = ''
+      let AINotDisplay = ''
+      let stop = 0 // stop all the process in cas of fatal error in the training analysis
+      let myLevel = -1
+      let myAttributeID = -1
+      let myValue = ''
+      let statisticNb = 0
+      let myOccurence = 0
+      let weight = 100
+      let myCondition = ''
+      let tempCondition = ''
+      let sep = ''
+
+      const currentDate = new Date();
+      const day = currentDate.getDate();
+      const month = currentDate.getMonth() + 1; // Add 1 as months are zero-based
+      const year = currentDate.getFullYear();
+      const hours = currentDate.getHours();
+      const minutes = currentDate.getMinutes()
+      let today = ('0' + day).slice(-2) + '/' + ('0' + month).slice(-2) + '/' + year + ' ' + ('0' + hours).slice(-2) + ':' + ('0' + minutes).slice(-2)
+
+
+      // --------------------------------------
+      // Check the validity of the parameters
+      // --------------------------------------
+      if (data.userID == undefined || data.projectID == undefined || data.selector == undefined || data.selectorID == undefined) {
+        variables.displayLog(1, 1, 'Invalid data!')
+        variables.displayLog(1, 1, data)
+        ret = { success: 0, message: "Invalid data!" }
+        return resolve(ret);
+      }
+
+      // ----------------------------------------
+      // Delete all the Patterns of the selector
+      // ----------------------------------------
+      let dataAPI2 = { projectID: data.projectID, selector: data.selector }
+      const result0 = await deleteAllPattern(dataAPI2);
+
+
+      // --------------------------------------------------------------------------
+      // get the global parameter: AI Root (a generic xpath to detect the criteria)
+      // --------------------------------------------------------------------------
+      let dataAPI = { projectID: 0, code: 'AI Root' }
+      const result1 = await getParametersByCode(dataAPI);
+      if (result1.length) {
+        AIRoot = result1[0].paramValue
+      } else {
+        variables.displayLog(1, 1, 'AI Statistics - global parameter AI Root not found!')
+        ret = { success: 0, message: "Cannot find the global parameter AI Root!", stop: 1 }
+        return resolve(ret);
+      }
+
+      // --------------------------------------------------------------------------------------------
+      // get the global parameter: AI Display (a generic xpath to detect if the element is displayed)
+      // --------------------------------------------------------------------------------------------
+      dataAPI = { projectID: 0, code: 'AI Display' }
+      const result2 = await getParametersByCode(dataAPI);
+      if (result2.length) {
+        AIDisplay = result2[0].paramValue
+      } else {
+        variables.displayLog(1, 1, 'AI Statistics - global parameter AI Display not found!')
+        ret = { success: 0, message: "Cannot find the global parameter AI Display!", stop: 1 }
+        return resolve(ret);
+      }
+
+      // --------------------------------------------------------------------------------------------
+      // get the global parameter: AI Not Display (a generic xpath to detect if the element is not visible)
+      // --------------------------------------------------------------------------------------------
+      dataAPI = { projectID: 0, code: 'AI Not Display' }
+      const result3 = await getParametersByCode(dataAPI);
+      if (result3.length) {
+        AINotDisplay = result3[0].paramValue
+      } else {
+        variables.displayLog(1, 1, 'AI Statistics - global parameter AI Not Display not found!')
+        ret = { success: 0, message: "Cannot find the global parameter AI Not Display!", stop: 1 }
+        return resolve(ret);
+      }
+
+      // ---------------------------
+      // Delete all the statistics
+      // ---------------------------
+      dataAPI = { projectID: data.projectID }
+      const result4 = await deleteAllStatistic(dataAPI);
+
+      // ---------------------------------------
+      // Get information on the paths in TagElement 
+      // ---------------------------------------
+      dataAPI = { projectID: data.projectID, selectorID: data.selectorID }
+      const paths = await getPathTagElement(dataAPI)
+      if (!paths.length) {
+        variables.displayLog(1, 1, 'AI Statistic - path (from tagElement) not found!')
+        ret = { success: 0, message: "Cannot find the path (from tagElement)!", stop: 1 }
+        return resolve(ret);
+      }
+
+      statisticNb++
+      for (let eltPath = 0; eltPath < paths.length; eltPath++) {
+
+        let pathID = paths[eltPath].pathID
+        weight = paths[eltPath].weight
+        //console.log ('Weight: ', weight)
+        //let tagElementID = paths[eltPath].tagelementID  // Added by Phil on 03/05
+        let pathArray = paths[eltPath].fullPath.split('/')
+        let myMaxOccurence = pathArray.length
+        myCondition = ''
+        sep = ''
+
+        variables.displayLog(1, 1, eltPath + ') pathID: ' + pathID + ', path: ' + paths[eltPath].fullPath)
+
+        // --------------------------------------------------------------------------------------------------------
+        // Read the attributes of the Tag Attributes by pathID + first, intermediate, last occurence from Attribute
+        // --------------------------------------------------------------------------------------------------------
+        dataAPI = { projectID: data.projectID, pathID: pathID, selectorID: data.selectorID }
+        const tagAttributes = await getTagAttributeByPath(dataAPI);
+        if (!tagAttributes.length) {
+          variables.displayLog(1, 1, 'AI Statistics - Tag Attribute for the path: ' + pathID + ' not found!')
+          ret = { success: 0, message: "Cannot find the Tag Attribute for the path:" + + pathID + " not found!", stop: 1 }
+          return resolve(ret);
+        }
+
+        // ------------------------
+        // Generate the Statistics
+        // ------------------------
+        variables.displayLog(1, 2, 'TagAttribute Nb: ' + tagAttributes.length)
+        for (let eltAttrib = 0; eltAttrib < tagAttributes.length; eltAttrib++) {
+
+          // Skip the attribute textContent
+          if (tagAttributes[eltAttrib].name == 'textContent') continue
+
+          variables.displayLog(1, 3, eltAttrib + ') level: ' + myLevel + ' versus ' + tagAttributes[eltAttrib].level + ' attribute: ' + myAttributeID + ' versus ' + tagAttributes[eltAttrib].attributeID + ' ' + tagAttributes[eltAttrib].name)
+          // Break on the level 
+          if (myLevel != tagAttributes[eltAttrib].level) {
+            myCondition = myCondition + sep + tempCondition
+            sep = '/'
+            tempCondition = ''
+            variables.displayLog(1, 4, 'myCondition: ', myCondition)
+
+          }
+
+          // Break on the level or the attribute
+          if (myLevel != tagAttributes[eltAttrib].level || myAttributeID != tagAttributes[eltAttrib].attributeID) {
+            // Valid break on the level or the attribute
+            if (myLevel >= 0 && myValue != '??') {
+              // Insert into Statistic if it is not the first time and the value is valid
+              dataAPI = {
+                projectID: data.projectID, selectorID: data.selectorID, pathID: paths[eltPath].pathID, pathValue: paths[eltPath].fullPath, conditionValue: '', level: myLevel,
+                attributeID: myAttributeID, value: myValue, position: statisticNb, active: 1
+              }
+              const result5 = await createStatistic(dataAPI)
+              if (!result5.affectedRows) {
+                variables.displayLog(1, 1, 'AI Statistic - Error in the creation of the statistic No ' + statisticNb + '!')
+                ret = { success: 0, message: 'Error in the creation of the statistic No ' + statisticNb + '!', stop: 1 }
+                return resolve(ret);
+              }
+              variables.displayLog(1, 3, 'Insert statistic')
+              statisticNb++
+            } // end valid break level/attribute
+
+            // Reset the values
+            myValue = tagAttributes[eltAttrib].value
+            myLevel = tagAttributes[eltAttrib].level
+            myAttributeID = tagAttributes[eltAttrib].attributeID
+            myOccurence = 0
+
+            // end break level/attribute
+          } else {
+
+            // Check if value is identical to the data stored
+            let found = 0
+            if (myValue.includes('|')) {
+              let TagArray = myValue.split('|')
+              for (let i = 0; i < TagArray.length; i++) {
+                if (TagArray[i] == tagAttributes[eltAttrib].value) found = 1
+              }
+            } else {
+              if (myValue == tagAttributes[eltAttrib].value) found = 1
+            }
+
+            // We detected a difference in the value of the tag elements
+            if (!found) {
+              variables.displayLog(1, 3, 'Attribute difference detected - myValue: ' + myValue + ' versus ' + tagAttributes[eltAttrib].value)
+
+              if (tagAttributes[eltAttrib].value == '??' || myValue == '??') {
+                myValue = '??'
+              } else {
+                if (myLevel == 0) { // First occurence
+                  //console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Level 0 - myOccurence: ' + myOccurence + ' First: ' + tagAttributes[eltAttrib].first)
+                  if (myOccurence >= tagAttributes[eltAttrib].first) { // We exceed the max occurence
+                    myValue = '??'
+                  } else {
+                    myValue = myValue + '|' + tagAttributes[eltAttrib].value
+                    myOccurence++
+                  }
+                  // end first occurence
+                } else if (myLevel == myMaxOccurence - 1) { // last occurence
+                  if (myOccurence >= tagAttributes[eltAttrib].last) { // We exceed the max occurence
+                    myValue = '??'
+                  } else {
+                    myValue = myValue + '|' + tagAttributes[eltAttrib].value
+                    myOccurence++
+                  }
+                  // end last occurence
+                } else { // intermediate occurence
+                  if (myOccurence >= tagAttributes[eltAttrib].intermediate) { // We exceed the max occurence
+                    myValue = '??'
+                  } else {
+                    myValue = myValue + '|' + tagAttributes[eltAttrib].value
+                    myOccurence++
+                  }
+                } // end intermediate occurence  
+              } // else ??        
+            }
+
+          } // end no break
+
+          variables.displayLog(1, 4, 'Value: ', myValue)
+          if (tagAttributes[eltAttrib].name == 'tagName') {
+            tempCondition = myValue // tagAttributes[eltAttrib].value
+            variables.displayLog(1, 4, 'tempCondition: ', tempCondition)
+            //sep = '/'
+          }
+
+        } // end for eltAttrib
+
+        // Write the last statistic
+        myCondition = myCondition + sep + tempCondition
+        tempCondition = ''
+        if (myCondition[0] == '/') myCondition = myCondition.substring(1) // skip the first /
+        variables.displayLog(1, 4, 'myCondition: ', myCondition)
+
+        if (myValue != '??') {
+          // Insert into Statistic
+          dataAPI = {
+            projectID: data.projectID, selectorID: data.selectorID, pathID: paths[eltPath].pathID, pathValue: paths[eltPath].fullPath, conditionValue: '', level: myLevel,
+            attributeID: myAttributeID, value: myValue, position: statisticNb, active: 1
+          }
+          const result6 = await createStatistic(dataAPI)
+          if (!result6.affectedRows) {
+            variables.displayLog(1, 2, 'AI Statistic - Error in the creation of the last statistic No ' + statisticNb + '!')
+            ret = { success: 0, message: 'Error in the creation of the last statistic No ' + statisticNb + '!', stop: 1 }
+            return resolve(ret);
+          }
+          variables.displayLog(1, 2, 'write the last statistic')
+          statisticNb++
+        } // end write last statistic  
+
+
+        // Update the condition in the statistic
+        dataAPI = { conditionValue: myCondition, projectID: data.projectID, pathID: paths[eltPath].pathID, selectorID: data.selectorID }
+        const result7 = await updateStatisticCondition(dataAPI)
+        if (!result7.affectedRows) {
+          variables.displayLog(1, 1, 'AI Statistic - Error in the update of the condition in the statistic No ' + statisticNb + '!')
+          ret = { success: 0, message: 'Error in the update of the condition in the statistic No ' + statisticNb + '!', stop: 1 }
+          return resolve(ret);
+        }
+
+
+        // --------------------------------
+        // Apply statistics on the Pattern
+        // --------------------------------
+
+        variables.displayLog(1, 1, '----------------')
+        variables.displayLog(1, 1, '--   Patterns --')
+        variables.displayLog(1, 1, '----------------')
+
+
+
+        let patternID = 0
+        let pattern = []
+        // Get the pattern (if it exists)
+        dataAPI = { projectID: data.projectID, path: paths[eltPath].fullPath, selector: data.selector }
+        pattern = await getPatternsByPath(dataAPI);
+        if (pattern.length) {
+          patternID = pattern[0].paternID
+        } else {
+          // No pattern found, create a new one
+          // (projectID, selector, path, tag, attribute, result, weight, comment, position, active
+          variables.displayLog(1, 1, 'No pattern found, create a new one')
+          dataAPI = {
+            projectID: data.projectID, selector: data.selector, path: paths[eltPath].fullPath, tag: myCondition, weight: weight, attribute: '', result: '', weight: weight,
+            comment: 'Created on ' + today, position: 99999, active: 1
+          }
+          pattern = await createPattern(dataAPI);
+          if (!pattern.affectedRows) {
+            variables.displayLog(1, 1, 'AI Statistic - Error in the creation of the pattern!')
+            ret = { success: 0, message: 'Error in the creation of the pattern!' }
+            return resolve(ret);
+          }
+          patternID = pattern.insertId
+          // Reorder the table
+          dataAPI = { projectID: data.projectID }
+          const result8 = await reorderPattern(dataAPI);
+        } // end create pattern
+
+        variables.displayLog(1, 2, 'PatternID: ', patternID)
+
+        let myPatterTag = ''
+        let myPatternResult = ''
+        let myPatternAttribute = ''
+
+        // Loop on the level
+        for (myLevel = 0; myLevel < myMaxOccurence; myLevel++) {
+
+          let myLastTag = ''
+          let myConditionTag = ''
+          let myConditionAttribute = ''
+          let myResultTag = ''
+          let myResultAttribute = ''
+
+          // Select the statistics by pathID
+          dataAPI = { projectID: data.projectID, pathID: paths[eltPath].pathID, selectorID: data.selectorID, level: myLevel }
+          const statistics = await getStatisticByPath(dataAPI);
+          if (!statistics.length) {
+            variables.displayLog(1, 1, 'AI Statistic - No statistics for the path: ' + paths[eltPath].pathID + ' selector: ' + data.selectorID + '!')
+            ret = { success: 0, message: 'Error no statistics to process patterns!' }
+            return resolve(ret);
+          }
+
+          // Loop on the statistics for a specific level of a selector
+          for (eltStat = 0; eltStat < statistics.length; eltStat++) {
+
+            let myValueArray = statistics[eltStat].value.split('|')
+
+            if (statistics[eltStat].name == 'tagName') {
+
+              myLastTag = '*'
+              myConditionTag = statistics[eltStat].value
+
+              let myTag = pathArray[statistics[eltStat].level]
+              myTag = myTag.replace('Root', '*')
+              console.log('>>>>>> myTag 1/2:', myTag)
+
+              // extract the position from myTag
+              let position = ''
+              let i = myTag.indexOf('[', 0);
+              let j = myTag.indexOf(']', i + 1);
+              if (i >= 0 && j >= 0) {
+                position = myTag.substring(i, i + (j - i) + 1)
+                myTag = myTag.replace(position, '')
+              }
+              console.log('>>>>>> myTag 2/2:', myTag)
+
+
+              // if (myValueArray.length > 1) {
+              myResultTag = ''
+              let mysep = ''
+              let mybegin = '['
+              if (myTag == '*') {
+                myTag = ''
+                mybegin = '*['
+              }
+
+              for (let eltTag = 0; eltTag < myValueArray.length; eltTag++) {
+                myResultTag = myResultTag + mysep + myTag + mybegin + 'self::' + myValueArray[eltTag].toLowerCase()
+                mysep = ' or '
+                mybegin = ''
+                myTag = ''
+              }
+
+              if (statistics[eltStat].level == 0) {  // first level 
+                myResultTag = myResultTag + '] ' + AIRoot.replace('//*', '')
+              } else myResultTag = myResultTag + ']'
+              // Add the position
+              myResultTag = myResultTag + position
+              console.log('myResultTag 1:', myResultTag)
+              // } else {
+              //   myResultTag = statistics[eltStat].value
+              //   console.log ('myResultTag 2:', myResultTag)
+              // } // end myValueArray > 1
+
+            } else if (!(statistics[eltStat].level != myMaxOccurence - 1 && '*visible*display*disabled'.includes(statistics[eltStat].name))) {
+              // if we are on the last level with *visible*display*disabled or another level without *visible*display*disabled            
+
+              myConditionAttribute = myConditionAttribute + '@' + statistics[eltStat].name + '=' + statistics[eltStat].value
+              variables.displayLog(1, 3, 'Pattern Attribute: ', statistics[eltStat].name)
+
+              if (statistics[eltStat].name == 'display') {
+                variables.displayLog(1, 2, 'display')
+                if (statistics[eltStat].value == 'true') {
+                  myResultTag = myResultTag + ' [' + AIDisplay + ']'
+                  console.log('myResultTag 3:', myResultTag)
+
+                } else if (statistics[eltStat].value == 'false') {
+                  myResultTag = myResultTag + ' [' + AINotDisplay + ']'
+                  console.log('myResultTag 4:', myResultTag)
+
+                }
+              }
+              //else if (statistics[eltStat].name != 'textContent' && statistics[eltStat].name != 'type') {
+              else if (statistics[eltStat].name != 'textContent') {
+
+                myResultTag = myResultTag + '['
+                let mysep = ''
+                for (let eltAttr = 0; eltAttr < myValueArray.length; eltAttr++) {
+
+                  let myContains = ''
+                  // if (statistics[eltStat].name == 'type') {
+                  //   if (myValueArray[eltAttr].toLowerCase() != 'submit') { // submit is the value by default but not always inside  HTML, so xpath cannot find it!
+                  //     myContains = 'contains( @' + statistics[eltStat].name.toLowerCase() + ", '" + myValueArray[eltAttr].toLowerCase() + "')"
+                  //   }
+                  // } else {
+                  myContains = 'contains( @' + statistics[eltStat].name.toLowerCase() + ", '" + myValueArray[eltAttr].toLowerCase() + "')"
+                  // }
+
+                  myResultTag = myResultTag + mysep + myContains
+                  mysep = ' or '
+                }
+                myResultTag = myResultTag + ']'
+                console.log('myResultTag 5:', myResultTag)
+
+
+              } // end else textContent/type               
+
+            } // end of if '*visible*display*disabled'
+
+
+
+            //variables.displayLog(1, 3, 'Inside the loop Statistics: ', myResultTag)
+
+          } // end loop statistics
+
+
+          variables.displayLog(1, 1, 'End loop Statistics: ', myResultTag)
+
+
+          // let myText = ''
+          // if (myResultAttribute != '') {
+          //   myText = Right(myResultTag.trim(), 3)
+          //   myText = myText[0] + '*' + Right(myText, 1) // [*]
+
+          //   if (myText == '[*]' || myText == '[#]') {
+          //     myText = myResultTag + '[' + myResultAttribute + ']'
+          //   } else if (Right(myResultTag, 1) == ']') {
+          //     myText = myResultTag.substring(0, myResultTag.length - 1) + ' and ' + myResultAttribute + ']'
+          //   } else {
+          //     myText = myResultTag
+          //   }
+          // } else {
+          //   myText = myResultTag
+          // } // end if empty myResultAttribute
+
+          myPatternResult = myPatternResult + '/' + myResultTag
+          myPatternAttribute = myPatternAttribute + '/' + myConditionTag + myConditionAttribute
+
+        } // Loop on level
+
+        myPatternResult = myPatternResult.replace('<param>', '<PARAM>')
+        myPatternResult = myPatternResult.replace('([#])', '')
+        myPatternResult = myPatternResult.replace('[#]', '')
+        myPatternResult = '/' + myPatternResult.trim()
+        myPatternAttribute = myPatternAttribute.substring(1)
+
+        variables.displayLog(1, 1, 'myPatternResult: ', myPatternResult)
+        variables.displayLog(1, 1, 'myPatternAttribute: ', myPatternAttribute)
+        // -------------------
+        // Update the Pattern
+        // -------------------
+        dataAPI = { attribute: myPatternAttribute, result: myPatternResult, patternID: patternID }
+        pattern = await updatePatternStatistic(dataAPI);
+        if (!pattern.affectedRows) {
+          variables.displayLog(1, 1, 'AI Statistic - Error in the update of the pattern!')
+          ret = { success: 0, message: 'Error in the update of the pattern!' }
+          return resolve(ret);
+        }
+
+        variables.displayLog(1, 1, '----------------')
+        variables.displayLog(1, 1, 'Pattern updated!')
+        variables.displayLog(1, 1, '----------------')
+
+
+        myLevel = -1 // Reset the level
+        myCondition = '' // Reset the condition
+        sep = ''  // Reset the separator
+
+      } // end for eltPath
+
+
+      variables.displayLog(1, 1, '-----------------------------')
+      variables.displayLog(1, 1, '--   End of The Statistics --')
+      variables.displayLog(1, 1, '-----------------------------')
+
+      ret = { success: 1, message: 'Statistic OK!' }
+      return resolve(ret);
+
+    });
+  },
+
+
 
 
   // -----------------------------------------------------------

@@ -19,7 +19,7 @@ const express = require("express")
  * @function
  *   specialFunction: execute a function from the library
  *
- * @param {object} driver:       selenium driver
+ * @param {object} page:         playwright page
  * @param {object} variables:    array of all the variables
  * @param {number} data:         all the parameters
  * @param {string} rulePosition: Position of the rule in the set
@@ -30,7 +30,7 @@ const express = require("express")
  * @param {string} param4:       Parameter 4
  * 
  */
-async function specialFunction(driver, variables, data, rulePosition, functionName, param1, param2, param3, param4) {
+async function specialFunction(page, variables, data, rulePosition, functionName, param1, param2, param3, param4) {
     const { logfile, speaking, dictionary, setReference, getReference, loginUser, loginPassword, dummyExtraInfo, dummyLogin, pause, getData, setData, debug, email,
         pressEnter, pressEscape, pressTab, click, doubleClick, setValue, getValue, select, selectCount, getElementDummy, setValueDummy, ask, waitInvisible,
         JSclick, JSinput, isExist, isCheck, isVisible, url, waitFor, waitForNot, setVariable, setFocus, refreshURL, printScreen, executeRules, newTab, newWindow,
@@ -63,14 +63,6 @@ async function specialFunction(driver, variables, data, rulePosition, functionNa
 
     switch (functionName) {
 
-        case '#clickDummy':
-            ret = await getElementDummy(driver, variables, data, param1)
-            await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1)
-            return ret
-        case '#setValueDummy':
-            ret = await setValueDummy(driver, data, variables, param1, param2, param3)
-            await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2)
-            return ret
         case '#Describe':
             //await logfile(data.userID, 'Describe', '--> (R' + rulePosition + ') Describe : ' + param1)
             break
@@ -81,10 +73,10 @@ async function specialFunction(driver, variables, data, rulePosition, functionNa
             ret = await debug(variables, param1)
             break
         case '#printScreen':
-            ret = await printScreen(driver, data, param1)
+            ret = await printScreen(page, data, param1)
             break
         case '#ask':
-            ret = await ask(driver, variables, param1, param2, param3, param4)
+            ret = await ask(page, variables, param1, param2, param3, param4)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3 + ' : ' + param4)
             return ret
         case '#email':
@@ -92,140 +84,139 @@ async function specialFunction(driver, variables, data, rulePosition, functionNa
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + ret.message)
             return ret
         case '#url':
-            ret = await url(driver, variables, data.projectID, param1)
-            driver.manage().window().maximize();
+            ret = await url(page, variables, data.projectID, param1)
+            page.manage().window().maximize();
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1)
             return ret
         case '#newTab':
-            ret = await newTab(driver)
+            ret = await newTab(page)
             return ret
         case '#newWindow':
-            ret = await newWindow(driver)
+            ret = await newWindow(page)
             return ret
         case '#loginUser':
-            ret = await loginUser(driver, variables, data, param1, param2, param3)
+            ret = await loginUser(page, variables, data, param1, param2, param3)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
             return ret
         case '#loginPassword':
-            ret = await loginPassword(driver, variables, data, param1, param2, param3)
+            ret = await loginPassword(page, variables, data, param1, param2, param3)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
             return ret
         case '#dummyExtraInfo':
-            ret = await dummyExtraInfo(driver, variables, data, param1, param2)
+            ret = await dummyExtraInfo(page, variables, data, param1, param2)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2)
             return ret
         case '#dummyLogin':
-            ret = await dummyLogin(driver, variables, data, param1, param2)
+            ret = await dummyLogin(page, variables, data, param1, param2)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2)
             return ret
         case '#setFocus':
-            ret = await setFocus(driver, data, variables, param1, param2, param3)
-            await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
+            ret = await setFocus(page, data, variables, param1, param2)
+            await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2)
             return ret
         case '#click':
-            ret = await click(driver, data, variables, param1, param2)
+            ret = await click(page, data, variables, param1, param2)
             //await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 )
             return ret
         case '#JSclick':
-            ret = await JSclick(driver, data, variables, param1, param2, param3)
+            ret = await JSclick(page, data, variables, param1, param2, param3)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
             return ret
         case '#doubleClick':
-            ret = await doubleClick(driver, data, variables, param1, param2, param3)
-            //await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
+            ret = await doubleClick(page, data, variables, param1, param2)
             return ret
         case '#JSinput':
-            ret = await JSinput(driver, data, variables, param1, param2, param3)
+            ret = await JSinput(page, data, variables, param1, param2, param3)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
             return ret
         case '#keyboard':
-            ret = await keyboard(driver, data, variables, param1)
+            ret = await keyboard(page, data, variables, param1)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1)
             return ret
         case '#enable':
-            ret = await enable(driver, data, variables, param1, param2)
-            await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
+            ret = await enable(page, data, variables, param1)
+            await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1)
             return ret
         case '#removeAttribute':
-            ret = await removeAttribute(driver, data, variables, param1, param2, param3)
-            await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
+            ret = await removeAttribute(page, data, variables, param1, param2)
+            await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2)
             return ret
         case '#setAttribute':
-            ret = await setAttribute(driver, data, variables, param1, param2, param3)
+            ret = await setAttribute(page, data, variables, param1, param2, param3)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
             return ret
         case '#readAttribute':
-            ret = await readAttribute(driver, data, variables, param1, param2, param3)
+            ret = await readAttribute(page, data, variables, param1, param2, param3)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
             return ret
         case '#pressEscape':
-            ret = await pressEscape(driver)
+            ret = await pressEscape(page)
             await logfile(data.userID, 'Info', '... ' + functionName)
             return ret
         case '#pressEnter':
-            ret = await pressEnter(driver)
+            ret = await pressEnter(page)
             await logfile(data.userID, 'Info', '... ' + functionName)
             return ret
         case '#pressTab':
-            ret = await pressTab(driver, param1)
+            ret = await pressTab(page, param1)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1)
             return ret
         case '#acceptPopup':
-            ret = await acceptPopup(driver, variables)
+            ret = await acceptPopup(page, variables)
             await logfile(data.userID, 'Info', '... ' + functionName)
             return ret
         case '#cancelPopup':
-            ret = await cancelPopup(driver, variables)
+            ret = await cancelPopup(page, variables)
             await logfile(data.userID, 'Info', '... ' + functionName)
             return ret
         case '#switchToFrame':
-            ret = await switchToFrame(driver, variables, data, param1)
+            ret = await switchToFrame(page, variables, data, param1)
             return ret
         case '#switchToBrowserTab':
-            ret = await switchToBrowserTab(driver, param1)
+            ret = await switchToBrowserTab(page, param1)
             return ret
         case 'closeBrowserTab':
-            ret = await closeBrowserTab(driver)
+            ret = await closeBrowserTab(page)
             return ret
         case '#waitFor':
-            ret = await waitFor(driver, data, variables, param1, param2, param3)
+            ret = await waitFor(page, data, variables, param1, param2, param3)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
             return ret
         case '#waitForNot':
-            ret = await waitForNot(driver, data, variables, param1, param2, param3)
+            ret = await waitForNot(page, data, variables, param1, param2, param3)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
             return ret
         case '#setValue':
-            ret = await setValue(driver, data, variables, param1, param2, param3)
+            ret = await setValue(page, data, variables, param1, param2, param3)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
             return ret
         case '#getValue':
-            ret = await getValue(driver, data, variables, param1, param2)
+            ret = await getValue(page, data, variables, param1, param2)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2)
             return ret
         case '#select':
-            ret = await select(driver, data, variables, param1, param2, param3)
+            ret = await select(page, data, variables, param1, param2, param3)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
             return ret
         case '#selectCount':
-            ret = await selectCount(driver, data, variables, param1, param2, param3)
-            await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
+            ret = await selectCount(page, data, variables, param1, param2)
+            await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2)
             if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
             return ret
         case '#isExist':
-            ret = await isExist(driver, data, variables, param1, param2, param3)
+            ret = await isExist(page, data, variables, param1, param2, param3)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
             return ret
         case '#isCheck':
-            ret = await isCheck(driver, data, variables, param1, param2, param3)
+            ret = await isCheck(page, data, variables, param1, param2, param3)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
             return ret
         case '#isVisible':
-            ret = await isVisible(driver, data, variables, param1, param2, param3)
+            ret = await isVisible(page, data, variables, param1, param2, param3)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
             return ret
         case '#waitInvisible':
-            ret = await waitInvisible(driver, data, variables, param1, param2, param3)
+            ret = await waitInvisible(page, data, variables, param1, param2, param3)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
             return ret
         case '#setVariable':
@@ -235,7 +226,7 @@ async function specialFunction(driver, variables, data, rulePosition, functionNa
         case '#listVariable':
             break
         case '#refreshURL':
-            ret = await refreshURL(driver, data, variables)
+            ret = await refreshURL(page, data, variables)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2)
             return ret
         case '#speak':
@@ -249,7 +240,7 @@ async function specialFunction(driver, variables, data, rulePosition, functionNa
             await logfile(data.userID, param2, param1)
             break
         case '#pause':
-            await pause(driver, variables, data.subprojectID, param1)
+            await pause(page, variables, data.subprojectID, param1)
             break
         case '#setReference':
             await setReference(variables, data.projectID, data.userID, param1, param2, param3)
@@ -289,31 +280,31 @@ async function specialFunction(driver, variables, data, rulePosition, functionNa
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3 + ' : ' + param4)
             break
         case '#getTableData':
-            await getTableData(driver, data, variables, param1, param2, param3, param4)
+            await getTableData(page, data, variables, param1, param2, param3, param4)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3 + ' : ' + param4)
             break
         case '#getTableHeader':
-            await getTableHeader(driver, data, variables, param1, param2, param3, param4)
+            await getTableHeader(page, data, variables, param1, param2, param3, param4)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3 + ' : ' + param4)
             break
         case '#setTableData':
-            await setTableData(driver, data, variables, param1, param2, param3, param4)
+            await setTableData(page, data, variables, param1, param2, param3, param4)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3 + ' : ' + param4)
             break
         case '#countTableRow':
-            await countTableRow(driver, data, variables, param1, param2)
+            await countTableRow(page, data, variables, param1, param2)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2)
             break
         case '#searchTableData':
-            await searchTableData(driver, data, variables, param1, param2, param3, param4)
+            await searchTableData(page, data, variables, param1, param2, param3, param4)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3 + ' : ' + param4)
             break
         case '#clickCell':
-            await clickCell(driver, data, variables, param1, param2, param3, param4)
+            await clickCell(page, data, variables, param1, param2, param3, param4)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3 + ' : ' + param4)
             break
         case '#uploadFile':
-            await uploadFile(driver, data, variables, param1, param2)
+            await uploadFile(page, data, variables, param1, param2)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3 + ' : ' + param4)
             break
         case '#skipIt':
@@ -325,7 +316,7 @@ async function specialFunction(driver, variables, data, rulePosition, functionNa
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + originalParam1 + ' --> (' + param1 + ' : ' + param2)
             return ret
         case '#detectGUI':
-            ret = await detectGUI(driver, variables, data, param1, param2, param3, param4)
+            ret = await detectGUI(page, variables, data, param1, param2, param3, param4)
             //await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3 + ' : ' + param4)
             if (ret.success == 1) await logfile(data.userID, 'Info', '... patternID: ' + ret.patternID)
             else await logfile(data.userID, 'Warning', '... Cannot detect ' + param2)
@@ -344,24 +335,24 @@ async function specialFunction(driver, variables, data, rulePosition, functionNa
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3 + ' : ' + param4)
             return ret
         case '#rule':
-            ret = await executeRules(driver, variables, data, param1, param2, param3, param4)
+            ret = await executeRules(page, variables, data, param1, param2, param3, param4)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3 + ' : ' + param4)
             variables.displayLog(3, 1, 'Rule - Ret: ', ret)
             return ret
         case '#callScenario':
-            ret = await callScenario(data, driver, variables, param1)
+            ret = await callScenario(data, page, variables, param1)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1)
             return ret
         case '#callSuite':
-            ret = await callSuite(data, driver, variables, param1)
+            ret = await callSuite(data, page, variables, param1)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1)
             return ret
         case '#startTimer':
-            ret = await startTimer(data, driver, variables, param1)
+            ret = await startTimer(data, page, variables, param1)
             await logfile(data.userID, 'Info', '... ' + functionName  + ' : ' + param1 )
             return ret
         case '#stopTimer':
-            ret = await stopTimer(data, driver, variables, param1, param2)
+            ret = await stopTimer(data, page, variables, param1, param2)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2)
             return ret
 
@@ -451,10 +442,10 @@ async function _substring(variables, fullText, starting, length, variable) {
  * @function
  *   execRules: execute the rules
  *
-* @param {object} driver:       selenium driver
-* @param {object} variables:    array of all the variables
-* @param {number} data:         all the parameters
-* @param {number} ruleName:     Name of the rule
+ * @param {object} page:         playwright page
+ * @param {object} variables:    array of all the variables
+ * @param {number} data:         all the parameters
+ * @param {number} ruleName:     Name of the rule
  * 
  */
 
@@ -468,7 +459,7 @@ async function _substring(variables, fullText, starting, length, variable) {
 * --------------------------------------------------------------------------- 
 */
 
-async function execRules(driver, variables, data, ruleName) {
+async function execRules(page, variables, data, ruleName) {
     const { getRulesByCode } = require("../../rule/rule.service");
     const { logfile } = require("./robot.library")
     const { Left, Right } = require("./string.library.js");
@@ -567,7 +558,7 @@ async function execRules(driver, variables, data, ruleName) {
                         } else {
                             //console.log (parameters)
                             await logfile(data.userID, 'Step', '--> (R' + item.position + ') ' + item.comment)
-                            let ret = await specialFunction(driver, variables, data, item.position, functionName, parameters[0], parameters[1], parameters[2], parameters[3])
+                            let ret = await specialFunction(page, variables, data, item.position, functionName, parameters[0], parameters[1], parameters[2], parameters[3])
                             if (item.ruleMessage.trim() != '') {
                                 expr = variables.evaluateVariable(item.ruleMessage)
                                 await logfile(data.userID, 'Info', '  >>> Message: ' + expr)
