@@ -2,8 +2,8 @@
  * @Author: Philippe Goffin 
  * @Email: artcomputer123@gmail.com
  * @Date: 2024-04-16
- * @Last Modified by: Philippe Goffin
- * @Last Modified time: 2024-04-30 09:33:32
+ * @Last Modified by: Someone
+ * @Last Modified time: 2025-05-27 07:56:58
  * @Description: Analyse: Stop (quit) the browser
  */
 
@@ -24,7 +24,7 @@ const AIStopBrowser = () => {
             } else {
                 consoleLog('AIStopBrowser.js/StopBrowser', 3, 'AIStopBrowser', trace)
                 const url = process.env.VUE_APP_MYSQL_API
-                let data = await fetch(url + 'Selenium/robot/stopbrowser')
+                let data = await fetch(url + 'playwright/robot/stopbrowser')
                 if (!data.ok) {
                     throw Error('Error during the execution of the stop browser')
                 }

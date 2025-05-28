@@ -6,8 +6,8 @@ module.exports = {
    * @Author: Philippe Goffin 
    * @Email: artcomputer123@gmail.com
    * @Date: 2024-04-09
- * @Last Modified by: Philippe GoffinPhilippe Goffin
-   * @Last Modified time: 2024-04-21 11:37:20
+ * @Last Modified by: Someone
+   * @Last Modified time: 2025-05-27 07:17:19
    * @Description: All the database services available for the API Selector
    */
 
@@ -222,7 +222,7 @@ module.exports = {
   // Import Selector
   // ---------------------------------------------------------------------------
   importSelector: (data) => {
-    const { importSelectors } = require("../Selenium/library/file.library")
+    const { importSelectors } = require("../playwright/library/file.library")
     //console.log ('Data: ', data)
 
     return new Promise((resolve, reject) => {

@@ -2,8 +2,8 @@
  * @Author: Philippe Goffin 
  * @Email: artcomputer123@gmail.com
  * @Date: 2024-04-16
- * @Last Modified by: 
- * @Last Modified time: 2024-05-16 10:19:43
+ * @Last Modified by: Someone
+ * @Last Modified time: 2025-05-27 07:57:07
  * @Description: Analyse a webpage
  */
 
@@ -24,7 +24,7 @@ const AIAnalyse = (projectID, subprojectID, userID, userName, link, targetlink, 
             } else {
                 consoleLog('AIAnalyse.js/analysePage', 3, 'targetlink: ' + targetlink + " - " + criteria, trace)
                 const url = process.env.VUE_APP_MYSQL_API
-                let data = await fetch(url + 'Selenium/robot/analyse', {
+                let data = await fetch(url + 'playwright/robot/analyse', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

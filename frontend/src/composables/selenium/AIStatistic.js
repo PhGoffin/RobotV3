@@ -2,8 +2,8 @@
  * @Author: Philippe Goffin 
  * @Email: artcomputer123@gmail.com
  * @Date: 2024-04-23
- * @Last Modified by: 
- * @Last Modified time: 2024-04-23 11:21:12
+ * @Last Modified by: Someone
+ * @Last Modified time: 2025-05-27 07:57:19
  * @Description: AI Statistics
  */
 
@@ -24,7 +24,7 @@ const AIStatistic = (projectID, subprojectID, userID, userName, selector, select
             } else {
                 consoleLog('AIStatistic.js/generateStatistic', 3, 'selector: ' + selector, trace)
                 const url = process.env.VUE_APP_MYSQL_API
-                let data = await fetch(url + 'Selenium/robot/statistic', {
+                let data = await fetch(url + 'playwright/robot/statistic', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 'projectID': projectID, 'subprojectID': subprojectID, 'userID': userID, 'userName': userName, 'selector': selector, 'selectorID': selectorID })

@@ -3,7 +3,7 @@
 /**
 * @author 	Philippe Goffin
 * @name   	browser utility
-* @property	class 
+* @property	javascript 
 *
 * @description 
 *  Playwright browser functions
@@ -12,68 +12,6 @@
 * V1.0 PGO	23/05/2025	Initial version   
 *
 */
-
-
-class BrowserUtility {
-    constructor() {
-        this.browser = 0
-        this.page = 0
-        this.headless = 0
-        this.browserName = 'chromeXX'
-        this.device = ''
-    }
-
-
-/**
- * @function
- *   getBrowser: get the browser instance
- *
- */
-getBrowser() {
-    return this.browser
-} 
-
-
-
-/**
- * @function
- *   getPage: get the page instance
- *
- */
-getPage() {
-    return this.page
-}  
-
-
-/**
- * @function
- *   getHeadless: get the headless instance
- *
- */
-getHeadless() {
-    return this.headless
-}  
-
-
-/**
- * @function
- *   getBrowserName: get the browserName instance
- *
- */
-getBrowserName() {
-    console.log ('getBrowserName', this.browserName)
-    return this.browserName
-} 
-
-
-/**
- * @function
- *   getDevice: get the device instance
- *
- */
-getDevice() {
-    return this.device
-} 
 
 
 
@@ -86,9 +24,7 @@ getDevice() {
  *  @param {number} data.userID        ID of the user* 
  * 
  */
-
-async startBrowser(data) {
-
+async function startBrowser(data) {
     const { chromium, firefox, webkit, devices } = require('playwright'); // chromium, firefox or webkit
     const { getReferenceByCode } = require("../../reference/reference.service.js");
 
@@ -184,11 +120,7 @@ async startBrowser(data) {
         page = await context.newPage();
     }
 
-    this.page = page
-    this.browser = browser
-    this.headless = headless
-    this.browserName = browserName
-    this.device = device
+
 
     ret = { success: 1, message: "Browser started!", page: page, browser: browser, headless: headless, browserName: browserName, device: device }
 
@@ -197,33 +129,11 @@ async startBrowser(data) {
 }
 
 
-    /**
-     * @function
-     *   quitBrowser: Quit the browser
-     *
-     */
-    async quitBrowser() {
-       
-        if (this.browser == 0) {
-            console.log('Browser is already closed!')
-            return { success: 1, message: 'Browser already stopped!' }
-        }
-
-        try {
-            await this.browser.close()
-            this.browser = 0 // just to free the memory
-            return { success: 1, message: 'Driver stopped!' }
-        } catch (err) {
-            console.log ('quitBrowser fatal error detected!')
-            //console.log(err.message)
-            return { success: 0, message: err.message }
-        }
-    }
 
 
 
-} // end class
+module.exports = {
+    startBrowser: startBrowser
+};
 
-// Export BrowserUtility
-module.exports = BrowserUtility;
 

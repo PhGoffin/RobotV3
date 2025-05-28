@@ -6,8 +6,8 @@ module.exports = {
    * @Author: Philippe Goffin 
    * @Email: artcomputer123@gmail.com
    * @Date: 2024-02-15
-   * @Last Modified by: 
-   * @Last Modified time: 2024-07-29 15:21:29
+   * @Last Modified by: Someone
+   * @Last Modified time: 2025-05-27 07:30:22
    * @Description: All the database services available for the API Pattern
    */
 
@@ -319,7 +319,7 @@ module.exports = {
   // Import Patterns
   // ---------------------------------------------------------------------------
   importPattern: (data) => {
-    const { importPatterns } = require("../Selenium/library/file.library")
+    const { importPatterns } = require("../playwright/library/file.library")
     let dataAPI = {}
     //console.log ('Data: ', data)
 

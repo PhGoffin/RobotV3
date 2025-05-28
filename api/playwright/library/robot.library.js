@@ -838,19 +838,6 @@ async function getAllElements_OBSOLETE(driver, variables, data, tag) {
         return { success: 0, message: 'tag is undefined in the function getAllElements!', stop: 1 }
     }
 
-    // Check if the driver is still alive
-    // PGO: 14/06/2024
-    // try {
-    //     let url = await driver.getCurrentUrl()
-    //     //variables.displayLog(2, 1, 'Url: ', url)
-    //     if (url == null) {
-    //         variables.displayLog(1, 1, 'Browser not responding(7)!')
-    //         return { success: 0, message: 'Browser not responding!', stop: 1 }
-    //     }
-    // } catch (err) {
-    //     variables.displayLog(1, 1, 'Browser not responding(8)!')
-    //     return { success: 0, message: 'Browser not responding!', stop: 1 }
-    // }
 
     // remove the first and the last character if it's a quote
     if (tag[0] == "'") {
@@ -907,6 +894,8 @@ async function getAllElements_OBSOLETE(driver, variables, data, tag) {
     }
 
     variables.displayLog(1, 1, '     @@@@@@@@@@@@@@@@@@@@@@@@===== tag: ' + tag)
+
+    
 
     //if (tag.substring(0, 2) == '//' || tag.substring(0, 3) == '(//') {
     if (tag.includes('//')) {
@@ -6090,7 +6079,7 @@ async function promptAI(page, data, variables, prompt, variableName) {
 
 // -----------------------------------------------------------
 // @function <TBR>
-// Execute a scenario to execute the test
+// executeScenario: Execute a scenario to execute the test
 //
 // @param {string} data.scenarioName  Name of the scenario
 // @param {number} data.scenarioID    ID of the scenario
@@ -6525,13 +6514,13 @@ async function executeScenario(data, page, tests) {
 
                 if (errorNb > 0) {
                     // if (stopTest) {
-                    ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Error', "Fatal error, stop the tests after " + errorNb + " error(s) and " + warningNb + " warning(s)!")
+                    ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Execute', "Fatal error, stop the tests after " + errorNb + " error(s) and " + warningNb + " warning(s)!")
                     ret = { success: 0, message: "Fatal error, stop the tests after " + errorNb + " error(s) and " + warningNb + " warning(s)!", context: context, stop: 1 }
                 } else if (!warningNb) {
-                    ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Info', "Test successfully executed!")
+                    ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Execute', "Test successfully executed!")
                     ret = { success: 1, message: "Test successfully executed!", context: '', stop: 0 }
                 } else {
-                    ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Warning', "Test successfully executed with " + warningNb + " warning(s)!")
+                    ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Execute', "Test successfully executed with " + warningNb + " warning(s)!")
                     ret = { success: 1, message: "Test successfully executed with " + warningNb + " warning(s)!", context: '', stop: 0 }
                 }
                 await robot.evaluateFunction(page, variables, 'listVariable', data, '', '')

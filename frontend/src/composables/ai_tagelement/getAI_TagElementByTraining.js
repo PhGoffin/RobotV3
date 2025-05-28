@@ -3,8 +3,8 @@
  * @Author: Philippe Goffin 
  * @Email: artcomputer123@gmail.com
  * @Date: 2024-04-20
- * @Last Modified by: Philippe Goffin
- * @Last Modified time: 2024-04-21 09:49:12
+ * @Last Modified by: Someone
+ * @Last Modified time: 2025-05-28 14:25:34
  * @Description: Get AI_TagElements by training
  */
 
@@ -21,7 +21,7 @@ const getAI_TagElementByTraining = (projectID, trainingID) => {
             if (process.env.VUE_APP_DATABASE == 'LOCAL') {
                 consoleLog('getAI_TagElementByTraining.js/getTheAI_TagElement', 3, 'LOCAL Database get AI_TagElements by training not implemented', trace)
             } else {
-                consoleLog('getAI_TagElementByTraining.js/getTheAI_TagElement', 3, 'projectID: ' + projectID + 'trainingID: ' + trainingID, trace)
+                consoleLog('getAI_TagElementByTraining.js/getTheAI_TagElement', 3, 'projectID: ' + projectID + ', trainingID: ' + trainingID, trace)
                 const url = process.env.VUE_APP_MYSQL_API
                 let data = await fetch(url + 'aitagelement/training', {
                     method: 'POST',

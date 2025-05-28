@@ -2,8 +2,8 @@
  * @Author: Philippe Goffin 
  * @Email: artcomputer123@gmail.com
  * @Date: 2024-04-19
- * @Last Modified by: 
- * @Last Modified time: 2024-05-14 11:49:32
+ * @Last Modified by: Someone
+ * @Last Modified time: 2025-05-27 07:57:34
  * @Description: Training analysis of a webpage
  */
 
@@ -24,7 +24,7 @@ const AITraining = (projectID, subprojectID, userID, userName, link, targetlink,
             } else {
                 consoleLog('AITraining.js/analysePage', 3, 'targetlink: ' + targetlink + " - " + criteria, trace)
                 const url = process.env.VUE_APP_MYSQL_API
-                let data = await fetch(url + 'Selenium/robot/training', {
+                let data = await fetch(url + 'playwright/robot/training', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 'projectID': projectID, 'subprojectID': subprojectID, 'userID': userID, 'userName': userName, 'link': link, 'targetlink': targetlink, 'selector': selector, 'selectorID': selectorID, 'criteria': criteria, 'expected': expected })

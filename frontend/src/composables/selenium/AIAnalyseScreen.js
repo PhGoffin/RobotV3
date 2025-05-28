@@ -2,8 +2,8 @@
  * @Author: Philippe Goffin 
  * @Email: artcomputer123@gmail.com
  * @Date: 2024-04-16
- * @Last Modified by: 
- * @Last Modified time: 2024-05-14 11:48:43
+ * @Last Modified by: Someone
+ * @Last Modified time: 2025-05-27 07:48:38
  * @Description: Analyse: Goto a webpage
  */
 
@@ -24,7 +24,7 @@ const AIAnalyseScreen = (projectID, subprojectID, userID, userName, link, target
             } else {
                 consoleLog('AIAnalyseScreen.js/analysePage', 3, 'targetlink: ' + targetlink + " - " + criteria, trace)
                 const url = process.env.VUE_APP_MYSQL_API
-                let data = await fetch(url + 'Selenium/robot/analysescreen', {
+                let data = await fetch(url + 'playwright/robot/analysescreen', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 'projectID': projectID, 'subprojectID': subprojectID, 'userID': userID, 'userName': userName, 'link': link, 'targetlink': targetlink, 'selector': selector, 'criteria': criteria, 'occurence': occurence })

@@ -80,6 +80,8 @@ export default {
         const pattern = ref([])
 
 
+        console.log ('aitagelement:', aitagelement.value)
+
         // ----------------------------------------------------------
         // Check if the tagelement is linked to an existing pattern
         // ----------------------------------------------------------

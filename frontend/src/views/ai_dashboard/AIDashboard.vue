@@ -99,21 +99,25 @@
                                     </div>
                                     <i class="fa-solid fa-bars" @click="handleScenario()" title="Go to Scenario"> </i>
                                 </div>
-                                <div class="input-container focus" v-if="linkID == 2">
-                                    <input type="text" name="comment" class="input disabled" style="width: 95%"
-                                        v-model="comment" disabled />
-                                    <label>Comment</label>
-                                    <span>Comment</span>
-                                </div>
 
                             </td>
                             <td>
-                                <div class="input-container" v-if="started == 0">
+                                <div class="input-container">
                                     <button @click="handelGotoScreen" class="init" title="Open the webpage">
                                         <i class="fa-solid fa-globe"></i>
                                         Goto screen</button>
                                 </div>
                             </td>
+
+                        </tr>
+
+                        <tr>
+                                <div class="input-container focus" v-if="linkID == 2">
+                                    <input type="text" name="comment" class="input disabled" style="width: 250%"
+                                        v-model="comment" disabled />
+                                    <label>Comment</label>
+                                    <span>Comment</span>
+                                </div>
 
                         </tr>
 
@@ -711,6 +715,7 @@ export default {
                         consoleLog('AIDashboard.vue/handleStopBrowser', 2, 'Error during the closure of the browser!', trace.value)
                         DisplayError(selenium.value.message, 'Alert')
                         execute.value = false
+                        started.value = false
                         return (0)
                     }
                 })

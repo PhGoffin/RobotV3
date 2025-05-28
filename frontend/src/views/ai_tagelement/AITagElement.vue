@@ -40,8 +40,8 @@
 
                 <div class="entities" height="150px">
                     <div v-if="error"> {{ error }}</div>
-                    <div class="layout">
-                        <AITagElementList :key="refresh" class="AITagElementList" :aitagelements="filteredData"
+                    <div class="layout"  v-if="refresh">
+                        <AITagElementList  class="AITagElementList" :aitagelements="filteredData"
                             :workspaceID="workspaceID" :workspace="workspace" :superUser="superUser"
                             :projectID="projectID" :userID="userID" :trace="trace"
                             @refreshtagelement="refreshTagElement" @selectrecord="selectRecord"
@@ -179,7 +179,9 @@ export default {
         const filteredData = computed(() => {
             consoleLog('AI_TagElement.vue/filteredData', 2, 'computed value', trace.value)
             if (aitagelements.value.length) {
-                refresh.value = !refresh.value
+                console.log ('Refresh', refresh.value)
+                // 28/05 - the following line crashes the refresh !!! no idea why
+                //refresh.value = !refresh.value
                 return aitagelements.value.filter((ar) => ('#' + ar.tagelementID).includes(filterValue.value) ||
                     ar.fullPath.toUpperCase().includes(filterValue.value.toUpperCase()))
             } else {

@@ -90,8 +90,8 @@ export default {
         // User asks to delete a aiselector
         // -------------------------------------------
         const handelDelete = () => {
-            consoleLog('AISelectorSingle.vue/handelDelete', 2, 'Emit event to delete a record', trace.value)
-            context.emit('handledelete', aiselector.value.aiselectorID)
+            consoleLog('AISelectorSingle.vue/handelDelete', 2, 'Emit event to delete a record with ID: '  + aiselectorID.value, trace.value)
+            context.emit('handledelete', aiselectorID.value)
         }
 
         // --------------------------------------------------------------------------

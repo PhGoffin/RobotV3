@@ -1,4 +1,6 @@
 const { time } = require('console');
+const BrowserMiddelware = require("../library/browser.library.js")
+const browserMiddelware = new BrowserMiddelware
 
 module.exports = {
 
@@ -7,18 +9,8 @@ module.exports = {
   * @Email: artcomputer123@gmail.com
   * @Date: 2025-05-08
   * @Last Modified by: Someone
-  * @Last Modified time: 2025-05-26 14:19:13
+  * @Last Modified time: 2025-05-28 12:06:49
   * @Description: All the Playwright services available for robot
-  */
-
-
-/*
-  * @Author: Philippe Goffin 
-  * @Email: artcomputer123@gmail.com
-  * @Date: 2024-01-27
- * @Last Modified by: Someone
-  * @Last Modified time: 2025-02-13 08:42:20
-  * @Description: All the Selenium services available for robot
   */
 
   // -----------------------------------------------------------
@@ -52,8 +44,8 @@ module.exports = {
 
       let ret = 0
       let dataResult = []
-      let value = ''
       let driver = 0
+      let timeout = 30 // 30 seconds by default      
 
       if (data.link == undefined || data.targetlink == undefined || data.selector == undefined || data.criteria == undefined) {
         variables.displayLog(1, 1, 'Invalid data!')
@@ -70,20 +62,38 @@ module.exports = {
       // ----------------------------------
       // Start the browser
       // ----------------------------------
-      const { Builder, By, Key, ChromeOptions } = require("selenium-webdriver")
-      const { startBrowser } = require("../browser/browser.service.js")
-      ret = await startBrowser(data.projectID)
-      variables.displayLog(1, 1, 'Ret: ', ret)
-      if (!ret.success) {
-        ret = ({ success: 0, message: "AI Robot: Error during the start of the browser" })
+      const { getReferenceByCode } = require("../../reference/reference.service.js");
+
+      let retBrowser = await browserMiddelware.startBrowser(data)
+      //console.log('RetBrowser', retBrowser)
+      if (!retBrowser.success) {
+        ret = { success: 0, message: "No way to start the browser: " + retBrowser.message }
         return resolve(ret);
       }
-      driver = ret.driver
 
+      let headless = browserMiddelware.getHeadless() // 0 by default (browser is visible)
+      let browserName = browserMiddelware.getBrowserName()
+      let device = browserMiddelware.getDevice()
+      let page = browserMiddelware.getPage()
+      let browser = browserMiddelware.getBrowser()
+
+
+      // Get the timeout (if any)
+      const dataAPI4 = { projectID: data.projectID, userID: data.userID, code: 'TimeOut' }
+      const reference4 = await getReferenceByCode(dataAPI4);
+      if (reference4.length) {
+        if (reference4[0].label != '<N/A>') {
+          timeout = reference4[0].label * 1
+        }
+      }
+      console.log('TimeOut: ' + timeout)
+      page.setDefaultTimeout(timeout * 1000)
+      await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "Timeout is set to " + timeout + " second(s)")
+      await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "Browser is: " + browserName + " - Headless: " + headless + " - Device is: " + device)
 
 
       // write the scenario name in the reference for the title in the logfile
-      ret = await robot.evaluateFunction(driver, variables, 'setReference', data, 'Scenario Name', 'AI Robot - Analysis', 'Name of the current scenario')
+      ret = await robot.evaluateFunction(page, variables, 'setReference', data, 'Scenario Name', 'AI Robot - Analysis', 'Name of the current scenario')
 
       // Process a scenario
       if (data.link == 2) {
@@ -105,15 +115,15 @@ module.exports = {
           } else {
             // Execute the scenario
             variables.setVariable("$error", "0");
-            ret = await robot.executeScenario(data, driver, tests)
-            if (!ret.success) await robot.evaluateFunction(driver, variables, 'setReference', data, 'Execution Status', 0, 'Error during the execuction')
-            else await robot.evaluateFunction(driver, variables, 'setReference', data, 'Execution Status', 1, 'Test OK')
-            await robot.evaluateFunction(driver, variables, 'listVariable', data, '', '')
+            ret = await robot.executeScenario(data, page, tests)
+            if (!ret.success) await robot.evaluateFunction(page, variables, 'setReference', data, 'Execution Status', 0, 'Error during the execuction')
+            else await robot.evaluateFunction(page, variables, 'setReference', data, 'Execution Status', 1, 'Test OK')
+            await robot.evaluateFunction(page, variables, 'listVariable', data, '', '')
           }
         }
       } else {
         // Process an URL
-        ret = await robot.evaluateFunction(driver, variables, 'url', data, data.targetlink)
+        ret = await robot.evaluateFunction(page, variables, 'url', data, data.targetlink)
       }
 
       if (ret.success) {
@@ -147,11 +157,7 @@ module.exports = {
 
     return new Promise(async (resolve, reject) => {
 
-      const { Builder, By, Key, ChromeOptions } = require("selenium-webdriver")
       const robot = require("../library/robot.library")
-      const { getBrowser, stopBrowser } = require("../browser/browser.service.js")
-
-
       const Variables = require('../library/variable.library');
       let variables = new Variables();
       let ret = 0
@@ -166,26 +172,19 @@ module.exports = {
       //console.log('Data: ', data)
 
       //----------------------------------
-      // Get information on the browser
+      // Get the playwright page
       // ----------------------------------
-      ret = await getBrowser()
-      if (ret.success) {
-        driver = ret.driver
-      } else {
-        variables.displayLog(1, 1, 'Analysis: Error during the get of the browser!')
-        ret = { success: 0, message: 'Analysis: Error during the start of the browser!' }
-        return resolve(ret);
-      }
+      let page = browserMiddelware.getPage()
 
       // ----------------------------------
       // Analyse the webpage
       // ----------------------------------
       let today = new Date()
       let date = variables.formatDate(today, 'dd/mm/year hh:mi')
-      ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Title', '**************************************')
-      ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Title', "AI Analysis: " + data.criteria)
-      ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Title', "Date: " + date)
-      ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Title', '**************************************')
+      ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', '**************************************')
+      ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "AI Analysis: " + data.criteria)
+      ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "Date: " + date)
+      ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', '**************************************')
 
 
       if (data.link == undefined || data.targetlink == undefined || data.selectorID == undefined || data.criteria == undefined) {
@@ -198,14 +197,14 @@ module.exports = {
 
 
       //await robot.evaluateFunction(driver, variables, 'pause', data, 10)
-      ret = await robot.evaluateFunction(driver, variables, 'detectGUI', data, data.selectorID, data.criteria, data.occurence, 10)
-      await robot.evaluateFunction(driver, variables, 'logfile', data, 'Analysis', ret.message)
+      ret = await robot.evaluateFunction(page, variables, 'detectGUI', data, data.selectorID, data.criteria, data.occurence, 10)
+      await robot.evaluateFunction(page, variables, 'logfile', data, 'Analysis', ret.message)
       if (ret.success) {
         let GUI = ret.GUI
         let patternID = ret.patternID
         variables.displayLog(1, 1, 'GUI: ', ret.GUI)
         // Get all the occurences
-        ret = await robot.evaluateFunction(driver, variables, 'getAllElements', data, '$GUI')
+        ret = await robot.evaluateFunction(page, variables, 'getAllElements', data, '$GUI')
         if (ret.success) {
           let elements = ret.element
           let size = elements.length
@@ -224,16 +223,16 @@ module.exports = {
           }
 
 
-          await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
-          await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', "Analysis OK")
-          await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+          await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
+          await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', "Analysis OK")
+          await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
           ret = { success: 1, message: "Analysis OK", data: dataResult }
           return resolve(ret);
         }
       } else {
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', ret.message)
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', ret.message)
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
         ret = { success: 0, message: ret.message }
         return resolve(ret);
       }
@@ -242,9 +241,10 @@ module.exports = {
       // close the browser
       // ----------------------------------
       // await stopBrowser()
-      // variables.displayLog(1, 1, 'Analysis: OK!')
-      // ret = { success: 1, message: 'Analysis: OK!', data: dataResult }
-      // return resolve(ret);
+      await browserMiddelware.quitBrowser()
+      variables.displayLog(1, 1, 'Analysis: OK!')
+      ret = { success: 1, message: 'Analysis: OK!', data: dataResult }
+      return resolve(ret);
 
     });
   },
@@ -268,7 +268,6 @@ module.exports = {
 
     return new Promise(async (resolve, reject) => {
 
-      const { Builder, By, Key, ChromeOptions } = require("selenium-webdriver")
       const robot = require("../library/robot.library")
       const { getPathByProject } = require("../../ai_path/path.service")
       const { getSelector } = require("../../ai_selector/selector.service")
@@ -277,7 +276,7 @@ module.exports = {
       const { createTraining, reorderTraining } = require("../../ai_training/training.service.js");
       const { createTagAttribute, reorderTagAttribute } = require("../../ai_tagattribute/tagattribute.service")
       const { createTagElement, reorderTagElement } = require("../../ai_tagelement/tagelement.service.js");
-      const { getBrowser, stopBrowser } = require("../browser/browser.service.js")
+      const { getReferenceByCode } = require("../../reference/reference.service.js");
 
 
       const Variables = require('../library/variable.library');
@@ -300,6 +299,16 @@ module.exports = {
       let tagelementID = 0
       let stop = 0 // stop all the process in cas of fatal error in the training analysis
 
+      //----------------------------------
+      // Get the playwright page
+      // ----------------------------------
+      let page = browserMiddelware.getPage()
+
+
+      let locators
+      let locators2
+      let xxlocators2
+
       const currentDate = new Date();
       const day = currentDate.getDate();
       const month = currentDate.getMonth() + 1; // Add 1 as months are zero-based
@@ -309,24 +318,10 @@ module.exports = {
       let today = ('0' + day).slice(-2) + '/' + ('0' + month).slice(-2) + '/' + year + ' ' + ('0' + hours).slice(-2) + ':' + ('0' + minutes).slice(-2)
 
 
-      //----------------------------------
-      // Get information on the browser
-      // ----------------------------------
-      ret = await getBrowser()
-      if (ret.success) {
-        driver = ret.driver
-        retTraining = { success: 1, message: "Training OK", data: dataResult }
-      } else {
-        variables.displayLog(1, 1, 'Training: Error during the get of the browser!')
-        ret = { success: 0, message: 'Training: Error during the start of the browser!' }
-        return resolve(ret);
-      }
-
-
-      ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Title', '**************************************')
-      ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Title', "AI Training: " + data.criteria)
-      ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Title', "Date: " + today)
-      ret = await robot.evaluateFunction(driver, variables, 'logfile', data, 'Title', '**************************************')
+      ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', '**************************************')
+      ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "AI Training: " + data.criteria)
+      ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "Date: " + today)
+      ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', '**************************************')
 
 
       // --------------------------------------
@@ -335,9 +330,9 @@ module.exports = {
       if (data.link == undefined || data.targetlink == undefined || data.selector == undefined || data.criteria == undefined) {
         variables.displayLog(1, 1, 'Invalid data!')
         variables.displayLog(1, 1, data)
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', "Training KO, Invalid data!")
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', "Training KO, Invalid data!")
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
         ret = { success: 0, message: "Invalid data!", data: dataResult }
         return resolve(ret);
       }
@@ -350,9 +345,9 @@ module.exports = {
       if (result1.length) {
         AIRoot = result1[0].paramValue
       } else {
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', "Training KO, AI Root not found!")
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', "Training KO, AI Root not found!")
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
         variables.displayLog(1, 1, 'AI Training - global parameter AI Root not found!')
         ret = { success: 0, message: "Cannot find the global parameter AI Root!", stop: 1 }
         return resolve(ret);
@@ -364,9 +359,9 @@ module.exports = {
       dataAPI = { projectID: data.projectID, active: 1 }
       const paths = await getPathByProject(dataAPI);
       if (!paths.length) {
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', "Training KO, No paths for the project!")
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', "Training KO, No paths for the project!")
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
         variables.displayLog(1, 1, 'AI Training - paths for the project not found!')
         ret = { success: 0, message: "Cannot find the paths for the project!", stop: 1 }
         return resolve(ret);
@@ -377,9 +372,9 @@ module.exports = {
       // ---------------------------------------
       const selector = await getSelector(data.selectorID)
       if (!selector.length) {
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', "Training KO, No selectors found!")
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', "Training KO, No selectors found!")
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
         variables.displayLog(1, 1, 'AI Training - selector not found!')
         ret = { success: 0, message: "Cannot find the selector!", stop: 1 }
         return resolve(ret);
@@ -392,9 +387,9 @@ module.exports = {
       dataAPI = { projectID: data.projectID, active: '%' }
       const attributes = await getAttributeByProject(dataAPI)
       if (!attributes.length) {
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', "Training KO, No attributes found!")
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', "Training KO, No attributes found!")
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
         variables.displayLog(1, 1, 'AI Training - attributes of the project not found!')
         ret = { success: 0, message: "Cannot find the attributes of the project!", stop: 1 }
         return resolve(ret)
@@ -412,24 +407,36 @@ module.exports = {
         let dataAPI = { subprojectID: data.subprojectID }
         const result3 = await reorderTraining(dataAPI);
         if (!result3.affectedRows) {
-          await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '*******************************************')
-          await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', "Training KO, Error reordering statistics!")
-          await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '*******************************************')
+          await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '*******************************************')
+          await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', "Training KO, Error reordering statistics!")
+          await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '*******************************************')
           variables.displayLog(1, 1, 'AI Training - Error during the reordered of Training!')
           variables.displayLog(1, 1, 'Error: ', result3)
           ret = { success: 0, message: "Error during the reordered of Training!", stop: 1 }
           return resolve(ret);
         }
       } else {
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '*****************************************')
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', "Training KO, Error inserting a statistic!")
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '*****************************************')
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '*****************************************')
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', "Training KO, Error inserting a statistic!")
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '*****************************************')
         variables.displayLog(1, 1, 'AI Training - Error during the insert in Training!')
         variables.displayLog(1, 1, 'Error: ', result3)
         ret = { success: 0, message: "Error during the insert in Training!", stop: 1 }
         return resolve(ret);
       }
 
+
+
+      let timeout = 0.1
+      dataAPI = { projectID: data.projectID, userID: data.userID, code: 'Training TimeOut' }
+      const reference4 = await getReferenceByCode(dataAPI);
+      if (reference4.length) {
+        if (reference4[0].label != '<N/A>') {
+          timeout = reference4[0].label * 1
+        }
+      }
+      console.log('Training TimeOut: ' + timeout)
+      page.setDefaultTimeout(timeout * 1000)
 
       // ----------------------------------
       // Prepare the training on the webpage
@@ -442,20 +449,25 @@ module.exports = {
       // In AI Root, replace <PARAM> by the criteria
       let AIRoot2 = AIRoot.replace(/<PARAM>/g, data.criteria)
       variables.displayLog(1, 1, 'AIRoot: ', AIRoot2)
+
       // ---------------------------------------------
       // Get all the occurences of the generic XPath 
       // ---------------------------------------------
-      ret = await robot.evaluateFunction(driver, variables, 'getAllElements', data, AIRoot2)
-      if (ret.success && ret.element.length > 0) {
-        let elements = ret.element
-        let size = elements.length
-        variables.displayLog(1, 1, size + ' element(s) detected with AIRoot')
+      locators = page.locator(AIRoot2)
+      let count = 0
+      try {
+        await locators.first().waitFor()
+        count = await locators.count()
+      } catch (err) {
+        count = 0
+      }
+      console.log('locators count: ' + count)
 
-        // Loop on each element detected
-        for (let elt = 0; elt < size && !stop; elt++) {
+      if (count > 0) {
+
+        for (let elt = 0; elt < count; elt++) {
 
           let elementOK = 0
-
           variables.displayLog(1, 1, "------------------------------------------------------")
           variables.displayLog(1, 1, 'Element : ', elt + 1)
           variables.displayLog(1, 1, "------------------------------------------------------")
@@ -464,7 +476,7 @@ module.exports = {
             // -----------------------
             // The criteria is an ID
             // -----------------------
-            value = await elements[elt].getAttribute('id');
+            value = await locators.nth(elt).getAttribute('id')
             if (value == undefined || value == '') value = '<EMPTY>'
             else value = '#' + value
             // Check if the ID is matching
@@ -479,18 +491,10 @@ module.exports = {
             // -----------------------
             // Extract the value
             // -----------------------
-            value = await elements[elt].getText();
-            if (value == undefined || value == '') {
-              // try with the value
-              value = await elements[elt].getAttribute('value');
-              if (value == '' || value == undefined) {
-                // Try with the attribute textContent
-                value = await elements[elt].getAttribute('textContent');
-                if (value == '' || value == undefined) {
-                  value = '<EMPTY>'
-                }
-              }
-            }
+            value = await locators.nth(elt).textContent()
+            if (value == undefined || value == '') value = await locators.nth(elt).evaluate(el => el.value);
+            if (value == undefined || value == '') value = '<EMPTY>'
+
             // --------------------------------------------------------
             // Check if the text is matching criteria (exact matching)
             // --------------------------------------------------------
@@ -501,13 +505,15 @@ module.exports = {
             } else {
               variables.displayLog(1, 1, 'Element ', elt + 1, ' no matching with the name: ' + data.criteria.trim().toUpperCase() + ' we got: ' + value.trim().toUpperCase().substring(0, 80))
             }
-          } // end of value
+
+          } // end of Value
 
           if (elementOK) {
             // ---------------------------------------
             // Check the element versus all the paths
             // ---------------------------------------
             for (let path = 0; path < paths.length && !stop; path++) {
+
               console.log('------ Path: ', paths[path].fullPath)
               // --------------------------------------------------
               // Check if the path is compliant for this selector
@@ -542,30 +548,28 @@ module.exports = {
                 xpath = xpath.trim()
                 // In xpath, replace <PARAM> by the criteria
                 let xpath2 = xpath.replace(/<PARAM>/g, data.criteria)
+                console.log('xpath2', xpath2)
 
-
-                ret = await robot.evaluateFunction(driver, variables, 'getAllElements', data, xpath2)
-                if (ret.success && ret.element.length) {
-                  //console.log ('@@@@@@@ Path: ', paths[path].fullPath)
-                  console.log('---> xpath return ' + ret.element.length + ' row(s)')
-                  // --------------------------------------------------------------------------
-                  // check if the tag of the path is compliant with the end tag of the selector
-                  // --------------------------------------------------------------------------
-                  let xpathelements = ret.element
-                  for (let xpelt = 0; xpelt < xpathelements.length; xpelt++) {
-
-                    let tag = await xpathelements[xpelt].getAttribute('tagName');
+                locators2 = page.locator(xpath2)
+                let count2 = 0
+                try {
+                  await locators2.first().waitFor()
+                  count2 = await locators2.count()
+                } catch (err) {
+                  let count2 = 0
+                }
+                console.log('locators2 count: ' + count2)
+                if (count2 > 0) {
+                  for (let xpelt = 0; xpelt < count2; xpelt++) {
+                    let tag = await locators2.nth(xpelt).evaluate(el => el.tagName);
+                    console.log('locators2 tag', tag)
                     let endtag = selector[0].endTag.toUpperCase().split("|");
+
                     if (endtag.includes(tag.toUpperCase())) {
+
                       // Extract the value to show to the user to help to decide for the best pattern
-                      let valueEnd = await xpathelements[xpelt].getText();
-                      if (valueEnd == undefined || valueEnd == '') {
-                        // try with the value
-                        valueEnd = await xpathelements[xpelt].getAttribute('value');
-                        if (valueEnd == '' || valueEnd == undefined) {
-                          valueEnd = '<EMPTY>'
-                        }
-                      }
+                      let valueEnd = await locators2.nth(xpelt).textContent()
+                      if (valueEnd == undefined || valueEnd == '') valueEnd = '<EMPTY>'
 
                       // -----------------------------------------------------------
                       // check if the valueEnd is compliant with the expected value
@@ -581,8 +585,9 @@ module.exports = {
                       } else {
                         // No expected value, display the result  
                         dataResult.push({ 'GUI': paths[path].fullPath, 'Occurence': elt + 1, 'Value': value + ' / ' + valueEnd, 'PatternID': paths[path].pathID })
-                        variables.displayLog(1, 1, '====> Xpath: ', paths[path].fullPath, xpathelements.length + ' record(s) detected - tag: ' + tag)
+                        variables.displayLog(1, 1, '====> Xpath: ', paths[path].fullPath, count2 + ' record(s) detected - tag: ' + tag)
                       }
+
                       // ----------------------------------------------------------------------------
                       // Extract all the required attributes 
                       // ----------------------------------------------------------------------------
@@ -613,8 +618,8 @@ module.exports = {
                           stop = 1 // Fatal error, stop all the processes
                         }
 
-                        let pathDepth = paths[path].fullPath.split("/");
                         // Loop on the levels
+                        let pathDepth = paths[path].fullPath.split("/");
                         //variables.displayLog(1, 1, '---> pathDepth: ' + pathDepth.length)
 
                         for (let level = 0; level < pathDepth.length && !stop; level++) {
@@ -634,13 +639,21 @@ module.exports = {
                             // In xxpath, replace <PARAM> by the criteria
                             let xxpath2 = xxpath.replace(/<PARAM>/g, data.criteria)
 
-                            ret = await robot.evaluateFunction(driver, variables, 'getAllElements', data, xxpath2)
-                            if (!ret.success || !ret.element.length) {
+                            locators2 = page.locator(xxpath2)
+                            let xxcount2 = 0
+                            try {
+                              await locators2.first().waitFor()
+                              xxcount2 = await locators2.count()
+                            } catch (err) {
+                              xxcount2 = 0
+                            }
+                            console.log('xxlocators2 count: ' + xxcount2)
+
+                            if (xxcount2 == 0) {
                               elementOK = 0
                               variables.displayLog(1, 1, 'No element found for the ancestor: ' + xxpath2)
                               retTraining = { success: 0, message: "No element found for the ancestor!" }
                             } else {
-                              xpathelements = ret.element
                               variables.displayLog(1, 1, 'Element found for the ancestor: ' + xxpath2)
                             }
                           } // end if level
@@ -654,38 +667,56 @@ module.exports = {
                           }
                           variables.displayLog(1, 1, '@@@@@@ PathValue: ', pathValue)
 
-                          let outerHTML = await xpathelements[xpelt].getAttribute('outerHTML');
-                          variables.displayLog(1, 1, 'outerHTML:' + outerHTML)
+                          //let outerHTML = await locators2.nth(xpelt).getAttribute('outerHTML')
+                          let outerHTML = await locators2.nth(xpelt).evaluate(el => el.outerHTML);
+                          //variables.displayLog(1, 1, 'outerHTML:' + outerHTML)
 
                           // Loop on the attributes of the project
+                          let valueAttr = undefined
                           for (let attr = 0; attr < attributes.length && !stop; attr++) {
 
                             if (attributes[attr].name == 'display') {
-                              valueAttr = await xpathelements[xpelt].isDisplayed()
+                              valueAttr = await locators2.nth(xpelt).isVisible()
                               if (valueAttr) valueAttr = 'true'
                               else valueAttr = 'false'
                             } else if (attributes[attr].name == 'disabled') {
-                              valueAttr = await xpathelements[xpelt].isEnabled()
+                              valueAttr = await locators2.nth(xpelt).isEnabled()
                               if (valueAttr) valueAttr = 'false'
                               else valueAttr = 'true'
+                            } else if (attributes[attr].name == 'tagName') {
+                              valueAttr = await locators2.nth(xpelt).evaluate(el => el.tagName);
+                            } else if (attributes[attr].name == 'type') {
+                              valueAttr = await locators2.nth(xpelt).evaluate(el => el.type);
+                            } else if (attributes[attr].name == 'id') {
+                              valueAttr = await locators2.nth(xpelt).evaluate(el => el.id);
+                            } else if (attributes[attr].name == 'name') {
+                              valueAttr = await locators2.nth(xpelt).evaluate(el => el.name);
+                            } else if (attributes[attr].name == 'class') {
+                              valueAttr = await locators2.nth(xpelt).evaluate(el => el.className);
+                              console.log('Class: ', valueAttr)
                             } else {
-                              valueAttr = await xpathelements[xpelt].getAttribute(attributes[attr].name);
-
-                              if (attributes[attr].name != 'textContent' && attributes[attr].name != 'tagName') {
-                                // check if the attribute is visible in the outerHTML
-                                if (outerHTML.includes(attributes[attr].name)) {
-                                  variables.displayLog(1, 2, 'Attribute: ' + attributes[attr].name + ' is included in the html')
-                                } else {
-                                  variables.displayLog(1, 2, 'Attribute: ' + attributes[attr].name + ' is NOT INCLUDED in the html')
-                                  valueAttr = undefined
-                                }
-                              }
+                              retTraining = { success: 0, message: "Inavlid attribute: " + attributes[attr].name }
+                              return resolve(retTraining);
                             }
+                            // } else {
+                            //   let valueAttr = await locators2.nth(xpelt).getAttribute(attributes[attr].name)
+                            //   if (attributes[attr].name != 'textContent' && attributes[attr].name != 'tagName') {
+                            //     // check if the attribute is visible in the outerHTML
+                            //     if (outerHTML.includes(attributes[attr].name)) {
+                            //       variables.displayLog(1, 2, 'Attribute: ' + attributes[attr].name + ' is included in the html')
+                            //     } else {
+                            //       variables.displayLog(1, 2, 'Attribute: ' + attributes[attr].name + ' is NOT INCLUDED in the html')
+                            //       valueAttr = undefined
+                            //     }
+                            //   }
+                            // }
+
                             //variables.displayLog(1, 1, 'Attribute before: ' + attributes[attr].name + ' = ' + valueAttr)
                             if (valueAttr == undefined || valueAttr == null || valueAttr == '' || valueAttr.length > 255) {
                               valueAttr = '??'
                             }
                             variables.displayLog(1, 1, 'Attribute: ' + attributes[attr].name + ' = ' + valueAttr)
+
                             // ------------------------------------
                             // Write attribute in Tag Attribute
                             // ------------------------------------
@@ -694,7 +725,7 @@ module.exports = {
                             const result6 = await createTagAttribute(dataAPI);
                             if (result6.affectedRows) {
                               let tagAttributeID = result6.insertId
-                              variables.displayLog(1, 1, '@@@@@@@ Tag Attribute ID: ', tagAttributeID)
+                              //variables.displayLog(1, 1, '@@@@@@@ Tag Attribute ID: ', tagAttributeID)
                               // Reorder the table
                               let dataAPI = { projectID: data.projectID }
                               const result7 = await reorderTagAttribute(dataAPI);
@@ -710,29 +741,26 @@ module.exports = {
                               stop = 1 // Fatal error, stop all the processes
                             }
 
-                            // } else {
-                            //   variables.displayLog(1, 1, 'No Attribute for ' + attributes[attr].name)
-                            // }
-                          } // end for attr
+                          } // End Loop on the attributes
                         } // end for level
                       } else {
                         console.log('----- 2')
-
-                      } // if elementOK
+                      } // end if elementOK
 
                     } else {
                       variables.displayLog(1, 1, '@@@@@@@ Path: ', paths[path].fullPath + ' Tag: ' + tag.toUpperCase() + ' not included in ' + selector[0].endTag.toUpperCase())
                     }
-
-                  } // end loop for xpathelements
+                  } // end loop for locators2
                 } else {
                   console.log(' no row detected for the path!')
                 }
-              }
+
+              } // end of elementOK
             } // end for path
-          }
-        } // end of elt loop
+          } // end elementOK
+        }
         ret = { success: 1, message: "Training OK", data: dataResult }
+
       } else {
         variables.displayLog(1, 1, ' Cannot detect element with AIRoot')
         variables.displayLog(1, 1, 'Ret:', ret)
@@ -747,14 +775,16 @@ module.exports = {
       variables.displayLog(1, 1, '-- End of The Training --')
       variables.displayLog(1, 1, '-------------------------')
       for (let i = 0; i < dataResult.length; i++) {
-        await robot.evaluateFunction(driver, variables, 'logfile', data, 'info', 'PathID: ' + dataResult[i].PatternID)
+        await robot.evaluateFunction(page, variables, 'logfile', data, 'info', 'PathID: ' + dataResult[i].PatternID)
       }
-      await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
-      await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', "Training OK!")
-      await robot.evaluateFunction(driver, variables, 'logfile', data, 'Message', '**************************************')
+      await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
+      await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', "Training OK!")
+      await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
 
       //await stopBrowser()
       variables.displayLog(1, 1, 'Training: OK!')
+      // To be updated
+      retTraining = { success: 0, message: "Fake Training OK!" }
       return resolve(retTraining);
 
     });
@@ -769,9 +799,9 @@ module.exports = {
 
     return new Promise(async (resolve, reject) => {
 
-      const { Builder, By, Key, ChromeOptions } = require("selenium-webdriver")
+      // const { Builder, By, Key, ChromeOptions } = require("selenium-webdriver")
       const robot = require("../library/robot.library")
-      const { stopBrowser } = require("../browser/browser.service.js")
+      // const { stopBrowser } = require("../browser/browser.service.js")
 
       const Variables = require('../library/variable.library');
       let variables = new Variables();
@@ -787,7 +817,9 @@ module.exports = {
       //----------------------------------
       // Quit the browser
       // ----------------------------------
-      ret = await stopBrowser()
+      //ret = await stopBrowser()
+      ret = await browserMiddelware.quitBrowser()
+
       variables.displayLog(2, 1, 'Ret: ', ret)
       if (!ret.success) {
         ret = ({ success: 0, message: "AI Robot: Error during the closure of the browser" })
@@ -813,7 +845,7 @@ module.exports = {
   AIStatistic: async (data) => {
 
     return new Promise(async (resolve, reject) => {
-      const { Builder, By, Key, ChromeOptions } = require("selenium-webdriver")
+      //const { Builder, By, Key, ChromeOptions } = require("selenium-webdriver")
       const robot = require("../library/robot.library")
       const { getParametersByCode } = require("../../parameter/parameter.service.js");
       const { createStatistic, getStatisticByPath, updateStatisticCondition, deleteAllStatistic } = require("../../ai_statistic/statistic.service.js");
@@ -1349,7 +1381,10 @@ module.exports = {
       const { getTestByScenario } = require("../../test/test.service.js");
       const { deleteLogfile } = require("../../logfile/logfile.service.js");
       const { getReferenceByCode } = require("../../reference/reference.service.js");
-      const { startBrowser } = require("../library/browser.library.js")
+      //const { startBrowser } = require("../library/browser.library.js")
+
+      // const BrowserMiddelware = require("../library/browser.library.js")
+      // const browserMiddelware = new BrowserMiddelware
 
       console.log('**********  Playwright ****************')
 
@@ -1403,21 +1438,22 @@ module.exports = {
 
       console.log('***** before test playwright')
 
-      let retBrowser = await startBrowser(data)
-      console.log('RetBrowser', retBrowser)
+      //----------------------------------
+      // launch the browser
+      // ----------------------------------      
+      let retBrowser = await browserMiddelware.startBrowser(data)
+      //console.log('RetBrowser', retBrowser)
       if (!retBrowser.success) {
         ret = { success: 0, message: "No way to start the browser: " + retBrowser.message }
         return resolve(ret);
       }
 
-      //----------------------------------
-      // launch the browser
-      // ----------------------------------
-      headless = retBrowser.headless // 0 by default (browser is visible)
-      browserName = retBrowser.browserName
-      let device = retBrowser.device
-      let page = retBrowser.page
-      let browser = retBrowser.browser
+
+      headless = browserMiddelware.getHeadless() // 0 by default (browser is visible)
+      browserName = browserMiddelware.getBrowserName()
+      let device = browserMiddelware.getDevice()
+      let page = browserMiddelware.getPage()
+      let browser = browserMiddelware.getBrowser()
 
 
       // Get the timeout (if any)
@@ -1455,14 +1491,16 @@ module.exports = {
         // Stop the test
         await robot.evaluateFunction(page, variables, 'pause', 3)
 
-        await browser.close();
+        //await browser.close();
+        await browserMiddelware.quitBrowser()
 
         return resolve(ret);
 
       } catch (err) {
         console.log('testScenario: catch error', err)
         //addConsoleHandler.log('testScenario: catch error')
-        await browser.close();
+        //await browser.close();
+        await browserMiddelware.quitBrowser()
         ret.success = 1
         ret.stop = 0
         return resolve(ret);
@@ -1496,7 +1534,10 @@ module.exports = {
       const { deleteLogfile } = require("../../logfile/logfile.service.js");
       const { getReferenceByCode } = require("../../reference/reference.service.js");
       //const { startBrowser, stopBrowser } = require("../browser/browser.service.js")
-      const { startBrowser } = require("../library/browser.library.js")
+      //const { startBrowser } = require("../library/browser.library.js")
+
+      // const BrowserMiddelware = require("../library/browser.library.js")
+      // const browserMiddelware = new BrowserMiddelware
 
 
 
@@ -1552,19 +1593,18 @@ module.exports = {
       //----------------------------------
       // launch the browser
       // ----------------------------------
-      let retBrowser = await startBrowser(data)
+      let retBrowser = await browserMiddelware.startBrowser(data)
       console.log('RetBrowser', retBrowser)
       if (!retBrowser.success) {
         ret = { success: 0, message: "No way to start the browser: " + retBrowser.message }
         return resolve(ret);
       }
 
-
-      headless = retBrowser.headless // 0 by default (browser is visible)
-      browserName = retBrowser.browserName
-      let device = retBrowser.device
-      let page = retBrowser.page
-      let browser = retBrowser.browser
+      headless = browserMiddelware.getHeadless() // 0 by default (browser is visible)
+      browserName = browserMiddelware.getBrowserName()
+      let device = browserMiddelware.getDevice()
+      let page = browserMiddelware.getPage()
+      let browser = browserMiddelware.getBrowser()
 
 
       // Get the timeout (if any)
@@ -1693,8 +1733,8 @@ module.exports = {
       // close the browser
       await robot.evaluateFunction(page, variables, 'pause', 3)
       //await stopBrowser()
-      await browser.close();
-
+      //await browser.close();
+      await browserMiddelware.quitBrowser()
       return resolve(ret);
 
     });
@@ -1727,7 +1767,9 @@ module.exports = {
       const { deleteLogfile } = require("../../logfile/logfile.service.js");
       const { getReferenceByCode } = require("../../reference/reference.service.js");
       //const { startBrowser, stopBrowser } = require("../browser/browser.service.js")
-      const { startBrowser } = require("../library/browser.library.js")
+      //const { startBrowser } = require("../library/browser.library.js")
+      // const BrowserMiddelware = require("../library/browser.library.js")
+      // const browserMiddelware = new BrowserMiddelware
 
 
       const Variables = require('../library/variable.library.js');
@@ -1782,7 +1824,7 @@ module.exports = {
       //----------------------------------
       // launch the browser
       // ----------------------------------
-      let retBrowser = await startBrowser(data)
+      let retBrowser = await browserMiddelware.startBrowser(data)
       console.log('RetBrowser', retBrowser)
       if (!retBrowser.success) {
         ret = { success: 0, message: "No way to start the browser: " + retBrowser.message }
@@ -1790,11 +1832,11 @@ module.exports = {
       }
 
 
-      headless = retBrowser.headless // 0 by default (browser is visible)
-      browserName = retBrowser.browserName
-      let device = retBrowser.device
-      let page = retBrowser.page
-      let browser = retBrowser.browser
+      headless = browserMiddelware.getHeadless() // 0 by default (browser is visible)
+      browserName = browserMiddelware.getBrowserName()
+      let device = browserMiddelware.getDevice()
+      let page = browserMiddelware.getPage()
+      let browser = browserMiddelware.getBrowser()
 
 
       // Get the timeout (if any)
@@ -1856,7 +1898,7 @@ module.exports = {
         storyErrorID = ''
         suiteErrorID = ''
       }
-   
+
       variables.startTime()
 
       let fatalError = 0
@@ -1986,7 +2028,9 @@ module.exports = {
         await robot.evaluateFunction(page, variables, 'setReference', data, 'Execution Status', 1, 'Test OK')
       } else await robot.evaluateFunction(page, variables, 'setReference', data, 'Execution Status', 0, 'Error during the execuction')
 
-      browser.close()   
+      //await browser.close();
+      await browserMiddelware.quitBrowser()
+
       return resolve(ret);
 
     });
@@ -2016,7 +2060,9 @@ module.exports = {
       const { getReferenceByCode } = require("../../reference/reference.service.js");
       const { deleteLogfile } = require("../../logfile/logfile.service.js");
       //const { startBrowser, stopBrowser } = require("../browser/browser.service.js")
-      const { startBrowser } = require("../library/browser.library.js")
+      //const { startBrowser } = require("../library/browser.library.js")
+      // const BrowserMiddelware = require("../library/browser.library.js")
+      // const browserMiddelware = new BrowserMiddelware
 
 
       const Variables = require('../library/variable.library.js');
@@ -2072,7 +2118,7 @@ module.exports = {
       //----------------------------------
       // launch the browser
       // ----------------------------------
-      let retBrowser = await startBrowser(data)
+      let retBrowser = await browserMiddelware.startBrowser(data)
       console.log('RetBrowser', retBrowser)
       if (!retBrowser.success) {
         ret = { success: 0, message: "No way to start the browser: " + retBrowser.message }
@@ -2080,11 +2126,11 @@ module.exports = {
       }
 
 
-      headless = retBrowser.headless // 0 by default (browser is visible)
-      browserName = retBrowser.browserName
-      let device = retBrowser.device
-      let page = retBrowser.page
-      let browser = retBrowser.browser
+      headless = browserMiddelware.getHeadless() // 0 by default (browser is visible)
+      browserName = browserMiddelware.getBrowserName()
+      let device = browserMiddelware.getDevice()
+      let page = browserMiddelware.getPage()
+      let browser = browserMiddelware.getBrowser()
 
 
       // Get the timeout (if any)
@@ -2281,7 +2327,8 @@ module.exports = {
         await robot.evaluateFunction(driver, variables, 'setReference', data, 'Execution Status', 1, 'Test OK')
       } else await robot.evaluateFunction(driver, variables, 'setReference', data, 'Execution Status', 0, 'Error during the execuction')
 
-      browser.close()   
+      //await browser.close();
+      await browserMiddelware.quitBrowser()
       return resolve(ret);
 
 

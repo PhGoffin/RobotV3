@@ -6,8 +6,8 @@ module.exports = {
  * @Author: Philippe Goffin 
  * @Email: artcomputer123@gmail.com
  * @Date: 2024-04-15
- * @Last Modified by: 
- * @Last Modified time: 2024-04-23 08:17:59
+ * @Last Modified by: Someone
+ * @Last Modified time: 2025-05-27 07:27:19
  * @Description: All the database services available for the API AI Attribute
  */
 
@@ -227,7 +227,7 @@ module.exports = {
   // Import Attribute
   // ---------------------------------------------------------------------------
   importAttribute: (data) => {
-    const { importAttributes } = require("../Selenium/library/file.library")
+    const { importAttributes } = require("../playwright/library/file.library")
     let dataAPI = {}
     //console.log ('Data: ', data)
 
