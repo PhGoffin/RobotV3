@@ -124,6 +124,7 @@ export default {
         // ----------------------------------------------------------------------------
         const iconsRole = ref([
             { class: 'fa-solid fa-book', text: 'Tester Manual', name: './documentation/TesterUserManual.pdf', role: 'Tester' },
+            { class: 'fa-solid fa-book', text: 'Flyer', name: './documentation/Flyer.pdf', role: 'Tester' },
             { class: 'fa-solid fa-book', text: 'Designer Manual', name: './documentation/DesignerUserManual.pdf', role: 'Designer' },
             { class: 'fa-solid fa-book', text: 'Function Manual', name: './documentation/FunctionsUserManual.pdf', role: 'Designer' },
             { class: 'fa-solid fa-book', text: 'Good Practices', name: './documentation/GoodPracticesForAutomatedTests.pdf', role: 'Designer' },
@@ -586,7 +587,8 @@ td.menu {
 
 .menu li {
     list-style-type: none;
-    background: white;
+    /* background: white; */
+    background: rgb(188, 229, 236);        
     padding: 30px;
     border-radius: 10px;
     box-shadow: 1px 3px 5px rgba(0, 0, 0, 0.1);

@@ -4,7 +4,10 @@
         <div class="form">
             <div class="banner">
                 <h3 class="title">{{ projectName }}<br>-- Robot --</h3>
-                <img src="../assets/RobotV2.png" alt="robot">
+                <img src="../assets/Robot-Tester.png" alt="robot" v-if="role=='Tester'">
+                <img src="../assets/Robot-Designer.png" alt="robot" v-if="role=='Designer'">
+                <img src="../assets/Robot-Admin.png" alt="robot" v-if="role=='Admin'">
+                <img src="../assets/Robot-Super.png" alt="robot" v-if="role=='Super'">
                 <Transition>
                     <p class="message" :class="styleMessage" v-if="errorMessage"> {{ errorMessage }}</p>
                 </Transition>            
