@@ -65,6 +65,13 @@
                         <span>Value</span>
                     </div>
 
+                    <div class="input-container focus" v-if="activeID != 2">
+                        <input type="text" name="original" class="input disabled" maxlength="80" title="Original value of the Tag Attribute"
+                            v-model="original" />
+                        <label>Original value</label>
+                        <span>Original value</span>
+                    </div>                    
+
                     <div class="input-container focus">
                         <select id="active" class="input" @focus="handleFocus($event)" @blur="handleBlur($event)"
                             @change="handleActiveChange()" v-model="selectedActive">
@@ -137,6 +144,7 @@ export default {
         const attributes = ref([])
         const selectedAttribute = ref({ id: attributeID.value })        
         const value = ref('')
+        const original = ref('')
         const pathValue = ref('')
         const pathID = ref(1)
         const paths = ref([])
@@ -197,6 +205,7 @@ export default {
                         attributeID.value = aiTagAttribute.value[0].attributeID
                         selectedAttribute.value = ({ id: attributeID.value })
                         value.value = aiTagAttribute.value[0].value
+                        original.value = aiTagAttribute.value[0].original
                         activeID.value = aiTagAttribute.value[0].active
                         selectedActive.value = ({ id: aiTagAttribute.value[0].active })
                         return (1)
@@ -342,7 +351,7 @@ export default {
 
         return {
             errorMessage, styleMessage, aiTagAttribute, projectName, projectID, userID, actives, activeID, selectedActive,
-            level, paths, pathID, selectedPath, attributeID, pathValue, value, attributes, selectedAttribute,
+            level, paths, pathID, selectedPath, attributeID, pathValue, value, original, attributes, selectedAttribute,
             handleCancel, handleSubmit, handleFocus, handleBlur, handleActiveChange, handlePathChange, handleAttributeChange
         }
 

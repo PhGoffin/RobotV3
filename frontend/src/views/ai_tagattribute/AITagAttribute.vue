@@ -29,13 +29,16 @@
                                 <div class="actions3">
                                     <div class="input-container focus" style="min-width: 30rem; max-width: 30rem">
                                         <input type="text" name="dataFilter" class="input" @focus="handleFocus($event)"
-                                            title="You can filter by the Name or =1 for actif, =0 for inactive" @blur="handleBlur($event)"
-                                            v-model="filterValue" />
+                                            title="type <ACTIVE> to filter only by active attributes"
+                                            @blur="handleBlur($event)" v-model="filterValue" />
                                         <label>Filter {{ filteredRows }}</label>
                                         <span>Filter {{ filteredRows }}</span>
                                     </div>
                                     <i class="fa-regular fa-trash-can" @click="filterValue = ''"
                                         title="Reset the filter"></i>
+
+                                    <i class="fa-regular fa-eye" @click="filterValue = '<ACTIVE>'"
+                                        title="Only active attributes"></i>
                                 </div>
                             </td>
                         </tr>
@@ -48,12 +51,12 @@
                 <div class="entities" height="150px">
                     <div v-if="error"> {{ error }}</div>
                     <div v-if="filteredData.length" class="layout">
-                        <AITagAttributeList :key="filterValue"  class="AITagAttributeList" :aitagattributes="filteredData"
-                            :workspaceID="workspaceID" :workspace="workspace" :superUser="superUser"
-                            :projectID="projectID" :userID="userID" :trace="trace"
+                        <AITagAttributeList :key="filterValue" class="AITagAttributeList"
+                            :aitagattributes="filteredData" :workspaceID="workspaceID" :workspace="workspace"
+                            :superUser="superUser" :projectID="projectID" :userID="userID" :trace="trace"
                             @refreshtagattribute="refreshTagAttribute" @selectrecord="selectRecord"
                             @handleinsert="handleInsert" @handlecopy="handleCopy" @handlemove="handleMove"
-                            @handledelete="handleDelete" />
+                            @handledelete="handleDelete" @handlerestore="handleRestore" />
                     </div>
                 </div>
                 <div class="input-group">
@@ -80,6 +83,7 @@ import reorderAI_TagAttribute from '../../composables/ai_tagattribute/reorderAI_
 import addAI_TagAttribute from '../../composables/ai_tagattribute/addAI_TagAttribute'
 import copyAI_TagAttribute from '../../composables/ai_tagattribute/copyAI_TagAttribute'
 import deleteAI_TagAttribute from '../../composables/ai_tagattribute/deleteAI_TagAttribute'
+import restoreAI_TagAttribute from '../../composables/ai_tagattribute/restoreAI_TagAttribute'
 
 
 import Spinner from '../../components/Spinner.vue'
@@ -121,7 +125,7 @@ export default {
         const aitagattributes = ref([])
         const displayInfo = ref('')
         const location = ref(props.location)
-        const filterValue = ref('')
+        const filterValue = ref('<ACTIVE>') // filter on active record only, by default
         const trainingID = ref(0)
 
 
@@ -163,7 +167,7 @@ export default {
             // split the location to find the keyword
             let data = location.value.split("=");
             trainingID.value = data[1]
-        } 
+        }
 
         const loadTagAttributeData = async () => {
             // -------------------------------------------
@@ -197,7 +201,10 @@ export default {
         const filteredData = computed(() => {
             consoleLog('AI_TagAttribute.vue/filteredData', 2, 'computed value', trace.value)
             if (aitagattributes.value.length) {
-                return aitagattributes.value.filter((ar) => ('#' + ar.tagattributeID).includes(filterValue.value) || ('=' + ar.active) == filterValue.value)
+                if (filterValue.value != '<ACTIVE>')
+                    return aitagattributes.value.filter((ar) => ('#' + ar.tagattributeID).includes(filterValue.value) || ('=' + ar.active) == filterValue.value)
+                else
+                    return aitagattributes.value.filter((ar) => !( ar.active == 0 || ar.value == '??') )
             } else {
                 filteredRows.value = ''
                 return aitagattributes.value
@@ -210,6 +217,8 @@ export default {
         const filteredRows = computed(() => {
             return '( ' + filteredData.value.length + ' )'
         })
+
+
 
 
         // --------------------------------------------------------------------------
@@ -505,12 +514,43 @@ export default {
         }
 
 
+        // --------------------------------------------------------------------------
+        // aitagattribute received a request to restore original record
+        // --------------------------------------------------------------------------
+        const handleRestore = async (tagattributeID) => {
+            let aitagattribute = []
+            let ret = 1
+
+            consoleLog('AI_TagAttribute.vue/handleRestore', 2, 'Restore Original Tag Attribute - tagattributeID: ' + tagattributeID, trace.value)
+            const { error, restoreTheAI_TagAttribute } = restoreAI_TagAttribute(tagattributeID)
+            await restoreTheAI_TagAttribute(aitagattribute, trace.value)
+                .then(function () {
+                    // check the status of the delete
+                    consoleLog('AI_TagAttribute.vue/handleRestore', 2, 'Tag Attribute restore status: ' + aitagattribute.value.success, trace.value)
+                    if (aitagattribute.value.success) {
+                        consoleLog('AI_TagAttribute.vue/handleRestore', 2, aitagattribute, trace.value)
+                        //return (1)
+                        ret = 1
+                    } else {
+                        consoleLog('AI_TagAttribute.vue/handleRestore', 2, 'Error during the restore of a Tag Attribute', trace.value)
+                        //return (0)
+                        ret = 0
+                    }
+                })
+
+            // Refresh the list
+            await loadTagAttributeData()
+            recordSelected.value = []
+            return ret
+        }
+
+
 
 
         return {
             errorMessage, styleMessage, aitagattributes, filteredData, filterValue, filteredRows, workspaceID, workspace,
             superUser, projectID, projectName, userID, displayInfo, trace, rowToInsert,
-            handleCancel, refreshTagAttribute, handleInsert, handleCopy, handleMove, handleDelete, selectRecord,
+            handleCancel, refreshTagAttribute, handleInsert, handleCopy, handleMove, handleDelete, handleRestore, selectRecord,
             handleFocus, handleBlur, handleRowToInsert
         }
 
@@ -908,6 +948,7 @@ button.action:hover {
 .actions3 i:hover {
     color: #777;
 }
+
 .entities {
     overflow: scroll;
     scrollbar-width: thin;

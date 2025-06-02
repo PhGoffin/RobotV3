@@ -7,7 +7,7 @@
                 <img src="../assets/RobotV2.png" alt="robot">
                 <Transition>
                     <p class="message" :class="styleMessage" v-if="errorMessage"> {{ errorMessage }}</p>
-                </Transition>
+                </Transition>            
             </div>
 
             <div class="entity">
@@ -48,6 +48,7 @@
                             <span>Subproject</span>
                         </div>
                     </div>
+
                 </div>
 
 
@@ -811,7 +812,8 @@ td.menu {
 
 .menu li {
     list-style-type: none;
-    background: white;
+    /* background: white; */
+    background: rgb(233, 240, 213);
     padding: 30px;
     border-radius: 10px;
     box-shadow: 1px 3px 5px rgba(0, 0, 0, 0.1);

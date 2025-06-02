@@ -1637,6 +1637,7 @@ td.value {
 
 img.smiley {
     position: absolute;
+    top: 1.5%;
     left: 60%;
     width: 80px;
     height: 80px;

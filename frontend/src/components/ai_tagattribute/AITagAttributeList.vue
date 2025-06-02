@@ -3,7 +3,7 @@
       <div v-for="aitagattribute in aitagattributes" :key="aitagattribute.tagattributeID">
         <AITagAttributeSingle :aitagattribute="aitagattribute" :superUser="superUser" :trace="trace" @refreshtagattribute="refreshTagAttribute"
           @selectrecord="selectRecord" @handleinsert="handleInsert" @handlecopy="handleCopy" @handlemove="handleMove"
-          @handledelete="handleDelete" />
+          @handledelete="handleDelete" @handlerestore="handleRestore" />
       </div>
     </div>
   </template>
@@ -74,8 +74,17 @@
         consoleLog('AITagAttributeList.vue/handleDelete', 2, 'Emit event to delete record(s)', trace.value)
         context.emit('handledelete', tagattributeID)
       }
-  
-      return { trace, aitagattributes, superUser, refreshTagAttribute, selectRecord, handleInsert, handleCopy, handleMove, handleDelete }
+
+      // --------------------------------------------------------------------------
+      // AITagAttributeSingle emits a request to delete todo(s)
+      // --------------------------------------------------------------------------
+      const handleRestore = (tagattributeID) => {
+        consoleLog('AITagAttributeList.vue/handleRestore', 2, 'Emit event to restore record(s)', trace.value)
+        context.emit('handlerestore', tagattributeID)
+      }
+      
+
+      return { trace, aitagattributes, superUser, refreshTagAttribute, selectRecord, handleInsert, handleCopy, handleMove, handleDelete, handleRestore }
   
     }
   }

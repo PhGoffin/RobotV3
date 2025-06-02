@@ -6,8 +6,8 @@ module.exports = {
   * @Author: Philippe Goffin 
   * @Email: artcomputer123@gmail.com
   * @Date: 2024-04-17
- * @Last Modified by: 
-  * @Last Modified time: 2024-07-03 06:49:48
+ * @Last Modified by: Someone
+  * @Last Modified time: 2025-06-02 09:43:15
   * @Description: All the database services available for the API AI TagAttribute
   */
 
@@ -20,8 +20,8 @@ module.exports = {
 
 
       mysql.query(
-        `insert into ai_tagattribute(projectID, trainingID, tagelementID, level, pathID, pathValue, attributeID, value, position, active) 
-                  values(?,?,?,?,?,?,?,?,?,?)`,
+        `insert into ai_tagattribute(projectID, trainingID, tagelementID, level, pathID, pathValue, attributeID, value, original, position, active) 
+                  values(?,?,?,?,?,?,?,?,?,?,?)`,
         [
           data.projectID,
           data.trainingID,
@@ -30,6 +30,7 @@ module.exports = {
           data.pathID,
           data.pathValue,
           data.attributeID,
+          data.value,
           data.value,
           data.position,
           data.active
@@ -50,7 +51,7 @@ module.exports = {
   getTagAttribute: (tagattributeID) => {
     return new Promise((resolve, reject) => {
       mysql.query(
-        `SELECT tagattributeID, projectID, trainingID, tagelementID, level, pathID, attributeID, pathValue, value, position, active 
+        `SELECT tagattributeID, projectID, trainingID, tagelementID, level, pathID, attributeID, pathValue, value, original, position, active 
          FROM ai_tagattribute WHERE tagattributeID=?`,
         [tagattributeID],
         (error, results, fields) => {
@@ -69,7 +70,7 @@ module.exports = {
   getTagAttributeByProject: (projectID) => {
     return new Promise((resolve, reject) => {
       mysql.query(
-        `SELECT T.tagattributeID, T.projectID, T.trainingID, T.tagelementID, T.level, T.pathID, P.fullPath, T.attributeID, A.name, T.pathValue, T.value, T.position, T.active 
+        `SELECT T.tagattributeID, T.projectID, T.trainingID, T.tagelementID, T.level, T.pathID, P.fullPath, T.attributeID, A.name, T.pathValue, T.value, T.original, T.position, T.active 
          FROM ai_tagattribute T
          LEFT JOIN ai_path P
          ON T.pathID = P.pathID 
@@ -103,7 +104,7 @@ module.exports = {
         //  AND T.trainingID=?
         //  LEFT JOIN ai_attribute A
         //  ON T.attributeID = A.attributeID`,
-        `SELECT T.tagattributeID, T.projectID, T.trainingID, T.tagelementID, T.level, T.pathID, P.fullPath, T.attributeID, A.name, T.pathValue, T.value, T.position, T.active 
+        `SELECT T.tagattributeID, T.projectID, T.trainingID, T.tagelementID, T.level, T.pathID, P.fullPath, T.attributeID, A.name, T.pathValue, T.value, T.original, T.position, T.active 
          FROM ai_tagattribute T, ai_path P, ai_attribute A
          WHERE T.pathID = P.pathID 
          AND T.projectID=?
@@ -130,7 +131,7 @@ module.exports = {
   getTagAttributeByTagelement: (data) => {
     return new Promise((resolve, reject) => {
       mysql.query(
-        `SELECT T.tagattributeID, T.projectID, T.trainingID, T.tagelementID, T.level, T.pathID, P.fullPath, T.attributeID, A.name, T.pathValue, T.value, T.position, T.active 
+        `SELECT T.tagattributeID, T.projectID, T.trainingID, T.tagelementID, T.level, T.pathID, P.fullPath, T.attributeID, A.name, T.pathValue, T.value, T.original, T.position, T.active 
          FROM ai_tagattribute T, ai_path P, ai_attribute A
          WHERE T.pathID = P.pathID 
          AND T.projectID=?
@@ -158,7 +159,7 @@ module.exports = {
     return new Promise((resolve, reject) => {
       mysql.query(
         `SELECT T.tagattributeID, T.projectID, T.trainingID, T.tagelementID, T.level, T.pathID, P.fullPath, T.attributeID, A.name, A.first, A.intermediate, A.last,
-         T.pathValue, T.value, T.position, T.active, S.selectorID
+         T.pathValue, T.value, T.original, T.position, T.active, S.selectorID
          FROM ai_tagattribute T, ai_path P, ai_attribute A, ai_training S
          WHERE T.pathID = P.pathID 
          AND T.projectID=?
@@ -269,8 +270,8 @@ module.exports = {
 
     return new Promise((resolve, reject) => {
       mysql.query(
-        `INSERT INTO ai_tagattribute ( projectID, trainingID, tagelementID, level, pathID, attributeID, pathValue, value, active, position )
-        SELECT t1.projectID, t1.trainingID, t1.tagelementID, t1.level, t1.pathID, t1.attributeID, t1.pathValue, t1.value, t1.active, ? 
+        `INSERT INTO ai_tagattribute ( projectID, trainingID, tagelementID, level, pathID, attributeID, pathValue, value, original, active, position )
+        SELECT t1.projectID, t1.trainingID, t1.tagelementID, t1.level, t1.pathID, t1.attributeID, t1.pathValue, t1.value, t1.original, t1.active, ? 
         FROM ai_tagattribute t1 WHERE t1.tagattributeID = ?`,
         [
           data.position,
@@ -297,6 +298,26 @@ module.exports = {
         `UPDATE ai_tagattribute SET value = ?  WHERE tagattributeID = ?`,
         [ '??',
           tagattributeID],
+        (error, results) => {
+          //console.log ('Error: ', error)
+          //console.log ('Results: ', results)
+          if (error) {
+            return reject(error);
+          }
+          return resolve(results);
+        }
+      );
+    });
+  },
+
+  // --------------------------------------------------------------------------------------------
+  // Restore original TagAttribute 
+  // --------------------------------------------------------------------------------------------
+  restoreTagAttribute: (tagattributeID) => {
+    return new Promise((resolve, reject) => {
+      mysql.query(
+        `UPDATE ai_tagattribute SET value = original  WHERE tagattributeID = ?`,
+        [ tagattributeID],
         (error, results) => {
           //console.log ('Error: ', error)
           //console.log ('Results: ', results)

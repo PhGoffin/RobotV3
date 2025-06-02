@@ -9,7 +9,7 @@ module.exports = {
   * @Email: artcomputer123@gmail.com
   * @Date: 2025-05-08
   * @Last Modified by: Someone
-  * @Last Modified time: 2025-05-28 12:06:49
+  * @Last Modified time: 2025-06-02 13:50:00
   * @Description: All the Playwright services available for robot
   */
 
@@ -759,7 +759,7 @@ module.exports = {
             } // end for path
           } // end elementOK
         }
-        ret = { success: 1, message: "Training OK", data: dataResult }
+        retTraining = { success: 1, message: "Training OK", data: dataResult }
 
       } else {
         variables.displayLog(1, 1, ' Cannot detect element with AIRoot')
@@ -783,8 +783,6 @@ module.exports = {
 
       //await stopBrowser()
       variables.displayLog(1, 1, 'Training: OK!')
-      // To be updated
-      retTraining = { success: 0, message: "Fake Training OK!" }
       return resolve(retTraining);
 
     });

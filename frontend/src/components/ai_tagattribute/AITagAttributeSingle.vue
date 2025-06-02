@@ -19,6 +19,11 @@
                     </div>
 
                     <div class="icons" v-if="actionAllowed">
+                        <i class="fa-regular fa-eye" @click="handleRestore" title="Restore original attribute"></i>
+                    </div>
+
+
+                    <div class="icons" v-if="actionAllowed">
                         <router-link :to="{ name: 'AITagAttributeEdit', params: { id: tagattributeID } }">
                             <i class="fa-regular fa-pen-to-square" title="Edit the attribute"></i>
                         </router-link>
@@ -56,6 +61,8 @@
             <p> ID: {{ aitagattribute.tagattributeID }} </p>
             <p>Path: ({{ aitagattribute.pathID }}) - {{ aitagattribute.fullPath }}</p>
             <p>Path value: {{ aitagattribute.pathValue }}</p>
+            <p>Original value: {{ aitagattribute.original }}</p>
+            <p>Current value: {{ aitagattribute.value }}</p>
             <p>Active: {{ aitagattribute.active }}</p>
         </div>
 
@@ -89,7 +96,15 @@ export default {
 
 
         // -------------------------------------------
-        // User asks to delete a aitagattribute
+        // User asks to restore original aitagattribute 
+        // -------------------------------------------
+        const handleRestore = () => {
+            consoleLog('AITagAttributeSingle.vue/handleRestore', 2, 'Emit event to restore original record', trace.value)
+            context.emit('handlerestore', aitagattribute.value.tagattributeID)
+        }
+
+        // -------------------------------------------
+        // User asks to delete a aitagattribute (replace the attribute by ??)
         // -------------------------------------------
         const handelDelete = () => {
             consoleLog('AITagAttributeSingle.vue/handelDelete', 2, 'Emit event to delete a record', trace.value)
@@ -161,7 +176,7 @@ export default {
         return {
             showDetails, tagattributeID, aitagattribute, actionAllowed, showPopup, recordSelected,
             handleConfirmation, handelDelete, handleCancelDelete, handleConfirmDelete,
-            handleSelect, handleInsert, handleCopy, handleMove
+            handleSelect, handleInsert, handleCopy, handleMove, handleRestore
         }
     }
 }

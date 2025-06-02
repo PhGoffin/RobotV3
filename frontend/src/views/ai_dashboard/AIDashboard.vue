@@ -113,7 +113,7 @@
 
                         <tr>
                                 <div class="input-container focus" v-if="linkID == 2">
-                                    <input type="text" name="comment" class="input disabled" style="width: 250%"
+                                    <input type="text" name="comment" class="input disabled" style="width: 200%"
                                         v-model="comment" disabled />
                                     <label>Comment</label>
                                     <span>Comment</span>
@@ -125,17 +125,17 @@
                         <tr>
                             <td>
                                 <div class="input-container" v-if="started == 1">
-                                    <button @click="handelAnalyse" class="init"
-                                        title="Analyse the page with the existing patterns">
-                                        <i class="fa-solid fa-binoculars"></i>
-                                        Analysis</button>
+                                    <button @click="handelAnalyseTraining" class="init" title="Train the Robot">
+                                        <i class="fa-solid fa-chalkboard-user"></i>
+                                        Training(1)</button>
                                 </div>
                             </td>
                             <td>
                                 <div class="input-container" v-if="started == 1">
-                                    <button @click="handelAnalyseTraining" class="init" title="Train the Robot">
-                                        <i class="fa-solid fa-chalkboard-user"></i>
-                                        Training(1)</button>
+                                    <button @click="handelAnalyse" class="init"
+                                        title="Analyse the page with the existing patterns">
+                                        <i class="fa-solid fa-binoculars"></i>
+                                        Analysis</button>
                                 </div>
                             </td>
                         </tr>

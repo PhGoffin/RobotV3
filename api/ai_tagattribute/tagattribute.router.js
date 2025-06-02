@@ -18,6 +18,7 @@ const {
   getTagAttributeByPath,
   updateTagAttribute,
   deleteTagAttribute,
+  restoreTagAttribute,
   deleteByTagElement,
   deleteAllTagAttribute,
   updateTagAttributePosition, 
@@ -37,6 +38,7 @@ router.post("/path", getTagAttributeByPath);
 router.post("/create", createTagAttribute);
 router.post("/update", updateTagAttribute);
 router.get("/delete/:id", deleteTagAttribute);
+router.get("/restore/:id", restoreTagAttribute);
 router.post("/fulldelete", deleteAllTagAttribute);
 router.post("/deletebytagelement", deleteByTagElement);
 router.post("/position", updateTagAttributePosition); 

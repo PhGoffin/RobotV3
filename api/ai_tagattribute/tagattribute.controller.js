@@ -18,6 +18,7 @@ const {
   getTagAttributeByPath,  
   updateTagAttribute,
   deleteTagAttribute,
+  restoreTagAttribute,
   deleteByTagElement,
   deleteAllTagAttribute,
   updateTagAttributePosition,
@@ -214,6 +215,24 @@ module.exports = {
       message: "TagAttribute disabled successfully",
     });
   }),
+
+  // ---------------------------------------------------------------------------
+  // Restore an original TagAttribute
+  // ---------------------------------------------------------------------------
+  restoreTagAttribute: catchAsync(async (req, res, next) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    const id = req.params.id;
+    // Call the database services to delete a TagAttribute
+    const result = await restoreTagAttribute(id);
+    if (!result.affectedRows) {
+      throw new AppError('Failed to restore record!', 200);
+    }
+    return res.json({
+      success: 1,
+      message: "TagAttribute restored successfully",
+    });
+  }),
+
 
   // ---------------------------------------------------------------------------
   // Delete all TagAttributes of a project
