@@ -9,7 +9,7 @@ module.exports = {
   * @Email: artcomputer123@gmail.com
   * @Date: 2025-05-08
   * @Last Modified by: Someone
-  * @Last Modified time: 2025-06-02 13:50:00
+  * @Last Modified time: 2025-06-03 09:40:40
   * @Description: All the Playwright services available for robot
   */
 
@@ -195,40 +195,40 @@ module.exports = {
       }
 
 
-
-      //await robot.evaluateFunction(driver, variables, 'pause', data, 10)
       ret = await robot.evaluateFunction(page, variables, 'detectGUI', data, data.selectorID, data.criteria, data.occurence, 10)
       await robot.evaluateFunction(page, variables, 'logfile', data, 'Analysis', ret.message)
       if (ret.success) {
         let GUI = ret.GUI
         let patternID = ret.patternID
         variables.displayLog(1, 1, 'GUI: ', ret.GUI)
+
         // Get all the occurences
-        ret = await robot.evaluateFunction(page, variables, 'getAllElements', data, '$GUI')
-        if (ret.success) {
-          let elements = ret.element
-          let size = elements.length
-          for (let elt = 0; elt < size; elt++) {
-            // Extract the value of the cell
-            value = await elements[elt].getText();
-            if (value == undefined || value == '') {
-              // try with the value
-              value = await elements[elt].getAttribute('value');
-              if (value == '' || value == undefined) {
-                value = '<EMPTY>'
-              }
-            }
+        await page.locator(GUI).last().waitFor()
+        let locators = await page.locator(GUI)
+        const count = await locators.count()
+        console.log ('Count: ' + count)
+        if (count > 0) {
+          for (i = 0; i < count; i++) {
+            value = locators.nth(i).textContent()
+            if (value == undefined || value == '') value = await locators.nth(i).evaluate(el => el.value);
+            if (value == undefined || value == '') value = '<EMPTY>'
             if (value.length > 80) value = value.substring(0, 80) + '....'
-            dataResult.push({ 'GUI': GUI, 'Occurence': elt + 1, 'Value': value, 'PatternID': patternID })
+            dataResult.push({ 'GUI': GUI, 'Occurence': i + 1, 'Value': value, 'PatternID': patternID })
           }
-
-
           await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
           await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', "Analysis OK")
           await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
           ret = { success: 1, message: "Analysis OK", data: dataResult }
           return resolve(ret);
+
+        } else {
+          await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
+          await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', "No record returned by the detectGUI()")
+          await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
+          ret = { success: 0, message: ret.message }
+          return resolve(ret);
         }
+
       } else {
         await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
         await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', ret.message)
@@ -237,14 +237,47 @@ module.exports = {
         return resolve(ret);
       }
 
+      // ret = await robot.evaluateFunction(page, variables, 'getAllElements', data, '$GUI')
+      // if (ret.success) {
+      // let elements = ret.element
+      // let size = elements.length
+      // for (let elt = 0; elt < size; elt++) {
+      //   // Extract the value of the cell
+      //   value = await elements[elt].getText();
+      //   if (value == undefined || value == '') {
+      //     // try with the value
+      //     value = await elements[elt].getAttribute('value');
+      //     if (value == '' || value == undefined) {
+      //       value = '<EMPTY>'
+      //     }
+      //   }
+      //   if (value.length > 80) value = value.substring(0, 80) + '....'
+      //   dataResult.push({ 'GUI': GUI, 'Occurence': elt + 1, 'Value': value, 'PatternID': patternID })
+      // }
+
+
+      // await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
+      // await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', "Analysis OK")
+      // await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
+      // ret = { success: 1, message: "Analysis OK", data: dataResult }
+      // return resolve(ret);
+      // }
+      // } else {
+      //   await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
+      //   await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', ret.message)
+      //   await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
+      //   ret = { success: 0, message: ret.message }
+      //   return resolve(ret);
+      // }
+
       // ----------------------------------
       // close the browser
       // ----------------------------------
       // await stopBrowser()
-      await browserMiddelware.quitBrowser()
-      variables.displayLog(1, 1, 'Analysis: OK!')
-      ret = { success: 1, message: 'Analysis: OK!', data: dataResult }
-      return resolve(ret);
+      // await browserMiddelware.quitBrowser()
+      // variables.displayLog(1, 1, 'Analysis: OK!')
+      // ret = { success: 1, message: 'Analysis: OK!', data: dataResult }
+      // return resolve(ret);
 
     });
   },
@@ -456,7 +489,7 @@ module.exports = {
       locators = page.locator(AIRoot2)
       let count = 0
       try {
-        await locators.first().waitFor()
+        await locators.last().waitFor()
         count = await locators.count()
       } catch (err) {
         count = 0
@@ -553,7 +586,7 @@ module.exports = {
                 locators2 = page.locator(xpath2)
                 let count2 = 0
                 try {
-                  await locators2.first().waitFor()
+                  await locators2.last().waitFor()
                   count2 = await locators2.count()
                 } catch (err) {
                   let count2 = 0
@@ -642,7 +675,7 @@ module.exports = {
                             locators2 = page.locator(xxpath2)
                             let xxcount2 = 0
                             try {
-                              await locators2.first().waitFor()
+                              await locators2.last().waitFor()
                               xxcount2 = await locators2.count()
                             } catch (err) {
                               xxcount2 = 0

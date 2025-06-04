@@ -33,7 +33,7 @@ const AIStatistic = (projectID, subprojectID, userID, userName, selector, select
                     throw Error('Error during the execution of the AI Statistics')
                 }
                 selenium.value = await data.json()
-                consoleLog('AIStatistic.js/generateStatistic', 3, '--- seleniumAIStatistic ---' + url + 'Selenium/robot/statistic', trace)
+                consoleLog('AIStatistic.js/generateStatistic', 3, '--- seleniumAIStatistic ---' + url + 'playwright/robot/statistic', trace)
                 consoleLog('AIStatistic.js/generateStatistic', 3, selenium.value, trace)
 
             }

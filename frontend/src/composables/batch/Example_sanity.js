@@ -2,8 +2,8 @@
  * @Author: Philippe Goffin 
  * @Email: artcomputer123@gmail.com
  * @Date: 2024-08-02
- * @Last Modified by: 
- * @Last Modified time: 2024-08-02 11:33:24
+ * @Last Modified by: Someone
+ * @Last Modified time: 2025-06-04 14:49:33
  * @Description: Execute a sanity batch
  */
 
@@ -16,7 +16,7 @@ const execAPI = async (dataAPI) => {
 
         const url = 'http://localhost:5000/api/'
         //let scenarioID = 101
-        let data = await fetch(url + 'Selenium/robot/test', {
+        let data = await fetch(url + 'playwright/robot/test', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 'scenarioName': dataAPI.scenarioName, 'scenarioID': dataAPI.scenarioID, 'subprojectID': dataAPI.subprojectID, 'projectID': dataAPI.projectID, 'userID': dataAPI.userID })

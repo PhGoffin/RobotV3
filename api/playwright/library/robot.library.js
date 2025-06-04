@@ -2,11 +2,12 @@ const { By, Key, Keys, until } = require("selenium-webdriver")
 let frameCount = 0;
 let frameID = 0;
 let Frames = [];
+let frameLocator = null;
 
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function <TbR>
+* @function <OK>
 *   switchToDefaultContent: Switch to the default window
 *
 * @param {object} page:         playwright page
@@ -366,116 +367,6 @@ async function stopTest(variables, condition, message) {
 
 /**
  * ---------------------------------------------------------------------------- 
- * @function <TbR> ???? To be tested
- *  detectFrame: Recursive function to detect all the frames
- * 
- * @param {object} page:       playwright page
- * @param {object} variables:  array of all the variables
- * @param {string} framePath:  Level of the frame
- */
-
-async function detectFrame(page, variables, framePath) {
-
-    let mySeparator = "-";
-    let frameOk = 1;
-    frameOk = await checkFrame(page, variables, framePath);
-    if (frameOk == 1) {
-        if (framePath != undefined && framePath != "") {
-            Frames[frameID] = '0' + framePath;
-            let myId = frameID + 1;
-            frameID = frameID + 1;
-        }
-
-        try {
-            let tag = "//*[self::frame or self::iframe]"
-            await page.locator(tag).first().waitFor()
-            const count = await page.locator(tag).count()
-            if (count >= 0) {
-                frameCount = frameCount + count;
-                let nextLevel = 1;
-                for (let i = 0; i < count; i++) {
-                    let frameNextPath = framePath + mySeparator + nextLevel;
-                    nextLevel = nextLevel + 1;
-                    await detectFrame(page, variables, frameNextPath);
-                }
-                return 1;
-            } else {
-            }
-
-        } catch (err) {
-            return 0
-        }
-
-
-        // try {
-        //     return driver.findElements(By.xpath("//*[self::frame or self::iframe]")).then(async (result) => {
-        //         //return element.all(by.xpath("//*[self::frame or self::iframe]")).then(async (result) => {
-        //         //console.log ('debug: detectFrame', result)
-        //         if (result.length >= 0) {
-        //             frameCount = frameCount + result.length;
-        //             let nextLevel = 1;
-        //             for (var item in result) {
-        //                 let frameNextPath = framePath + mySeparator + nextLevel;
-        //                 nextLevel = nextLevel + 1;
-        //                 await detectFrame(page, variables, frameNextPath);
-        //             }
-        //             return 1;
-        //         } else {
-        //         }
-        //     });
-        // } catch (err) {
-        //     return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
-        // }
-
-    } else {
-        throw new Error("Internal error during detection of the frame (" + framePath + ")!");
-    }
-}
-
-
-/**
- * ---------------------------------------------------------------------------- 
- * @function <OK>
- *  checkFrame: Check if a frame path exists
- * 
- * @param {object} page:        playwright page
- * @param {object} variables:   array of all the variables
- * @param {string} framePath:   Level of the frame
- */
-
-async function checkFrame(page, variables, framePath) {
-
-    let frameLocator
-
-    if (framePath == undefined || framePath == "") {
-        return { success: 99, message: 'No frame!', stop: 0 }
-    }
-
-    let myArray = framePath.split("-")
-
-    let frameId = -100
-    let frameOK = 0
-    for (var item in myArray) {
-        try {
-            frameId = myArray[item] - 1
-            if (frameId >= 0) {
-                frameLocator = page.frameLocator(frameId)
-                await frameLocator.waitFor();
-                frameOK = 1
-                return { success: 1, message: 'checkFrame OK!', frame: frameLocator, stop: 0 }
-            }
-        }
-        catch (err) {
-            return { success: 99, message: 'checkFrame KO!', stop: 0 }
-        }
-    }  // end for
-
-    return frameOK
-}
-
-
-/**
- * ---------------------------------------------------------------------------- 
  * @function <OK>
  *  SwitchToBrowserTab:  Switch to the last tab of the browser
  *
@@ -541,7 +432,7 @@ async function closeBrowserTab(page) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function <TbR>
+* @function <OK>
 *  switchToFrame:  Switch to an Frame
 * 
 * @param {object} page:         playwright page
@@ -552,55 +443,32 @@ async function closeBrowserTab(page) {
 */
 async function switchToFrame(page, variables, data, frameId) {
     variables.displayLog(1, 1, "switchToFrame (" + frameId + ")");
-    let myFrame
-    let frameLocator = ""
 
-    // Check if the driver is still alive
-    // PGO: 14/06/2024
-    // try {
-    //     let url = await driver.getCurrentUrl()
-    //     variables.displayLog(2, 1, 'Url: ', url)
-    //     if (url == null) {
-    //         variables.displayLog(1, 1, 'Browser not responding (3)!')
-    //         return { success: 0, message: 'Browser not responding!', stop: 1 }
-    //     }
-    // } catch (err) {
-    //     variables.displayLog(1, 1, 'Browser not responding (4)!')
-    //     return { success: 0, message: 'Browser not responding!', stop: 1 }
-    // }
-
-    try {
-        if (frameId == 0) {
-            let ret = await switchToDefaultContent(page, variables)
-            if (!ret.success) return { success: 0, message: ret.message, stop: 1 }
-            myFrame = "0";
-            variables.setVariable("$myFrame", myFrame);
-            data.frameID = 0
-            //await driver.sleep(3000);
-        } else {
-            data.frameID = frameId
-            frameId = frameId - 1;
-            frameLocator = page.frameLocator(frameId)
-            await frameLocator.waitFor();
-            frameLocator.switchTo();
-            myFrame = myFrame + "-" + (frameId + 1);
-            variables.setVariable("$myFrame", myFrame);
-            //await driver.sleep(3000);
-        }
-        return { success: 1, message: 'switchToFrame OK', stop: 0 }
-
+    frameId--
+    const allframes = await page.frames()
+    if (frameId > allframes.length) {
+        return { success: 0, message: "switchToFrame: Invalid frameID (max frame(s) is " + allframes.length + "!", stop: 1 }
     }
-    catch (err) {
-        variables.displayLog(1, 1, "switchToFrame() - Error in the frame: " + frameId + " " + err.name + ': ' + err.message);
-        variables.setVariable("$Error", "1");
-        return { success: 0, message: "switchToFrame() - Error in the frame: " + frameId + " " + err.name + ': ' + err.message, stop: 1 }
+
+    if (frameId < 0) {
+        return { success: 0, message: "switchToFrame: Invalid frameID (must be greater than zero)!", stop: 1 }
     }
-};
+
+
+    let url = allframes[frameId].url()
+    if (url != undefined && url != '') {
+        frameID = frameId
+        frameLocator = await page.frame({ url: url })
+        return { success: 1, message: "switchToFrame: " + (frameID + 1) + " OK!", stop: 0 }
+    } else {
+        return { success: 0, message: "switchToFrame: Invalid URL for the frameID " + (frameID + 1) + "!", stop: 1 }
+    }
+}
 
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function <TBR>
+* @function <OK>
 *   getElement: get html element by xpath or by css
 *
 * @param {object} page:         playwright page
@@ -609,430 +477,118 @@ async function switchToFrame(page, variables, data, frameId) {
 * @param {string} tag:          tag of the element
 *
 */
-async function getElement_OBSOLETE(driver, variables, data, tag) {
+async function getElement(page, variables, data, tag, functionName) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
-    const { Left } = require("./string.library.js");
+    const { getReferenceByCode } = require("../../reference/reference.service.js");
 
-    let element
-    let ret
+
+    // Get the current timeout (default is 30 seconds)
+    let dataAPI
+    let timeout = 30
+    dataAPI = { projectID: data.projectID, userID: data.userID, code: 'TimeOut' }
+    const ref = await getReferenceByCode(dataAPI);
+    if (ref.length) {
+        if (ref[0].label != '<N/A>') {
+            timeout = ref[0].label * 1
+        }
+    }
 
     if (tag == undefined) {
-        return { success: 0, message: 'tag is undefined in the function getElement!', stop: 1 }
+        console.log(functionName + "::getElement: tag cannot be empty!")
+        return { success: 0, message: functionName + "::getElement: tag cannot be empty!", stop: 1 }
     }
-
-
-    // remove the first and the last character if it's a quote
-    if (tag[0] == "'") {
-        tag = tag.substring(1, tag.length)
-    }
-    if (tag.substring(tag.length, tag.length - 1) == "'") {
-        tag = tag.substring(0, tag.length - 1)
-    }
-
-    // protect original quote
-    tag = tag.replace(/'/g, "&apos;")
-
-    // Check if the tag is not on the dictionary
-    if (tag[0] == '@') {
-        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+    else if (tag == '$GUI') tag = await variables.getVariable('$GUI')
+    else if (tag[0] == '@') {
+        // Search the tag in the dictionary
+        dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
         const result = await getDictionaryByCode(dataAPI);
         if (result.length) {
             tag = result[0].label
-            //console.log (link)
+            tag = variables.evaluateVariable(tag)
+            //console.log("Find the code: " + tag)
         } else {
-            variables.displayLog(1, 1, 'Data: ' + tag + ' not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
+            console.log(functionName + "::getElement: Cannot find the code: " + tag)
+            variables.displayLog(1, 1, 'Data not found in the dictionary!')
+            return { success: 0, message: functionName + "::getElement: Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
         }
     }
 
-    //tag = tag.replace('$$-1', 'BEFORELAST');
-    tag = tag.replace('$$', 'LAST');
-
-    tag = variables.evaluateVariable(tag)
-    tag = tag.replace(/''/g, "'");
-    tag = tag.replace(/&apos;/g, "'")
-
     // remove the first and the last character if it's a quote
+
     if (tag[0] == "'") {
         tag = tag.substring(1, tag.length)
     }
     if (tag.substring(tag.length, tag.length - 1) == "'") {
         tag = tag.substring(0, tag.length - 1)
-    }
+    }   
 
-    // detect the position (if any)
-    // s.substr(a, b) is the same as s.substring(a, a+b)
-    let myOccurence = 1;
-    if (tag[0] == "(" && tag[1] != '/') {
-        // tag contains the occurence (in the case of non unique identifier)
-        let j = tag.indexOf(')', 0);
-        myOccurence = tag.substring(1, j);
-        //myOccurence--;
-        if (Left(myOccurence, 4) != 'LAST') {
-            if (Left(myOccurence, 1) == '$') {
-                myOccurence = variables.evaluateVariable(myOccurence);
-            }
-            //myOccurence--;
-        } else {
-            myOccurence = myOccurence.replace('LAST', 'last()');
+
+    //console.log('******* ' + tag + '*********')
+
+    // Check if the element is found in the current page
+    try {
+        // If frame was previously detected, reuse it
+        if (frameID == 0) {
+            console.log('Try without frames')
+            await page.locator(tag).last().waitFor()
+            console.log('Element detected!')
+            return { success: 1, message: functionName + "::getElement: element detected on the page", page: page, tag: tag, frameID: 0, stop: 0 }
         }
-        tag = tag.substring(j + 1);
-    }
+        else {
+            console.log('try with the previous frame: ' + frameID)
+            await frameLocator.locator(tag).last().waitFor()
+            console.log('Element detected!')
+            return { success: 1, message: functionName + "::getElement: element detected on the page", page: frameLocator, tag: tag, frameID: (frameID + 1), stop: 0 }
+        }
 
-    variables.displayLog(1, 1, 'getElement - tag: ' + tag)
 
+    } catch (err) {
 
-    //if (tag.substring(0, 2) == '//' || tag.substring(0, 3) == '(//') {
-    if (tag.includes('//')) {
+        // The page is already refreshed, we don't need to wait so long
+        page.setDefaultTimeout(1000) // 1 second
 
-        /* -------------------------------------------------------------
-        * Detection by xpath
-        * -------------------------------------------------------------
-        */
-        //variables.displayLog(1, 1, '---- getElement: xpath detected in ' + tag)
-        tag = '(' + tag + ')[' + myOccurence + ']'
-        try {
-            variables.displayLog(1, 2, 'getElement try Xpath no frame, with tag: ' + tag)
-            element = await driver.findElement(By.xpath(tag))
-            variables.displayLog(1, 2, 'getElement found the element by xpath')
-            return { success: 1, element: element, message: 'getElement by Xpath OK', stop: 0 }
-        } catch (err) {
-            // Element is not detected, try to see if there is frame or iframe on the page
-            Frames = [];
-            frameID = 0;
-            await detectFrame(driver, variables, "");
-            frameID = 0;
-            if (Frames[0] == undefined) { // No frame, stop the process
-                variables.displayLog(1, 2, 'getElement by xpath not detected (no frame)')
-                return { success: 0, message: 'getElement by xpath not detected (no frame)', stop: 0 }
-            }
-
+        if (frameID > 0) {
             try {
-                // first, try with the default Content
-                //await driver.switchTo().defaultContent();
-                variables.displayLog(1, 2, 'Not detected, try with the frames: ', Frames)
-                let ret = await switchToDefaultContent(driver, variables)
-                if (!ret.success) return { success: 0, message: ret.message, stop: 1 }
-
-                element = await driver.findElement(By.xpath(tag))
-                //element = elements[myOccurence]
-                variables.displayLog(1, 2, 'getElement by Xpath OK (defautlt Content)')
-                return { success: 1, element: element, message: 'getElement by Xpath OK (defautlt Content)', stop: 0 }
-            } catch (err) {
-                // Loop through all the frames to check the existence of the element
-                while ((element == undefined || element.length == 0)) {
-                    let frameOk = await checkFrame(driver, variables, Frames[frameID]);
-                    if (!frameOk) checkAgain = 0
-                    else {
-                        try {
-                            variables.displayLog(1, 2, 'getElement try Xpath with frame: ' + Frames[frameID])
-                            element = await driver.findElement(By.xpath(tag))
-                            //element = elements[myOccurence]
-                            variables.displayLog(1, 2, 'getElement by Xpath (with frame: ' + Frames[frameID] + ') OK')
-                            return { success: 1, element: element, message: 'getElement by Xpath (with frame) OK', stop: 0 }
-                        } catch (err) {
-                            frameID = frameID + 1;
-                            if (frameID >= Frames.length) {
-                                // We try all the different frames, we have to stop and be resigned :)
-                                variables.displayLog(1, 2, 'getElement by xpath not detected (with frame)')
-                                //variables.displayLog(2, 2, tag)
-                                return { success: 0, message: 'getElement by xpath not detected (with frame)', stop: 0 }
-                            }
-                        }
-                    }
-                }
-            }
-
-            ret = { success: 0, message: err.message, stop: 0 }
-            return ret
-        }
-    } else {
-
-        /* -------------------------------------------------------------
-        * Detection by CSS
-        * -------------------------------------------------------------
-        */
-        try {
-            variables.displayLog(1, 1, '----- get element found the element by CSS')
-            element = await driver.findElement(By.css(tag))
-            return { success: 1, element: element, message: 'getElement by CSS OK', stop: 0 }
-        } catch (err) {
-            //console.log('debug: in the catch 1', err.message)
-            if (err.message.indexOf('target window already closed') >= 0) {
-                //console.log ('fatal error: ' + err.message + '**')
-                ret = { success: 0, message: 'Browser not responding!', stop: 1 }
-                return ret
-            }
-            // Element is not detected, try to see if there is frame or iframe on the page
-            Frames = [];
-            frameID = 0;
-            //console.log('debug: in the catch 1.1')
-            await detectFrame(driver, variables, "");
-            //console.log('debug: in the catch 1.2')
-            frameID = 0;
-            if (Frames[0] == '0' || Frames[0] == undefined) { // No frame, stop the process
-                variables.displayLog(1, 1, '----- getElement by CSS not detected (no frame)')
-                return { success: 0, message: 'getElement by CSS not detected (no frame)', stop: 0 }
-            }
-
-            try {
-                // first, try with the default Content
-                //await driver.switchTo().defaultContent();
-                let ret = await switchToDefaultContent(driver, variables)
-                if (!ret.success) return { success: 0, message: ret.message, stop: 1 }
-                element = await driver.findElement(By.css(tag))
-                variables.displayLog(1, 1, '----- getElement by CSS OK (defautlt Content)')
-                return { success: 1, element: element, message: 'getElement by CSS OK (defautlt Content)', stop: 0 }
-            } catch (err) {
-                //console.log('debug: in the catch 2')
-                // Loop through all the frames to check the existence of the element
-                while ((element == undefined || element.length == 0)) {
-                    let frameOk = await checkFrame(driver, variables, Frames[frameID]);
-                    if (!frameOk) checkAgain = 0
-                    else {
-                        try {
-                            element = await driver.findElement(By.css(tag))
-                            variables.displayLog(1, 1, '----- getElement by CSS (with frame) OK')
-                            return { success: 1, element: element, message: 'getElement by CSS (with frame) OK', stop: 0 }
-                        } catch (err) {
-                            frameID = frameID + 1;
-                            if (frameID >= Frames.length) {
-                                // We try all the different frames, we have to stop and be resigned :)
-                                variables.displayLog(1, 1, '----- getElement by CSS not detected (with frame)')
-                                return { success: 0, message: 'getElement by CSS not detected (with frame)', stop: 0 }
-                            }
-                        }
-                    }
-                }
-            }
-
-            ret = { success: 0, message: err.message, stop: 0 }
-            return ret
-        }
-
-
-    }
-}
-
-
-
-/**
-* ---------------------------------------------------------------------------- 
-* @function <TBR>
-*   getAllElements: get html element by xpath or by css
-*
-* @param {object} page:         playwright page
-* @param {object} variables:  array of all the variables
-* @param {object} data:       all the parameters
-* @param {string} tag:        tag of the element
-*
-*/
-async function getAllElements_OBSOLETE(driver, variables, data, tag) {
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
-    const { Left } = require("./string.library.js");
-
-    let elements
-    let ret
-
-    if (tag == undefined) {
-        return { success: 0, message: 'tag is undefined in the function getAllElements!', stop: 1 }
-    }
-
-
-    // remove the first and the last character if it's a quote
-    if (tag[0] == "'") {
-        tag = tag.substring(1, tag.length)
-    }
-    if (tag.substring(tag.length, tag.length - 1) == "'") {
-        tag = tag.substring(0, tag.length - 1)
-    }
-
-    // protect original quote
-    tag = tag.replace(/'/g, "&apos;")
-
-
-    // Check if the tag is not on the dictionary
-    if (tag[0] == '@') {
-        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tag = result[0].label
-            //console.log (link)
-        } else {
-            variables.displayLog(1, 1, 'Data: ' + tag + ' not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-        }
-    }
-
-    tag = variables.evaluateVariable(tag)
-    tag = tag.replace(/''/g, "'");
-    tag = tag.replace(/&apos;/g, "'")
-
-    // remove the first and the last character if it's a quote
-    if (tag[0] == "'") {
-        tag = tag.substring(1, tag.length)
-    }
-    if (tag.substring(tag.length, tag.length - 1) == "'") {
-        tag = tag.substring(0, tag.length - 1)
-    }
-
-    // detect the position (if any)
-    // s.substr(a, b) is the same as s.substring(a, a+b)
-    let myOccurence = 1;
-    if (tag[0] == "(" && tag[1] != '/') {
-        // tag contains the occurence (in the case of non unique identifier)
-        let j = tag.indexOf(')', 0);
-        myOccurence = tag.substring(1, j);
-        //myOccurence--;
-        if (Left(myOccurence, 2) != '$$') { // $$ means the last element
-            if (Left(myOccurence, 1) == '$') {
-                myOccurence = variables.evaluateVariable(myOccurence);
-            }
-            //myOccurence--;
-        }
-        tag = tag.substring(j + 1);
-    }
-
-    variables.displayLog(1, 1, '     @@@@@@@@@@@@@@@@@@@@@@@@===== tag: ' + tag)
-
-
-
-    //if (tag.substring(0, 2) == '//' || tag.substring(0, 3) == '(//') {
-    if (tag.includes('//')) {
-
-
-        /* -------------------------------------------------------------
-        * Detection by xpath
-        * -------------------------------------------------------------
-        */
-        //variables.displayLog(1, 1, '---- getElement: xpath detected in ' + tag)
-        //variables.displayLog(1, 1, '     ===== Tag - occurence: ', myOccurence, ' tag: ', tag)
-        try {
-            elements = await driver.findElements(By.xpath(tag))
-            if (elements.length > 0) {
-                return { success: 1, element: elements, message: 'getAllElements by Xpath OK', stop: 0 }
-            } else {
-                // Provoke an error, to execute the catch
-                throw new Error('No element detected!')
-            }
-
-
-        } catch (err) {
-            // Element is not detected, try to see if there is frame or iframe on the page
-            Frames = [];
-            frameID = 0;
-            await detectFrame(driver, variables, "");
-            frameID = 0;
-            if (Frames[0] == '0' || Frames[0] == undefined) { // No frame, stop the process
-                variables.displayLog(1, 1, '----- getAllElements by xpath not detected (no frame)')
-                return { success: 0, message: 'getAllElements by xpath not detected (no frame)', stop: 0 }
-            }
-            //variables.displayLog(1, 2, '----- getAllElements: ' + Frames.length + ' frame(s) detected')
-
-            try {
-                // first, try with the default Content
-                //await driver.switchTo().defaultContent();
-                let ret = await switchToDefaultContent(driver, variables)
-                if (!ret.success) return { success: 0, message: ret.message, stop: 1 }
-
-                elements = await driver.findElements(By.xpath(tag))
-                //variables.displayLog(1, 2, '----- getAllElements by Xpath OK (defautlt Content): ' + elements.length + ' record(s)')
-                if (elements.length > 0) {
-                    return { success: 1, element: elements, message: 'getAllElements by Xpath OK (defautlt Content)', stop: 0 }
-                } else {
-                    // Provoke an error, to execute the catch
-                    throw new Error('No element detected!')
-                }
+                // Retry without frame
+                await page.locator(tag).last().waitFor()
+                frameID = 0
+                frameLocator = null
+                page.setDefaultTimeout(timeout * 1000)
+                return { success: 1, message: functionName + "::getElement: element detected without frame: ", page: page, tag: tag, frameID: 0, stop: 0 }
 
             } catch (err) {
-                // Loop through all the frames to check the existence of the element
-                let checkAgain = 1
-                while ((elements == undefined || elements.length == 0) && checkAgain) {
-                    frameID++
-                    let frameOk = await checkFrame(driver, variables, Frames[frameID - 1]);
-                    //variables.displayLog(1, 2, '----- getAllElements:  check with the frame: ' + frameID + ' value: ' + Frames[frameID - 1] + ' status: ' + frameOk)
-                    if (!frameOk) checkAgain = 0
-                    else {
-                        try {
-                            elements = await driver.findElements(By.xpath(tag))
-                            //variables.displayLog(1, 2, '----- getAllElements by Xpath (with frame) OK: ' + elements.length + ' record(s)')
-                            //return { success: 1, element: elements, message: 'getAllElements by Xpath (with frame) OK', stop: 0 }
-                            if (elements.length > 0) {
-                                return { success: 1, element: elements, message: 'getAllElements by Xpath (with frame: ' + frameID + ') OK', stop: 0 }
-                            } else {
-                                // Provoke an error, to execute the catch
-                                //variables.displayLog(1, 2, '----- getAllElements by Xpath (with frame: ' + frameID + ') No element detected!')
-                                throw new Error('No element detected!')
-                            }
-                        } catch (err) {
-                            frameID = frameID + 1;
-                            if (frameID >= Frames.length) {
-                                // We try all the different frames, we have to stop and be resigned :)
-                                //variables.displayLog(1, 2, '----- getAllElements by xpath not detected (with frame)')
-                                return { success: 0, message: 'getAllElements by xpath not detected (with frame)', stop: 0 }
-                            }
-                        }
-                    }
+                // nothing to do
+            }
+        }
+
+        // Check all the frames (if any)
+        const allframes = await page.frames()
+        let frame
+        console.log('Try with frame(s) - Number of frames:', allframes.length)
+        for (i = 0; i < allframes.length; i++) {
+            let url = allframes[i].url()
+            if (url != undefined && url != '') {
+                //console.log('url: ' + i, url)
+                // Try with this frame
+                frame = await page.frame({ url: url })
+                try {
+                    await frame.locator(tag).last().waitFor()
+                    console.log('find in the frame: ' + i)
+                    frameID = i
+                    frameLocator = frame
+                    // restore the original timeout
+                    page.setDefaultTimeout(timeout * 1000)
+                    return { success: 1, message: functionName + "::getElement: element detected on the frame: " + i, page: frame, tag: tag, frameID: (frameID + 1), stop: 0 }
+
+                } catch (err) {
+                    //console.log('not found for the frame: ' + i)
                 }
             }
-
-            ret = { success: 0, message: err.message, stop: 0 }
-            return ret
         }
-    } else {
-        /* -------------------------------------------------------------
-        * Detection by CSS
-        * -------------------------------------------------------------
-        */
-        try {
-            elements = await driver.findElements(By.css(tag))
-            variables.displayLog(1, 1, '----- getAllElements found the element by CSS: ' + elements.length + ' record(s)')
-            return { success: 1, element: elements, message: 'getAllElements by CSS OK', stop: 0 }
-        } catch (err) {
-            // Element is not detected, try to see if there is frame or iframe on the page
-            Frames = [];
-            frameID = 0;
-            await detectFrame(driver, variables, "");
-            frameID = 0;
-            if (Frames[0] == '0' || Frames[0] == undefined) { // No frame, stop the process
-                variables.displayLog(1, 1, '----- getAllElements by CSS not detected (no frame)')
-                return { success: 0, message: 'getAllElements by CSS not detected (no frame)', stop: 0 }
-            }
-
-            try {
-                // first, try with the default Content
-                //await driver.switchTo().defaultContent();
-                let ret = await switchToDefaultContent(driver, variables)
-                if (!ret.success) return { success: 0, message: ret.message, stop: 1 }
-
-                elements = await driver.findElements(By.css(tag))
-                variables.displayLog(1, 1, '----- getAllElements by CSS OK (defautlt Content): ' + elements.length + ' record(s)')
-                return { success: 1, element: elements, message: 'getAllElements by CSS OK (defautlt Content)', stop: 0 }
-            } catch (err) {
-                // Loop through all the frames to check the existence of the element
-                while ((elements == undefined || elements.length == 0)) {
-                    let frameOk = await checkFrame(driver, variables, Frames[frameID]);
-                    if (!frameOk) checkAgain = 0
-                    else {
-                        try {
-                            elements = await driver.findElements(By.css(tag))
-                            variables.displayLog(1, 1, '----- getAllElements by CSS (with frame) OK: ' + elements.length + ' record(s)')
-                            return { success: 1, element: elements, message: 'getAllElements by CSS (with frame) OK', stop: 0 }
-                        } catch (err) {
-                            frameID = frameID + 1;
-                            if (frameID >= Frames.length) {
-                                // We try all the different frames, we have to stop and be resigned :)
-                                variables.displayLog(1, 1, '----- getAllElements by CSS not detected (with frame)')
-                                return { success: 0, message: 'getAllElements by CSS not detected (with frame)', stop: 0 }
-                            }
-                        }
-                    }
-                }
-            }
-
-            ret = { success: 0, message: err.message, stop: 0 }
-            return ret
-        }
+        // restore the original timeout
+        page.setDefaultTimeout(timeout * 1000)
+        console.log(functionName + "::getElement: Cannot find element: " + tag + "!")
+        return { success: 0, message: functionName + "::getElement: Cannot find element: " + tag + "!", stop: 1 }
 
     }
 
@@ -1048,36 +604,24 @@ async function getAllElements_OBSOLETE(driver, variables, data, tag) {
 * @param {object} page:         playwright page
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
-* @param {number} tagElement:   tag of the element to be checked
+* @param {number} tag:          tag of the element to be checked
 * @param {string} variable:     name of the variable to store the number of elements
-* @param {number} delay:        delay in seconds
 * @param {number} action:       action in case element is not found: continue (0) or stop all the tests (1) or skip the It (2)
 *
 */
-async function countElement(page, data, variables, tagElement, variable, delay, action) {
+async function countElement(page, data, variables, tag, variable, action) {
 
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    let ret
 
-
-    // Check if the tag is not on the dictionary
-    if (tagElement[0] == '@') {
-        const dataAPI = { projectID: data.projectID, code: tagElement, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tagElement = result[0].label
-        } else {
-            variables.displayLog(1, 1, 'Data: ' + tagElement + ' not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tagElement + " in the dictionary!", stop: 1 }
-        }
-    }
-
+    ret = await getElement(page, variables, data, tag, 'countElement')
 
     try {
-        if (delay == undefined) delay = 10    // delay = number of loop (or second) to wait for the element
+        if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+        let page1 = ret.page
+        tag = ret.tag
 
-        page.setDefaultTimeout(delay * 1000);
-        await page.locator(tagElement).first().waitFor()
-        const count = await page.locator(tagElement).count()
+        await page1.locator(tag).last().waitFor()
+        const count = await page.locator(tag).count()
         // store the value into the variable
         variables.setVariable(variable, count)
         variables.displayLog(1, 2, 'countElement: ' + count)
@@ -1090,7 +634,7 @@ async function countElement(page, data, variables, tagElement, variable, delay, 
         if (action == undefined) action = 0
         // action: 0 = continue, 1 = stop all the tests, 2 = skip the It
 
-        let ret = { success: 0, message: 'countElement KO', stop: 0 }
+        ret = { success: 0, message: 'countElement KO', stop: 0 }
         if (action == 1) { ret.stop = 1 }
         else if (action == 0) { ret.success = 1 }
         else { ret.success = 0 }
@@ -1099,30 +643,6 @@ async function countElement(page, data, variables, tagElement, variable, delay, 
 
 }
 
-/**
- * @function
- *   computeGUIDistance: Compute the distance of the path (the deepest, the farthest)
- *
- * @param {string} myPath.
- *
- */
-async function computeGUIDistance(myPath) {
-    let distance = 0;
-    let slice = 0;
-    let id = myPath.indexOf('/', 0);
-    while (id > 0) {
-        slice = slice + 1;
-        if (myPath.substring(id + 1, id + 4) == '***') {
-            distance = slice * 30;
-        } else if (myPath.substr(id + 1, id + 3) == '**') {
-            distance = slice * 20;
-        } else if (myPath.substr(id + 1, id + 2) == '*') {
-            distance = slice * 10;
-        }
-        id = myPath.indexOf('/', id + 1);
-    }
-    return distance;
-}
 
 /**
  * @function
@@ -1283,14 +803,18 @@ async function detectGUI(page, variables, data, selectorID, myCriteria, myPositi
 
     try {
         locators = page.locator(AIRoot)
-        await locators.first().waitFor()
+        await locators.last().waitFor()
         count = await locators.count()
+        console.log('count: ' + count)
+
         if (count == 0) {
+            console.log("Error: Cannot Detect the GUI pattern!, count = 0")
             if (stopOnError) return { success: 0, message: "Error: Cannot Detect the GUI pattern!", stop: 1 }
             else return { success: 0, message: "Warning: Cannot Detect the GUI pattern!", stop: 0 }
         }
 
     } catch (err) {
+        console.log("Error: Cannot Detect the GUI pattern! Catch error!", err.message)
         if (stopOnError) return { success: 0, message: "Error: Cannot Detect the GUI pattern!", stop: 1 }
         else return { success: 0, message: "Warning: Cannot Detect the GUI pattern!", stop: 0 }
     }
@@ -1365,7 +889,7 @@ async function detectGUI(page, variables, data, selectorID, myCriteria, myPositi
 
         try {
             locators = page.locator(mycustomXpath)
-            await locators.first().waitFor()
+            await locators.last().waitFor()
             count = await locators.count()
         } catch (err) {
             count = 0
@@ -1545,200 +1069,6 @@ async function checkExactMatch(variables, locators, myCriteria) {
         exactMatch = 1;
     }
     return exactMatch
-}
-
-
-
-/**
-* ---------------------------------------------------------------------------- 
-* @function <TBR>
-*  checkAttribute: Check attribute of the GUI Element
-* 
-* @param {object} driver:       selenium driver
-* @param {object} variables:    array of all the variables
-* @param {object} data:         all the parameters
-* @param {string} myXpath:      Xpath of the pattern
-* @param {string} myPosition:   global position of the element
-* @param {string} myAttributes: attributes of the pattern
-* @param {string} myCriteria:   criteria to detect an element
-*/
-
-async function checkAttribute(driver, variables, data, myXpath, myAttributes, myCriteria) {
-    let exactCriteria = 1;
-    myCriteria = myCriteria.replace('&sol;', '/');
-
-    //console.log ('MyAttributes: ' + myAttributes)
-
-    let PATHATTRIBUTE = myAttributes.split("/");
-    myXpath = myXpath.replace('//', '<BEGIN>');
-    let beginBracketFlag = 0;
-    if (myXpath[0] == '(') {
-        beginBracketFlag = 1;
-        myXpath = myXpath.substring(1);
-    }
-    let XPATH = myXpath.split("/");
-    //variables.displayLog(1, 1, " checkAttribute: " + myXpath);
-    let mySubXpath = '';
-    let myReturn = 1;
-    for (var level in XPATH) {
-        //console.log ('Level: ' + level);
-        //variables.displayLog(1, 1, "checkAttribute: " + myXpath);
-
-        if (myReturn == 1) {
-            // await startPromises().then(async (result) => {
-            if (level == 0) {  // in the case of the root
-                mySubXpath = XPATH[level].replace('<BEGIN>', '//');
-                mySubXpath = mySubXpath.replace(/&sol;/g, '/');
-                if (level == XPATH.length - 1 && beginBracketFlag == 1) {  // 24/02/20222
-                    mySubXpath = '(' + mySubXpath;
-                }
-                //variables.displayLog(1, 1, "Level: " + level + " - checkAttribute: " + mySubXpath);
-
-                try {
-                    ret = await getElement(driver, variables, data, mySubXpath, 0)
-                }
-                catch (err) {
-                    variables.displayLog(1, 1, 'checkAttribute: Fatal error: Browser not responding!')
-                    return { success: 0, message: ret.message, stop: 1 }
-                }
-                if (!ret.success) {
-                    // Pattern not found, reset the score to 0
-                    variables.displayLog(1, 3, " No element detected for the sub pattern of the level: " + level);
-                    return 0
-                } else {
-
-                    // ---------------------------------------------------------------
-                    // Check on the value
-                    // ---------------------------------------------------------------
-                    myValue = await ret.element.getText();
-                    variables.displayLog(1, 3, "checkAttribute - getText: " + myValue);
-                    if (myValue == '' || myValue == undefined) {
-                        myValue = await ret.element.getAttribute('value');
-                        variables.displayLog(1, 3, "checkAttribute - value: " + myValue);
-                        if (myValue == '' || myValue == undefined) {
-                            myValue = await ret.element.getAttribute('placeholder');
-                            variables.displayLog(1, 3, "checkAttribute - placeholder: " + myValue);
-                            if (myValue == '' || myValue == undefined) {
-                                variables.displayLog(1, 3, "checkAttribute - Warning - no way to read the value, textvalue or placeholder!");
-                            }
-                        }
-                    }
-                    if (myValue != undefined) {
-                        myValue = myValue.trim();
-                        myCriteria = myCriteria.trim();
-                        if (myValue.length != myCriteria.length) {
-                            variables.displayLog(1, 3, "checkAttribute - we don't have an exact match with the criteria! value: **" + myValue + "** versus criteria: **" + myCriteria + "**");
-                            exactCriteria = 0;
-                        } else {
-                            variables.displayLog(1, 3, "checkAttribute - Exact match with the criteria value");
-                            exactCriteria = 1;
-                        }
-                    } else {
-                        variables.displayLog(1, 3, "checkAttribute - text/value/placeholder is empty");
-                        exactCriteria = 1;
-                    }
-
-                    // ---------------------------------------------------------------
-                    // Check on the other attribute
-                    // ---------------------------------------------------------------
-
-                    let ATTRIBUTE = PATHATTRIBUTE[level].split("@");
-                    for (var attributeId in ATTRIBUTE) {
-                        if (attributeId > 0) { // Skip the Tag
-                            let ATTRIBUTEVALUE = ATTRIBUTE[attributeId].split("=");
-                            let value = '';
-                            if (ATTRIBUTEVALUE[0] == 'display') {
-                                value = await ret.element.isDisplayed();
-                            } else if (ATTRIBUTEVALUE[0] == 'visible') {
-                                value = ATTRIBUTEVALUE[1]; // function isVisible does not exist - display is enough
-                            } else {
-                                value = await ret.element.getAttribute(ATTRIBUTEVALUE[0]);
-                            }
-                            if (ATTRIBUTEVALUE[1].toString().length >= value.toString().length) {
-                                if (ATTRIBUTEVALUE[1].toString().toUpperCase().indexOf(value.toString().toUpperCase(), 0) < 0) {
-                                    variables.displayLog(1, 3, " Attribute KO(1): " + ATTRIBUTEVALUE[0] + ' for the subpath: (' + level + ') ' + ' is not matching value: Expected = ' + ATTRIBUTEVALUE[1] + ' Got: ' + value);
-                                    return 0;
-                                } else {
-                                    variables.displayLog(1, 3, " Attribute OK(1): " + ATTRIBUTEVALUE[0] + ' for the subpath: (' + level + ') ' + ' is matching the value: ' + value);
-                                }
-                            } else { // we can use partial criteria like class='ux-dropdown-button-item mat-menu-item ng-star-inserted' simplify to class='ux-dropdown-button-item' (manual operation during the training)
-                                if (value.toString().toUpperCase().indexOf(ATTRIBUTEVALUE[1].toString().toUpperCase(), 0) < 0) {
-                                    variables.displayLog(1, 3, " Attribute KO(2): " + ATTRIBUTEVALUE[0] + ' for the subpath: (' + level + ') ' + ' is not matching value: Expected = ' + ATTRIBUTEVALUE[1] + ' Got: ' + value);
-                                    return 0;
-                                } else {
-                                    variables.displayLog(1, 3, " Attribute OK(2): " + ATTRIBUTEVALUE[0] + ' for the subpath: (' + level + ') ' + ' is matching the value: ' + value);
-                                }
-                            }
-                        }
-                    }
-                    myReturn = 1
-
-                }
-            } else { // for all the other subparts of the xpath
-                mySubXpath = mySubXpath + '/' + XPATH[level];
-                // for the last level, add the global position
-                if (level == XPATH.length - 1 && beginBracketFlag == 1) {  // 24/02/20222
-                    mySubXpath = '(' + mySubXpath;
-                }
-                mySubXpath = mySubXpath.replace(/&sol;/g, '/');
-                variables.displayLog(1, 3, "Level: " + level + " - checkAttribute: " + mySubXpath);
-
-                try {
-                    ret = await getElement(driver, variables, data, mySubXpath, 0)
-                }
-                catch (err) {
-                    variables.displayLog(1, 1, 'checkAttribute: Fatal error: Browser not responding!')
-                    return { success: 0, message: ret.message, stop: 1 }
-                }
-                if (!ret.success) {
-                    // Pattern not found, reset the score to 0
-                    variables.displayLog(1, 3, " No element detected for the sub pattern: " + mySubXpath);
-                    return 0
-                } else {
-
-                    let ATTRIBUTE = PATHATTRIBUTE[level].split("@");
-                    for (var attributeId in ATTRIBUTE) {
-                        if (attributeId > 0) { // Skip the Tag
-                            let ATTRIBUTEVALUE = ATTRIBUTE[attributeId].split("=");
-                            let value = '';
-                            if (ATTRIBUTEVALUE[0] == 'display') {
-                                value = await ret.element.isDisplayed();
-                            } else if (ATTRIBUTEVALUE[0] == 'visible') {
-                                value = ATTRIBUTEVALUE[1]; // function isVisible does not exist - display is enough
-                            } else {
-                                value = await ret.element.getAttribute(ATTRIBUTEVALUE[0]);
-                            }
-                            if (value == undefined) value = ''
-                            if (ATTRIBUTEVALUE[1].toString().length >= value.toString().length) {
-                                if (ATTRIBUTEVALUE[1].toString().toUpperCase().indexOf(value.toString().toUpperCase(), 0) < 0) {
-                                    variables.displayLog(1, 3, " Attribute KO 1: " + ATTRIBUTEVALUE[0] + ' for the subpath: (' + level + ') ' + ' is not matching value: Expected = ' + ATTRIBUTEVALUE[1] + ' Got: ' + value);
-                                    return 0;
-                                } else {
-                                    variables.displayLog(1, 3, " Attribute OK 1: " + ATTRIBUTEVALUE[0] + ' for the subpath: (' + level + ') ' + ' is matching the value: ' + value);
-                                }
-                            } else { // we can use partial criteria like class='ux-dropdown-button-item mat-menu-item ng-star-inserted' simplify to class='ux-dropdown-button-item' (manual operation during the training)
-                                if (value.toString().toUpperCase().indexOf(ATTRIBUTEVALUE[1].toString().toUpperCase(), 0) < 0) {
-                                    variables.displayLog(1, 3, " Attribute KO 2: " + ATTRIBUTEVALUE[0] + ' for the subpath: (' + level + ') ' + ' is not matching value: Expected = ' + ATTRIBUTEVALUE[1] + ' Got: ' + value);
-                                    return 0;
-                                } else {
-                                    variables.displayLog(1, 3, " Attribute OK 2: " + ATTRIBUTEVALUE[0] + ' for the subpath: (' + level + ') ' + ' is matching the value: ' + value);
-                                }
-                            }
-                        }
-                    }
-                    myReturn = 1
-                }
-            }
-        } else {
-            variables.displayLog(1, 3, " previous attributes not matching, skip the loop!");
-            return 0
-        }
-    } // end of the loop
-
-    if (myReturn == 1 && exactCriteria == 0) {
-        myReturn = 100;
-    }
-    return myReturn;
 }
 
 
@@ -2241,10 +1571,31 @@ async function waitFor(page, data, variables, tagElement, delay, action) {
         if (delay == undefined) delay = 10    // delay = number of second(s) to wait for the element
 
         page.setDefaultTimeout(delay * 1000);
-        await page.locator(tagElement).first().waitFor()
+        //await page.locator(tagElement).last().waitFor()
+        let ret = await getElement(page, variables, data, tagElement, 'waitFor')
         page.setDefaultTimeout(timeout * 1000) // Back to the original timeout
 
-        return { success: 1, message: "waitFor OK", stop: 0 }
+        if (ret.success) return { success: 1, message: "waitFor OK", stop: 0 }
+        else {
+            variables.setVariable('$Error', "1")
+            if (action == undefined) action = 0
+            // action: 0 = continue, 1 = stop all the tests, 2 = skip the It
+
+            let ret = { success: 0, message: 'WaitFor KO', stop: 0 }
+            if (action == 1) {
+                ret.stop = 1
+                ret.message = 'WaitFor KO after ' + delay + ' sec. --> Stop the tests'
+            }
+            else if (action == 0) {
+                ret.success = 1
+                ret.message = 'WaitFor KO after ' + delay + ' sec. --> Continue'
+            }
+            else {
+                ret.success = 0
+                ret.message = 'WaitFor KO after ' + delay + ' sec. --> Skip IT'
+            }
+            return ret
+        }
     }
     catch (err) {
         page.setDefaultTimeout(timeout * 1000) // Back to the original timeout
@@ -2276,7 +1627,7 @@ async function waitFor(page, data, variables, tagElement, delay, action) {
 /**
 * ---------------------------------------------------------------------------- 
 * @function <OK>
-*   waitForNot: check if an element is not available
+*   waitForNot: check if an element is not available (not working with frame/iFrame)
 *
 * @param {object} page:         playwright page
 * @param {object} data:         all the parameters
@@ -2460,7 +1811,7 @@ async function skipDescribe(variables, expression, message) {
 */
 async function setValue(page, data, variables, tag, value, delay) {
     const { getDatasetByCode } = require("../../dataset/dataset.service.js");
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    //const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
 
     try {
@@ -2534,48 +1885,59 @@ async function setValue(page, data, variables, tag, value, delay) {
         if (tabFlag == 1) value = value + '<TAB>'
 
 
-        if (tag == undefined) {
-            return { success: 0, message: "setValue: tag cannot be empty!", stop: 1 }
-        } else if (tag[0] == '@') {
-            // Search the tag in the dictionary
-            const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-            const result = await getDictionaryByCode(dataAPI);
-            if (result.length) {
-                tag = result[0].label
-                //console.log (link)
-            } else {
-                variables.displayLog(1, 1, 'Data not found in the dictionary!')
-                return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-            }
-        }
 
-        tag = variables.evaluateVariable(tag)
+
+
+        // if (tag == undefined) {
+        //     return { success: 0, message: "setValue: tag cannot be empty!", stop: 1 }
+        // } else if (tag[0] == '@') {
+        //     // Search the tag in the dictionary
+        //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+        //     const result = await getDictionaryByCode(dataAPI);
+        //     if (result.length) {
+        //         tag = result[0].label
+        //         //console.log (link)
+        //     } else {
+        //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
+        //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
+        //     }
+        // }
+
+        // tag = variables.evaluateVariable(tag)
+
+
+        ret = await getElement(page, variables, data, tag, 'click')
+        if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+        let page1 = ret.page
+        tag = ret.tag
+
+
 
         // Special clear when the normal function doesn't work!
         if (value.indexOf('<CLEAR>', 0) >= 0 || value.indexOf('<CLEAN>', 0) >= 0) {
             value = value.replace('<CLEAR>', '')
             value = value.replace('<CLEAN>', '')
             variables.displayLog(1, 1, '---- Clear field')
-            await page.keyboard.down('Control'); // Press and hold Control key
-            await page.keyboard.press('a');       // Press 'a' key
-            await page.keyboard.up('Control');   // Release Control key
-            await page.keyboard.press('Backspace'); // Press Backspace key
+            await page1.keyboard.down('Control'); // Press and hold Control key
+            await page1.keyboard.press('a');       // Press 'a' key
+            await page1.keyboard.up('Control');   // Release Control key
+            await page1.keyboard.press('Backspace'); // Press Backspace key
         }
         if (value.indexOf('<ENTER>', 0) >= 0) {
             value = value.replace('<ENTER>', '')
-            await page.locator(tag).fill(value)
+            await page1.locator(tag).fill(value)
             variables.displayLog(1, 1, '----' + value.trim() + '(' + value.trim().length + ')---- Press Enter')
-            if (delay != undefined && delay > 0) await page.waitForTimeout(delay * 1000);
-            await page.keyboard.sendCharacter('\r'); // ASCI 10
-            await page.keyboard.sendCharacter('\n'); // ASCI 13"
+            if (delay != undefined && delay > 0) await page1.waitForTimeout(delay * 1000);
+            await page1.keyboard.sendCharacter('\r'); // ASCI 10
+            await page1.keyboard.sendCharacter('\n'); // ASCI 13"
         } else if (value.indexOf('<TAB>', 0) >= 0) {
             value = value.replace('<TAB>', '')
-            await page.locator(tag).fill(value)
-            if (delay != undefined && delay > 0) await page.waitForTimeout(delay * 1000);
-            await page.keyboard.sendCharacter('\t'); // ASCI 9
+            await page1.locator(tag).fill(value)
+            if (delay != undefined && delay > 0) await page1.waitForTimeout(delay * 1000);
+            await page1.keyboard.sendCharacter('\t'); // ASCI 9
         } else {
-            await page.locator(tag).fill(value)
-            if (delay != undefined && delay > 0) await page.waitForTimeout(delay * 1000);
+            await page1.locator(tag).fill(value)
+            if (delay != undefined && delay > 0) await page1.waitForTimeout(delay * 1000);
         }
         ret = { success: 1, message: 'setValue OK', value: value, stop: 0 }
         return ret
@@ -2607,25 +1969,32 @@ async function getValue(page, data, variables, tag, variableName) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     let ret
 
-    if (tag == undefined) {
-        return { success: 0, message: "getValue: tag cannot be empty!", stop: 1 }
-    } else if (tag[0] == '@') {
-        // Search the tag in the dictionary
-        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tag = result[0].label
-            //console.log (link)
-        } else {
-            variables.displayLog(1, 2, 'Data not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-        }
-    }
-    tag = variables.evaluateVariable(tag)
+    // if (tag == undefined) {
+    //     return { success: 0, message: "getValue: tag cannot be empty!", stop: 1 }
+    // } else if (tag[0] == '@') {
+    //     // Search the tag in the dictionary
+    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+    //     const result = await getDictionaryByCode(dataAPI);
+    //     if (result.length) {
+    //         tag = result[0].label
+    //         //console.log (link)
+    //     } else {
+    //         variables.displayLog(1, 2, 'Data not found in the dictionary!')
+    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
+    //     }
+    // }
+    // tag = variables.evaluateVariable(tag)
+
+
+    ret = await getElement(page, variables, data, tag, 'getValue')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+
 
     // Get the element for the tag
     try {
-        let text = await page.locator(tag).textContent()
+        let page1 = ret.page
+        tag = ret.tag
+        let text = await page1.locator(tag).textContent()
         variables.setVariable(variableName, text)
         variables.displayLog(1, 1, 'getValue: ' + text)
         return { success: 1, message: 'getValue OK', value: text, stop: 0 }
@@ -2651,7 +2020,7 @@ async function getValue(page, data, variables, tag, variableName) {
 *
 */
 async function select(page, data, variables, tag, value, delay) {
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
     let ret
 
@@ -2691,30 +2060,35 @@ async function select(page, data, variables, tag, value, delay) {
         return ret
     }
 
-    if (tag == undefined) {
-        console.log("select: tag cannot be empty!")
-        return { success: 0, message: "select: tag cannot be empty!", stop: 1 }
-    } else if (tag[0] == '@') {
-        //console.log('In the dictionary.........', data.projectID)
-        // Search the tag in the dictionary
-        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tag = result[0].label
-            //console.log("Find the code: " + tag)
-        } else {
-            console.log("Cannot find the code: " + tag)
-            variables.displayLog(1, 1, 'Data not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-        }
-    }
+    // if (tag == undefined) {
+    //     console.log("select: tag cannot be empty!")
+    //     return { success: 0, message: "select: tag cannot be empty!", stop: 1 }
+    // } else if (tag[0] == '@') {
+    //     //console.log('In the dictionary.........', data.projectID)
+    //     // Search the tag in the dictionary
+    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+    //     const result = await getDictionaryByCode(dataAPI);
+    //     if (result.length) {
+    //         tag = result[0].label
+    //         //console.log("Find the code: " + tag)
+    //     } else {
+    //         console.log("Cannot find the code: " + tag)
+    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
+    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
+    //     }
+    // }
+
+    ret = await getElement(page, variables, data, tag, 'select')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
 
     try {
-        tag = variables.evaluateVariable(tag)
-        await page.locator(tag).selectOption(value)
+        // tag = variables.evaluateVariable(tag)
+        let page1 = ret.page
+        tag = ret.tag
+        await page1.locator(tag).selectOption(value)
 
-        if (delay != undefined && delay != 0) await page.waitForTimeout(delay * 1000);
+        if (delay != undefined && delay != 0) await page1.waitForTimeout(delay * 1000);
 
         return { success: 1, message: "select Ok!", value: value, stop: 0 }
 
@@ -2740,35 +2114,40 @@ async function select(page, data, variables, tag, value, delay) {
 *
 */
 async function selectCount(page, data, variables, tag, variable) {
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
     let ret
 
-    if (tag == undefined) {
-        console.log("select: tag cannot be empty!")
-        return { success: 0, message: "select: tag cannot be empty!", stop: 1 }
-    } else if (tag[0] == '@') {
-        //console.log('In the dictionary.........', data.projectID)
-        // Search the tag in the dictionary
-        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tag = result[0].label
-            //console.log("Find the code: " + tag)
-        } else {
-            console.log("Cannot find the code: " + tag)
-            variables.displayLog(1, 1, 'Data not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-        }
-    }
+    // if (tag == undefined) {
+    //     console.log("select: tag cannot be empty!")
+    //     return { success: 0, message: "select: tag cannot be empty!", stop: 1 }
+    // } else if (tag[0] == '@') {
+    //     //console.log('In the dictionary.........', data.projectID)
+    //     // Search the tag in the dictionary
+    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+    //     const result = await getDictionaryByCode(dataAPI);
+    //     if (result.length) {
+    //         tag = result[0].label
+    //         //console.log("Find the code: " + tag)
+    //     } else {
+    //         console.log("Cannot find the code: " + tag)
+    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
+    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
+    //     }
+    // }
+
+    ret = await getElement(page, variables, data, tag, 'selectCount')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
 
     try {
-        tag = variables.evaluateVariable(tag)
-        await page.locator(tag).first().waitFor()
+        //tag = variables.evaluateVariable(tag)
+        let page1 = ret.page
+        tag = ret.tag
+        await page1.locator(tag).last().waitFor()
 
         let tagElement = tag + '/option'
-        const count = await page.locator(tagElement).count()
+        const count = await page1.locator(tagElement).count()
         // store the size into the variable
         variables.setVariable(variable, count)
 
@@ -2795,7 +2174,7 @@ async function selectCount(page, data, variables, tag, variable) {
 *
 */
 async function uploadFile(page, data, variables, tag, fileName) {
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     const { getProjectById } = require("../../project/project.service.js")
     const { getDatasetByCode } = require("../../dataset/dataset.service.js");
     const { fileExist } = require("./file.library")
@@ -2846,26 +2225,31 @@ async function uploadFile(page, data, variables, tag, fileName) {
         return { success: 0, message: "uploadFile: file not found! : " + fileName, stop: 1 }
     }
 
-    if (tag == undefined) {
-        return { success: 0, message: "uploadFile: tag cannot be empty!", stop: 1 }
-    } else if (tag[0] == '@') {
-        // Search the tag in the dictionary
-        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tag = result[0].label
-            //console.log (link)
-        } else {
-            variables.displayLog(1, 2, 'Data not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-        }
-    }
-    tag = variables.evaluateVariable(tag)
+    // if (tag == undefined) {
+    //     return { success: 0, message: "uploadFile: tag cannot be empty!", stop: 1 }
+    // } else if (tag[0] == '@') {
+    //     // Search the tag in the dictionary
+    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+    //     const result = await getDictionaryByCode(dataAPI);
+    //     if (result.length) {
+    //         tag = result[0].label
+    //         //console.log (link)
+    //     } else {
+    //         variables.displayLog(1, 2, 'Data not found in the dictionary!')
+    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
+    //     }
+    // }
+    // tag = variables.evaluateVariable(tag)
+
+    ret = await getElement(page, variables, data, tag, 'uploadFile')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+    let page1 = ret.page
+    tag = ret.tag
 
     // Get the element for the tag
     try {
-        locators = page.locator(tag)
-        await locators.first().waitFor()
+        locators = page1.locator(tag)
+        await locators.last().waitFor()
         count = await locators.count()
         if (count == 0) {
             variables.displayLog(1, 2, '>>>>> Warning: Tag not found! - tag: ' + tag)
@@ -2883,9 +2267,9 @@ async function uploadFile(page, data, variables, tag, fileName) {
     try {
         let locator = locators.first()
         const elementHandle = await locator.elementHandle()
-        await page.evaluate(element => { element.scrollIntoView() }, elementHandle)
-        await page.evaluate(element => { element.style.display = 'inline'; element.style.height = '1px'; element.style.width = '1px'; element.style.opacity = 1; }, elementHandle)
-        await page.locator(tag).fill(fullName)
+        await page1.evaluate(element => { element.scrollIntoView() }, elementHandle)
+        await page1.evaluate(element => { element.style.display = 'inline'; element.style.height = '1px'; element.style.width = '1px'; element.style.opacity = 1; }, elementHandle)
+        await locator.fill(fullName)
         ret = { success: 1, message: "uploadFile OK", value: fullName, stop: 0 }
     } catch (err) {
         variables.displayLog(1, 1, err.message)
@@ -2937,32 +2321,37 @@ async function uploadFile(page, data, variables, tag, fileName) {
 */
 async function setFocus(page, data, variables, tag, delay) {
 
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
     let ret
 
-    if (tag == undefined) {
-        console.log("setFocus: tag cannot be empty!")
-        return { success: 0, message: "setFocus: tag cannot be empty!", stop: 1 }
-    } else if (tag[0] == '@') {
-        //console.log('In the dictionary.........', data.projectID)
-        // Search the tag in the dictionary
-        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tag = result[0].label
-            //console.log("Find the code: " + tag)
-        } else {
-            console.log("Cannot find the code: " + tag)
-            variables.displayLog(1, 1, 'Data not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-        }
-    }
+    // if (tag == undefined) {
+    //     console.log("setFocus: tag cannot be empty!")
+    //     return { success: 0, message: "setFocus: tag cannot be empty!", stop: 1 }
+    // } else if (tag[0] == '@') {
+    //     //console.log('In the dictionary.........', data.projectID)
+    //     // Search the tag in the dictionary
+    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+    //     const result = await getDictionaryByCode(dataAPI);
+    //     if (result.length) {
+    //         tag = result[0].label
+    //         //console.log("Find the code: " + tag)
+    //     } else {
+    //         console.log("Cannot find the code: " + tag)
+    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
+    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
+    //     }
+    // }
+
+    ret = await getElement(page, variables, data, tag, 'setFocus')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     try {
-        const locator = page.locator(tag)
+        let page1 = ret.page
+        tag = ret
+        const locator = page1.locator(tag)
         const elementHandle = await locator.elementHandle()
-        await page.evaluate(element => { element.scrollIntoView(); }, elementHandle)
+        await page1.evaluate(element => { element.scrollIntoView(); }, elementHandle)
 
         if (delay != undefined) {
             delay = variables.evaluateVariable(delay)
@@ -2982,7 +2371,7 @@ async function setFocus(page, data, variables, tag, delay) {
 * @function <OK>
 *   click: click on an element
 *
-* @param {object} driver:       selenium driver
+* @param {object} page:         playwright page
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
 * @param {string} tagElement:   tag element
@@ -2990,37 +2379,25 @@ async function setFocus(page, data, variables, tag, delay) {
 *
 */
 async function click(page, data, variables, tag, delay) {
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
     let ret
 
-    if (tag == undefined) {
-        console.log("click: tag cannot be empty!")
-        return { success: 0, message: "click: tag cannot be empty!", stop: 1 }
-    } else if (tag[0] == '@') {
-        //console.log('In the dictionary.........', data.projectID)
-        // Search the tag in the dictionary
-        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tag = result[0].label
-            //console.log("Find the code: " + tag)
-        } else {
-            console.log("Cannot find the code: " + tag)
-            variables.displayLog(1, 1, 'Data not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-        }
-    }
+    ret = await getElement(page, variables, data, tag, 'click')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+    //console.log('after call getElement ', ret.success)
 
     try {
-        tag = variables.evaluateVariable(tag)
-        await page.locator(tag).click()
+        let page1 = ret.page
+        tag = ret.tag
+        //console.log ('tag: ', tag)
+
+        await page1.locator(tag).click()
         if (delay != undefined) {
             delay = variables.evaluateVariable(delay)
             console.log('Delay:', delay)
             await page.waitForTimeout(delay * 1000);
         }
-        return { success: 1, message: "click ok!", stop: 0 }
+        return { success: 1, message: "click ok!", frameID: ret.frameID, stop: 0 }
     } catch (err) {
         return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
     }
@@ -3030,43 +2407,49 @@ async function click(page, data, variables, tag, delay) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function <TBR>
+* @function <OK>
 *   doubleClick: double click on an element
 *
-* @param {object} driver:       selenium driver
+* @param {object} page:         playwright page
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
-* @param {string} tagElement:   tag element
+* @param {string} tag:          tag element
 * @param {number} delay:        delay after the click (in seconds)
 *
 */
 
 async function doubleClick(page, data, variables, tag, delay) {
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
     let ret
 
-    if (tag == undefined) {
-        console.log("doubleClick: tag cannot be empty!")
-        return { success: 0, message: "doubleClick: tag cannot be empty!", stop: 1 }
-    } else if (tag[0] == '@') {
-        //console.log('In the dictionary.........', data.projectID)
-        // Search the tag in the dictionary
-        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tag = result[0].label
-            //console.log("Find the code: " + tag)
-        } else {
-            console.log("Cannot find the code: " + tag)
-            variables.displayLog(1, 1, 'Data not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-        }
-    }
+    // if (tag == undefined) {
+    //     console.log("doubleClick: tag cannot be empty!")
+    //     return { success: 0, message: "doubleClick: tag cannot be empty!", stop: 1 }
+    // } else if (tag[0] == '@') {
+    //     //console.log('In the dictionary.........', data.projectID)
+    //     // Search the tag in the dictionary
+    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+    //     const result = await getDictionaryByCode(dataAPI);
+    //     if (result.length) {
+    //         tag = result[0].label
+    //         //console.log("Find the code: " + tag)
+    //     } else {
+    //         console.log("Cannot find the code: " + tag)
+    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
+    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
+    //     }
+    // }
+
+    ret = await getElement(page, variables, data, tag, 'doubleClick')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+
 
     try {
-        tag = variables.evaluateVariable(tag)
-        await page.locator(tag).doubleClick()
+        // tag = variables.evaluateVariable(tag)
+        let page1 = ret.page
+        tag = ret.tag
+        await page1.locator(tag).doubleClick()
         if (delay != undefined) {
             delay = variables.evaluateVariable(delay)
             console.log('Delay:', delay)
@@ -3094,32 +2477,38 @@ async function doubleClick(page, data, variables, tag, delay) {
 *
 */
 async function JSclick(page, data, variables, tag, delay) {
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
     let ret
 
-    if (tag == undefined) {
-        console.log("JSclick: tag cannot be empty!")
-        return { success: 0, message: "JSclick: tag cannot be empty!", stop: 1 }
-    } else if (tag[0] == '@') {
-        //console.log('In the dictionary.........', data.projectID)
-        // Search the tag in the dictionary
-        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tag = result[0].label
-            //console.log("Find the code: " + tag)
-        } else {
-            console.log("Cannot find the code: " + tag)
-            variables.displayLog(1, 1, 'Data not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-        }
-    }
+    // if (tag == undefined) {
+    //     console.log("JSclick: tag cannot be empty!")
+    //     return { success: 0, message: "JSclick: tag cannot be empty!", stop: 1 }
+    // } else if (tag[0] == '@') {
+    //     //console.log('In the dictionary.........', data.projectID)
+    //     // Search the tag in the dictionary
+    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+    //     const result = await getDictionaryByCode(dataAPI);
+    //     if (result.length) {
+    //         tag = result[0].label
+    //         //console.log("Find the code: " + tag)
+    //     } else {
+    //         console.log("Cannot find the code: " + tag)
+    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
+    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
+    //     }
+    // }
+
+    ret = await getElement(page, variables, data, tag, 'JSclick')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+
 
     try {
-        const locator = page.locator(tag)
+        let page1 = ret.page
+        tag = ret.tag
+        const locator = page1.locator(tag)
         const elementHandle = await locator.elementHandle()
-        await page.evaluate(element => { element.click(); }, elementHandle)
+        await page1.evaluate(element => { element.click(); }, elementHandle)
 
         if (delay != undefined) {
             delay = variables.evaluateVariable(delay)
@@ -3168,7 +2557,7 @@ async function getTableData(page, data, variables, tagElement, row, column, vari
             return { success: 0, message: "Cannot find the code: " + tagElement + " in the dictionary!", stop: 1 }
         }
     }
-
+    tagElement = variables.evaluateVariable(tagElement)
 
     row = variables.evaluateVariable(row);
     row = row.replace(/'/g, "");
@@ -3181,9 +2570,14 @@ async function getTableData(page, data, variables, tagElement, row, column, vari
     if (tagElement[0] == "'") tagElement = tagElement.slice(1, -1)
     tagElement = tagElement + '/tbody/tr[' + row + ']/td[' + column + ']'
 
+    ret = await getElement(page, variables, data, tagElement, 'getTableData')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+
+    let page1 = ret.page
+    tagElement = ret.tag
 
     try {
-        let myValue = await page.locator(tagElement).textContent()
+        let myValue = await page1.locator(tagElement).textContent()
         variables.displayLog(1, 2, "getTableHeader - getText: " + myValue);
 
         if (myValue == '' || myValue == undefined) myValue = '<EMPTY>'
@@ -3232,6 +2626,7 @@ async function getTableHeader(page, data, variables, tagElement, row, column, va
             return { success: 0, message: "Cannot find the code: " + tagElement + " in the dictionary!", stop: 1 }
         }
     }
+    tagElement = variables.evaluateVariable(tagElement)
 
 
     row = variables.evaluateVariable(row);
@@ -3245,8 +2640,14 @@ async function getTableHeader(page, data, variables, tagElement, row, column, va
     if (tagElement[0] == "'") tagElement = tagElement.slice(1, -1)
     tagElement = tagElement + '/tbody/tr[' + row + ']/th[' + column + ']'
 
+    ret = await getElement(page, variables, data, tagElement, 'getTableHeader')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+
+    let page1 = ret.page
+    tagElement = ret.tag
+
     try {
-        let myValue = await page.locator(tagElement).textContent()
+        let myValue = await page1.locator(tagElement).textContent()
         variables.displayLog(1, 2, "getTableHeader - getText: " + myValue);
 
         if (myValue == '' || myValue == undefined) myValue = '<EMPTY>'
@@ -3278,7 +2679,7 @@ async function getTableHeader(page, data, variables, tagElement, row, column, va
 * @param {string} value:        value to key into the cell
 *
 */
-async function setTableData(driver, data, variables, tagElement, row, column, value) {
+async function setTableData(page, data, variables, tagElement, row, column, value) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     const { getDatasetByCode } = require("../../dataset/dataset.service.js");
 
@@ -3298,7 +2699,7 @@ async function setTableData(driver, data, variables, tagElement, row, column, va
             return { success: 0, message: "Cannot find the code: " + tagElement + " in the dictionary!", stop: 1 }
         }
     }
-
+    tagElement = variables.evaluateVariable(tagElement)
 
     row = variables.evaluateVariable(row);
     row = row.replace(/'/g, "");
@@ -3340,20 +2741,25 @@ async function setTableData(driver, data, variables, tagElement, row, column, va
 
     tagElement2 = tagElement + '/tbody/tr[' + row + ']/td[' + column + ']/descendant::input[1]'
 
+    ret = await getElement(page, variables, data, tagElement2, 'setTableData')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+    let page1 = ret.page
+    tagElement2 = ret.tag
+
     try {
-        await page.locator(tagElement2).click()
+        await page1.locator(tagElement2).click()
         if (value.indexOf('<ENTER>', 0) >= 0) {
             value = value.replace('<ENTER>', '')
-            await page.locator(tagElement2).fill(value)
+            await page1.locator(tagElement2).fill(value)
             variables.displayLog(1, 1, '     ----- Press Enter')
-            await page.keyboard.sendCharacter('\r'); // ASCI 10
-            await page.keyboard.sendCharacter('\n'); // ASCI 13"
+            await page1.keyboard.sendCharacter('\r'); // ASCI 10
+            await page1.keyboard.sendCharacter('\n'); // ASCI 13"
         } else if (value.indexOf('<TAB>', 0) >= 0) {
             value = value.replace('<TAB>', '')
-            await page.locator(tagElement2).fill(value)
-            await page.keyboard.sendCharacter('\t'); // ASCI 9"
+            await page1.locator(tagElement2).fill(value)
+            await page1.keyboard.sendCharacter('\t'); // ASCI 9"
         } else {
-            await page.locator(tagElement2).fill(value)
+            await page1.locator(tagElement2).fill(value)
         }
         variables.displayLog(1, 1, '---- setTableValue: OK!')
         ret = { success: 1, message: 'setTableValue OK', stop: 0 }
@@ -3383,6 +2789,7 @@ async function setTableData(driver, data, variables, tagElement, row, column, va
 async function countTableRow(page, data, variables, tagElement, variable) {
 
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    let ret
 
 
     // Check if the tag is not on the dictionary
@@ -3396,13 +2803,20 @@ async function countTableRow(page, data, variables, tagElement, variable) {
             return { success: 0, message: "Cannot find the code: " + tagElement + " in the dictionary!", stop: 1 }
         }
     }
+    tagElement = variables.evaluateVariable(tagElement)
 
     if (tagElement[0] == "'") tagElement = tagElement.slice(1, -1)
     tagElement = tagElement + '/tbody/tr'
 
+    ret = await getElement(page, variables, data, tagElement, 'countTableRow')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+
+    let page1 = ret.page
+    tagElement = ret.tag
+
     try {
-        await page.locator(tagElement).first().waitFor()
-        const count = await page.locator(tagElement).count()
+        //await page1.locator(tagElement).last().waitFor()
+        const count = await page1.locator(tagElement).count()
         // store the value into the variable
         variables.setVariable(variable, count)
         variables.displayLog(1, 2, 'countTableRow: ' + count)
@@ -3426,7 +2840,7 @@ async function countTableRow(page, data, variables, tagElement, variable) {
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function <TBR>
+* @function <elementOK>
 *   searchTableData: Search for a value in a cell of a table
 *
 * @param {object} page:         playwright page
@@ -3457,6 +2871,7 @@ async function searchTableData(page, data, variables, tagElement, column, search
             return { success: 0, message: "Cannot find the code: " + tagElement + " in the dictionary!", stop: 1 }
         }
     }
+    tagElement = variables.evaluateVariable(tagElement)
 
     let variable = '$Row'
     column = variables.evaluateVariable(column);
@@ -3494,9 +2909,16 @@ async function searchTableData(page, data, variables, tagElement, column, search
 
     tagElement = tagElement + '/tbody/tr/td[' + column + ']'
 
-    const locators = page.locator(tagElement)
+    //const locators = page.locator(tagElement)
+    ret = await getElement(page, variables, data, tagElement, 'searchTableData')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
-    await locators.first().waitFor()
+    let page1 = ret.page
+    tagElement = ret.tag
+
+    const locators = page1.locator(tagElement)
+
+    //await locators.last().waitFor()
     const count = await locators.count()
     console.log('count: ' + count)
     for (let i = 0; i < count; i++) {
@@ -3536,8 +2958,6 @@ async function searchTableData(page, data, variables, tagElement, column, search
                 variables.displayLog(1, 2, "searchTableData: " + findData + "/" + position + ") found a value: " + value + " in the row " + (elt + 1));
             }
         }
-
-
     }
 
     if (found) {
@@ -3583,6 +3003,8 @@ async function clickCell(page, data, variables, tagElement, row, column, delay) 
             return { success: 0, message: "Cannot find the code: " + tagElement + " in the dictionary!", stop: 1 }
         }
     }
+    tagElement = variables.evaluateVariable(tagElement)
+
 
     row = variables.evaluateVariable(row);
     row = row.replace(/'/g, "");
@@ -3593,8 +3015,16 @@ async function clickCell(page, data, variables, tagElement, row, column, delay) 
 
     tagElement = tagElement + '/tbody/tr[' + row + ']/td[' + column + ']'
 
+
+    ret = await getElement(page, variables, data, tagElement, 'clickCell')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+
+    let page1 = ret.page
+    tagElement = tagElement.tag
+
+
     try {
-        await page.locator(tag).click()
+        await page1.locator(tagElement).click()
         ret = { success: 1, message: 'clickCell OK', stop: 0 }
         variables.displayLog(1, 2, 'clickCell: wait ' + delay + ' second(s) after the click')
         if (delay != undefined) {
@@ -3625,34 +3055,40 @@ async function clickCell(page, data, variables, tagElement, row, column, delay) 
 *
 */
 async function enable(page, data, variables, tag) {
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
     let ret
 
 
-    if (tag == undefined) {
-        console.log("remove: tag cannot be empty!")
-        return { success: 0, message: "remove: tag cannot be empty!", stop: 1 }
-    } else if (tag[0] == '@') {
-        //console.log('In the dictionary.........', data.projectID)
-        // Search the tag in the dictionary
-        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tag = result[0].label
-            //console.log("Find the code: " + tag)
-        } else {
-            console.log("Cannot find the code: " + tag)
-            variables.displayLog(1, 1, 'Data not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-        }
-    }
+    // if (tag == undefined) {
+    //     console.log("remove: tag cannot be empty!")
+    //     return { success: 0, message: "remove: tag cannot be empty!", stop: 1 }
+    // } else if (tag[0] == '@') {
+    //     //console.log('In the dictionary.........', data.projectID)
+    //     // Search the tag in the dictionary
+    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+    //     const result = await getDictionaryByCode(dataAPI);
+    //     if (result.length) {
+    //         tag = result[0].label
+    //         //console.log("Find the code: " + tag)
+    //     } else {
+    //         console.log("Cannot find the code: " + tag)
+    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
+    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
+    //     }
+    // }
 
+
+    ret = await getElement(page, variables, data, tag, 'enable')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+
+    let page1 = ret.page
+    tag = ret.tag
 
     try {
-        const locator = page.locator(tag)
+        const locator = page1.locator(tag)
         const elementHandle = await locator.elementHandle()
-        await page.evaluate(element => { element.removeAttribute('disabled'); }, elementHandle)
+        await page1.evaluate(element => { element.removeAttribute('disabled'); }, elementHandle)
         return { success: 1, message: "enable OK!", stop: 0 }
 
     } catch (err) {
@@ -3675,34 +3111,38 @@ async function enable(page, data, variables, tag) {
 *
 */
 async function removeAttribute(page, data, variables, tag, attribute) {
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
     let ret
 
-    if (tag == undefined) {
-        console.log("removeAttribute: tag cannot be empty!")
-        return { success: 0, message: "removeAttribute: tag cannot be empty!", stop: 1 }
-    } else if (tag[0] == '@') {
-        //console.log('In the dictionary.........', data.projectID)
-        // Search the tag in the dictionary
-        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tag = result[0].label
-            //console.log("Find the code: " + tag)
-        } else {
-            console.log("Cannot find the code: " + tag)
-            variables.displayLog(1, 1, 'Data not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-        }
-    }
+    // if (tag == undefined) {
+    //     console.log("removeAttribute: tag cannot be empty!")
+    //     return { success: 0, message: "removeAttribute: tag cannot be empty!", stop: 1 }
+    // } else if (tag[0] == '@') {
+    //     //console.log('In the dictionary.........', data.projectID)
+    //     // Search the tag in the dictionary
+    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+    //     const result = await getDictionaryByCode(dataAPI);
+    //     if (result.length) {
+    //         tag = result[0].label
+    //         //console.log("Find the code: " + tag)
+    //     } else {
+    //         console.log("Cannot find the code: " + tag)
+    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
+    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
+    //     }
+    // }
 
+    ret = await getElement(page, variables, data, tag, 'removeAttribute')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+    let page1 = ret.page
+    tag = ret.tag
 
     try {
-        const locator = page.locator(tag)
+        const locator = page1.locator(tag)
         const elementHandle = await locator.elementHandle()
 
-        await page.evaluate(
+        await page1.evaluate(
             (elementData) => {
                 elementData.element.removeAttribute(elementData.attribute)
             },
@@ -3734,40 +3174,47 @@ async function removeAttribute(page, data, variables, tag, attribute) {
 */
 async function setAttribute(page, data, variables, tag, attribute, value) {
 
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
     let ret
 
-    if (tag == undefined) {
-        console.log("setAttribute: tag cannot be empty!")
-        return { success: 0, message: "setAttribute: tag cannot be empty!", stop: 1 }
-    } else if (tag[0] == '@') {
-        //console.log('In the dictionary.........', data.projectID)
-        // Search the tag in the dictionary
-        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tag = result[0].label
-            //console.log("Find the code: " + tag)
-        } else {
-            console.log("Cannot find the code: " + tag)
-            variables.displayLog(1, 1, 'Data not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-        }
-    }
+    // if (tag == undefined) {
+    //     console.log("setAttribute: tag cannot be empty!")
+    //     return { success: 0, message: "setAttribute: tag cannot be empty!", stop: 1 }
+    // } else if (tag[0] == '@') {
+    //     //console.log('In the dictionary.........', data.projectID)
+    //     // Search the tag in the dictionary
+    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+    //     const result = await getDictionaryByCode(dataAPI);
+    //     if (result.length) {
+    //         tag = result[0].label
+    //         //console.log("Find the code: " + tag)
+    //     } else {
+    //         console.log("Cannot find the code: " + tag)
+    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
+    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
+    //     }
+    // }
+
+
+    ret = await getElement(page, variables, data, tag, 'setAttribute')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+
+    let page1 = ret.page
+    tag = ret.tag
 
     try {
-        tag = variables.evaluateVariable(tag)
+        //tag = variables.evaluateVariable(tag)
 
         // Set the attribute
-        const locator = await page.locator(tag).first()
+        const locator = await page1.locator(tag).first()
 
         let myValue2 = await locator.getAttribute(attribute);
         if (myValue2 == undefined) myValue = '<EMPTY>'
         console.log('Attribute before the update is: ' + myValue2)
 
         const elementHandle = await locator.elementHandle();
-        await page.evaluate(
+        await page1.evaluate(
             (elementData) => {
                 elementData.element.setAttribute(elementData.attribute, elementData.value);
             },
@@ -3801,33 +3248,39 @@ async function setAttribute(page, data, variables, tag, attribute, value) {
 *
 */
 async function readAttribute(page, data, variables, tag, attribute, variableName) {
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
     let ret
 
-    if (tag == undefined) {
-        console.log("readAttribute: tag cannot be empty!")
-        return { success: 0, message: "readAttribute: tag cannot be empty!", stop: 1 }
-    } else if (tag[0] == '@') {
-        //console.log('In the dictionary.........', data.projectID)
-        // Search the tag in the dictionary
-        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tag = result[0].label
-            //console.log("Find the code: " + tag)
-        } else {
-            console.log("Cannot find the code: " + tag)
-            variables.displayLog(1, 1, 'Data not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-        }
-    }
+    // if (tag == undefined) {
+    //     console.log("readAttribute: tag cannot be empty!")
+    //     return { success: 0, message: "readAttribute: tag cannot be empty!", stop: 1 }
+    // } else if (tag[0] == '@') {
+    //     //console.log('In the dictionary.........', data.projectID)
+    //     // Search the tag in the dictionary
+    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+    //     const result = await getDictionaryByCode(dataAPI);
+    //     if (result.length) {
+    //         tag = result[0].label
+    //         //console.log("Find the code: " + tag)
+    //     } else {
+    //         console.log("Cannot find the code: " + tag)
+    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
+    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
+    //     }
+    // }
+
+    ret = await getElement(page, variables, data, tag, 'readAttribute')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+
+    let page1 = ret.page
+    tag = ret.tag
 
     try {
-        tag = variables.evaluateVariable(tag)
+        //tag = variables.evaluateVariable(tag)
 
         // Read the attribute
-        let myValue = await page.locator(tag).first().getAttribute(attribute);
+        let myValue = await page1.locator(tag).first().getAttribute(attribute);
         if (myValue == undefined) myValue = '<EMPTY>'
         if (variableName != undefined && variableName != '') variables.setVariable(variableName, myValue)
         return { success: 1, message: 'readAttribute OK!', value: myValue, stop: 0 }
@@ -3853,31 +3306,35 @@ async function readAttribute(page, data, variables, tag, attribute, variableName
 *
 */
 async function isExist(page, data, variables, tag, variableName, delay) {
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     const { getReferenceByCode } = require("../../reference/reference.service.js");
 
     let timeout = 30 // 30 seconds by default
     let ret
 
 
-    if (tag == undefined) {
-        console.log("isExist: tag cannot be empty!")
-        return { success: 0, message: "isExist: tag cannot be empty!", stop: 1 }
-    } else if (tag[0] == '@') {
-        //console.log('In the dictionary.........', data.projectID)
-        // Search the tag in the dictionary
-        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tag = result[0].label
-            //console.log("Find the code: " + tag)
-        } else {
-            console.log("Cannot find the code: " + tag)
-            variables.displayLog(1, 1, 'Data not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-        }
-    }
+    // if (tag == undefined) {
+    //     console.log("isExist: tag cannot be empty!")
+    //     return { success: 0, message: "isExist: tag cannot be empty!", stop: 1 }
+    // } else if (tag[0] == '@') {
+    //     //console.log('In the dictionary.........', data.projectID)
+    //     // Search the tag in the dictionary
+    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+    //     const result = await getDictionaryByCode(dataAPI);
+    //     if (result.length) {
+    //         tag = result[0].label
+    //         //console.log("Find the code: " + tag)
+    //     } else {
+    //         console.log("Cannot find the code: " + tag)
+    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
+    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
+    //     }
+    // }
+    ret = await getElement(page, variables, data, tag, 'isExist')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
+    let page1 = ret.page
+    tag = ret.tag
 
     try {
 
@@ -3896,10 +3353,10 @@ async function isExist(page, data, variables, tag, variableName, delay) {
         console.log('Tag', tag)
 
         page.setDefaultTimeout(delay * 1000);
-        await page.locator(tag).first().waitFor()
+        await page1.locator(tag).last().waitFor()
         page.setDefaultTimeout(timeout * 1000) // Back to the original timeout
 
-        let isExist = await page.locator(tag).first().isVisible()
+        let isExist = await page1.locator(tag).first().isVisible()
         console.log('Visible:', isExist)
 
         if (variableName != undefined && variableName != '') variables.setVariable(variableName, isExist)
@@ -3930,31 +3387,36 @@ async function isExist(page, data, variables, tag, variableName, delay) {
 */
 
 async function isCheck(page, data, variables, tag, variableName, delay) {
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     const { getReferenceByCode } = require("../../reference/reference.service.js");
 
     let ret
     let timeout = 30 // 30 seconds by default
 
 
-    if (tag == undefined) {
-        console.log("isCheck: tag cannot be empty!")
-        return { success: 0, message: "isCheck: tag cannot be empty!", stop: 1 }
-    } else if (tag[0] == '@') {
-        //console.log('In the dictionary.........', data.projectID)
-        // Search the tag in the dictionary
-        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tag = result[0].label
-            //console.log("Find the code: " + tag)
-        } else {
-            console.log("Cannot find the code: " + tag)
-            variables.displayLog(1, 1, 'Data not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-        }
-    }
+    // if (tag == undefined) {
+    //     console.log("isCheck: tag cannot be empty!")
+    //     return { success: 0, message: "isCheck: tag cannot be empty!", stop: 1 }
+    // } else if (tag[0] == '@') {
+    //     //console.log('In the dictionary.........', data.projectID)
+    //     // Search the tag in the dictionary
+    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+    //     const result = await getDictionaryByCode(dataAPI);
+    //     if (result.length) {
+    //         tag = result[0].label
+    //         //console.log("Find the code: " + tag)
+    //     } else {
+    //         console.log("Cannot find the code: " + tag)
+    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
+    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
+    //     }
+    // }
 
+    ret = await getElement(page, variables, data, tag, 'isCheck')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+
+    let page1 = ret.page
+    tag = ret.tag
 
     try {
 
@@ -3973,10 +3435,10 @@ async function isCheck(page, data, variables, tag, variableName, delay) {
         console.log('Tag', tag)
 
         page.setDefaultTimeout(delay * 1000);
-        await page.locator(tag).first().waitFor()
+        await page1.locator(tag).last().waitFor()
         page.setDefaultTimeout(timeout * 1000) // Back to the original timeout
 
-        let isChecked = await page.locator(tag).first().isChecked()
+        let isChecked = await page.locator1(tag).first().isChecked()
 
         if (variableName != undefined && variableName != '') variables.setVariable(variableName, isChecked)
         return { success: 1, message: "isCheck Ok!", value: isChecked, stop: 0 }
@@ -4004,30 +3466,35 @@ async function isCheck(page, data, variables, tag, variableName, delay) {
 *
 */
 async function isEnable(page, data, variables, tag, variableName, delay) {
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     const { getReferenceByCode } = require("../../reference/reference.service.js");
 
     let ret
     let timeout = 30 // 30 seconds by default
 
-    if (tag == undefined) {
-        console.log("isEnable: tag cannot be empty!")
-        return { success: 0, message: "isEnable: tag cannot be empty!", stop: 1 }
-    } else if (tag[0] == '@') {
-        //console.log('In the dictionary.........', data.projectID)
-        // Search the tag in the dictionary
-        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tag = result[0].label
-            //console.log("Find the code: " + tag)
-        } else {
-            console.log("Cannot find the code: " + tag)
-            variables.displayLog(1, 1, 'Data not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-        }
-    }
+    // if (tag == undefined) {
+    //     console.log("isEnable: tag cannot be empty!")
+    //     return { success: 0, message: "isEnable: tag cannot be empty!", stop: 1 }
+    // } else if (tag[0] == '@') {
+    //     //console.log('In the dictionary.........', data.projectID)
+    //     // Search the tag in the dictionary
+    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+    //     const result = await getDictionaryByCode(dataAPI);
+    //     if (result.length) {
+    //         tag = result[0].label
+    //         //console.log("Find the code: " + tag)
+    //     } else {
+    //         console.log("Cannot find the code: " + tag)
+    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
+    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
+    //     }
+    // }
 
+    ret = await getElement(page, variables, data, tag, 'isEnable')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+
+    let page1 = ret.page
+    tag = ret.tag
 
     try {
 
@@ -4046,10 +3513,10 @@ async function isEnable(page, data, variables, tag, variableName, delay) {
         console.log('Tag', tag)
 
         page.setDefaultTimeout(delay * 1000);
-        await page.locator(tag).first().waitFor()
+        await page1.locator(tag).last().waitFor()
         page.setDefaultTimeout(timeout * 1000) // Back to the original timeout
 
-        let isEnabled = await page.locator(tag).nth(0).isEnabled()
+        let isEnabled = await page1.locator(tag).nth(0).isEnabled()
 
         if (variableName != undefined && variableName != '') variables.setVariable(variableName, isEnabled)
         return { success: 1, message: "isEnabled Ok!", value: isEnabled, stop: 0 }
@@ -4076,30 +3543,35 @@ async function isEnable(page, data, variables, tag, variableName, delay) {
 *
 */
 async function isVisible(page, data, variables, tag, variableName, delay) {
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     const { getReferenceByCode } = require("../../reference/reference.service.js");
 
     let ret
     let timeout = 30 // 30 seconds by default
 
-    if (tag == undefined) {
-        console.log("isVisible: tag cannot be empty!")
-        return { success: 0, message: "isVisible: tag cannot be empty!", stop: 1 }
-    } else if (tag[0] == '@') {
-        //console.log('In the dictionary.........', data.projectID)
-        // Search the tag in the dictionary
-        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tag = result[0].label
-            //console.log("Find the code: " + tag)
-        } else {
-            console.log("Cannot find the code: " + tag)
-            variables.displayLog(1, 1, 'Data not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-        }
-    }
+    // if (tag == undefined) {
+    //     console.log("isVisible: tag cannot be empty!")
+    //     return { success: 0, message: "isVisible: tag cannot be empty!", stop: 1 }
+    // } else if (tag[0] == '@') {
+    //     //console.log('In the dictionary.........', data.projectID)
+    //     // Search the tag in the dictionary
+    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+    //     const result = await getDictionaryByCode(dataAPI);
+    //     if (result.length) {
+    //         tag = result[0].label
+    //         //console.log("Find the code: " + tag)
+    //     } else {
+    //         console.log("Cannot find the code: " + tag)
+    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
+    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
+    //     }
+    // }
 
+    ret = await getElement(page, variables, data, tag, 'click')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+
+    let page1 = ret.page
+    tag = ret.tag
 
     try {
 
@@ -4118,10 +3590,10 @@ async function isVisible(page, data, variables, tag, variableName, delay) {
         console.log('Tag', tag)
 
         page.setDefaultTimeout(delay * 1000);
-        await page.locator(tag).first().waitFor()
+        await page1.locator(tag).last().waitFor()
         page.setDefaultTimeout(timeout * 1000) // Back to the original timeout
 
-        let isVisible = await page.locator(tag).nth(0).isVisible()
+        let isVisible = await page1.locator(tag).nth(0).isVisible()
 
         if (variableName != undefined && variableName != '') variables.setVariable(variableName, isVisible)
         return { success: 1, message: "isVisible Ok!", value: isVisible, stop: 0 }
@@ -4147,25 +3619,31 @@ async function isVisible(page, data, variables, tag, variableName, delay) {
 * @param {number} action:       action in case element is still available: continue (0) or stop all the tests (1) or skip the It (2)
 *
 */
-async function waitInvisible(driver, data, variables, tagElement, delay, action) {
+async function waitInvisible(page, data, variables, tagElement, delay, action) {
 
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     const { getReferenceByCode } = require("../../reference/reference.service.js");
     let timeout = 30 // 30 seconds by default
+    let ret
 
 
     // Check if the tag is not on the dictionary
-    if (tagElement[0] == '@') {
-        const dataAPI = { projectID: data.projectID, code: tagElement, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tagElement = result[0].label
-        } else {
-            variables.displayLog(1, 1, 'Data: ' + tagElement + ' not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tagElement + " in the dictionary!", stop: 1 }
-        }
-    }
+    // if (tagElement[0] == '@') {
+    //     const dataAPI = { projectID: data.projectID, code: tagElement, language: '*', active: 1 }
+    //     const result = await getDictionaryByCode(dataAPI);
+    //     if (result.length) {
+    //         tagElement = result[0].label
+    //     } else {
+    //         variables.displayLog(1, 1, 'Data: ' + tagElement + ' not found in the dictionary!')
+    //         return { success: 0, message: "Cannot find the code: " + tagElement + " in the dictionary!", stop: 1 }
+    //     }
+    // }
 
+    ret = await getElement(page, variables, data, tagElement, 'waitInvisible')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+
+    let page1 = ret.page
+    tagElement = ret.tag
 
     try {
         // Get the timeout (if any)
@@ -4183,7 +3661,7 @@ async function waitInvisible(driver, data, variables, tagElement, delay, action)
         delay = delay * 1000
         page.setDefaultTimeout(delay);
 
-        const locator = page.locator(tagElement).first()
+        const locator = page1.locator(tagElement).first()
         await locator.waitFor({ state: 'hidden', delay });
 
         page.setDefaultTimeout(timeout * 1000) // Back to the original timeout
@@ -4231,31 +3709,37 @@ async function waitInvisible(driver, data, variables, tagElement, delay, action)
 */
 
 async function check(driver, data, variables, tag, delay) {
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
     let ret
 
-    if (tag == undefined) {
-        console.log("check: tag cannot be empty!")
-        return { success: 0, message: "check: tag cannot be empty!", stop: 1 }
-    } else if (tag[0] == '@') {
-        //console.log('In the dictionary.........', data.projectID)
-        // Search the tag in the dictionary
-        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tag = result[0].label
-            //console.log("Find the code: " + tag)
-        } else {
-            console.log("Cannot find the code: " + tag)
-            variables.displayLog(1, 1, 'Data not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-        }
-    }
+    // if (tag == undefined) {
+    //     console.log("check: tag cannot be empty!")
+    //     return { success: 0, message: "check: tag cannot be empty!", stop: 1 }
+    // } else if (tag[0] == '@') {
+    //     //console.log('In the dictionary.........', data.projectID)
+    //     // Search the tag in the dictionary
+    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+    //     const result = await getDictionaryByCode(dataAPI);
+    //     if (result.length) {
+    //         tag = result[0].label
+    //         //console.log("Find the code: " + tag)
+    //     } else {
+    //         console.log("Cannot find the code: " + tag)
+    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
+    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
+    //     }
+    // }
+
+    ret = await getElement(page, variables, data, tag, 'check')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+
+    let page1 = ret.page
+    tag = ret.tag
 
     try {
-        tag = variables.evaluateVariable(tag)
-        await page.locator(tag).check()
+        //tag = variables.evaluateVariable(tag)
+        await page1.locator(tag).check()
         if (delay != undefined) {
             delay = variables.evaluateVariable(delay)
             console.log('Delay:', delay)
@@ -4282,31 +3766,37 @@ async function check(driver, data, variables, tag, delay) {
 *
 */
 async function uncheck(page, data, variables, tag, delay) {
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
     let ret
 
-    if (tag == undefined) {
-        console.log("uncheck: tag cannot be empty!")
-        return { success: 0, message: "uncheck: tag cannot be empty!", stop: 1 }
-    } else if (tag[0] == '@') {
-        //console.log('In the dictionary.........', data.projectID)
-        // Search the tag in the dictionary
-        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tag = result[0].label
-            //console.log("Find the code: " + tag)
-        } else {
-            console.log("Cannot find the code: " + tag)
-            variables.displayLog(1, 1, 'Data not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-        }
-    }
+    // if (tag == undefined) {
+    //     console.log("uncheck: tag cannot be empty!")
+    //     return { success: 0, message: "uncheck: tag cannot be empty!", stop: 1 }
+    // } else if (tag[0] == '@') {
+    //     //console.log('In the dictionary.........', data.projectID)
+    //     // Search the tag in the dictionary
+    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+    //     const result = await getDictionaryByCode(dataAPI);
+    //     if (result.length) {
+    //         tag = result[0].label
+    //         //console.log("Find the code: " + tag)
+    //     } else {
+    //         console.log("Cannot find the code: " + tag)
+    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
+    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
+    //     }
+    // }
+
+    ret = await getElement(page, variables, data, tag, 'uncheck')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+
+    let page1 = ret.page
+    tag = ret.tag
 
     try {
         tag = variables.evaluateVariable(tag)
-        await page.locator(tag).uncheck()
+        await page1.locator(tag).uncheck()
         if (delay != undefined) {
             delay = variables.evaluateVariable(delay)
             console.log('Delay:', delay)
@@ -4596,6 +4086,7 @@ async function setVariable(variables, variable, value) {
 * @param {object} variables: array of all the variables
 *
 */
+/*
 async function refreshURL(userID, variables) {
 
     try {
@@ -4606,8 +4097,7 @@ async function refreshURL(userID, variables) {
         return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
     }
 }
-
-
+*/
 
 
 /**
@@ -4957,36 +4447,42 @@ async function setData(data, variables, code, value, comment) {
 *
 */
 async function JSinput(page, data, variables, tag, value) {
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
     let ret
 
-    if (tag == undefined) {
-        console.log("JSinput: tag cannot be empty!")
-        return { success: 0, message: "JSinput: tag cannot be empty!", stop: 1 }
-    } else if (tag[0] == '@') {
-        //console.log('In the dictionary.........', data.projectID)
-        // Search the tag in the dictionary
-        const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tag = result[0].label
-            //console.log("Find the code: " + tag)
-        } else {
-            console.log("Cannot find the code: " + tag)
-            variables.displayLog(1, 1, 'Data not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-        }
-    }
+    // if (tag == undefined) {
+    //     console.log("JSinput: tag cannot be empty!")
+    //     return { success: 0, message: "JSinput: tag cannot be empty!", stop: 1 }
+    // } else if (tag[0] == '@') {
+    //     //console.log('In the dictionary.........', data.projectID)
+    //     // Search the tag in the dictionary
+    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+    //     const result = await getDictionaryByCode(dataAPI);
+    //     if (result.length) {
+    //         tag = result[0].label
+    //         //console.log("Find the code: " + tag)
+    //     } else {
+    //         console.log("Cannot find the code: " + tag)
+    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
+    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
+    //     }
+    // }
+
+    ret = await getElement(page, variables, data, tag, 'JSinput')
+    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+
+    let page1 = ret.page
+    tag = ret.tag
 
     try {
         tag = variables.evaluateVariable(tag)
 
         // Set the attribute value
-        const locator = await page.locator(tag).first()
+        const locator = await page1.locator(tag).first()
 
         const elementHandle = await locator.elementHandle();
-        await page.evaluate(
+        await page1.evaluate(
             (elementData) => {
                 elementData.element.setAttribute(elementData.attribute, elementData.value);
             },
@@ -5016,6 +4512,7 @@ async function printScreen(page, data, slotID) {
 
     try {
         let picture = './printscreen/' + data.userID + '_image' + slotID + '.png'
+        console.log('printScreen', picture)
         await page.screenshot({ path: picture })
         return { success: 1, message: 'Printscreen OK', slot: slotID, stop: 0 }
     } catch (err) {
@@ -5150,49 +4647,6 @@ async function epochAddSecond(variables, myDate, myFormat, myValue, variable) {
 }
 
 
-/**
-* ---------------------------------------------------------------------------- 
-* @function <TBR>
-*  isBrowserAlive:  Check if the browser is still alive - return a boolean 
-* 
-* @param {object} driver:       selenium driver
-*
-*/
-async function isBrowserAlive_OBSOLETE(driver) {
-
-    variables.displayLog(1, 1, 'isBrowserAlive')
-
-    try {
-        // Get the current title to check if the browser is still alive
-        variables.displayLog(1, 1, 'Before getTitle....')
-        driver.getTitle()
-        variables.displayLog(1, 1, 'After getTitle....')
-        return { success: 1, message: "Browser Ok!", value: 1, stop: 0 }
-    } catch (NoSuchSessionError) {
-        variables.displayLog(1, 1, 'FATAL ERROR: ', err.message)
-        return { success: 0, message: 'Fatal Error: ' + err.message }
-    }
-
-    // return await driver.getCurrentUrl().then(function (link) {
-    //     //Browser is open
-    //     console.log ('Browser is alive')
-    //     return { success: 1, message: "Browser Ok!", value: 1, stop: 0 }
-    // }).catch(function (err) {
-    //     //Browser was closed
-    //     variables.displayLog(1, 1, 'FATAL ERROR: ', err.message)
-    //     return { success: 0, message: 'Fatal Error: ' + err.message, value: 0, stop: 1 }
-    // });
-
-    // if (!driver.session_) {
-    //     return { success: 0, message: 'Fatal Error: ' + err.message, value: 0, stop: 1 }
-    // } else {
-    //     return { success: 1, message: "Browser Ok!", value: 1, stop: 0 }
-    // }
-
-
-}
-
-
 
 
 /**
@@ -5324,7 +4778,7 @@ async function executeRules(page, variables, data, ruleName, param1, param2, par
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function <TBR>
+* @function <OK>
 *  startTimer:  Store a user time to measure performance
 * 
 * @param {object} page:       playwright page
@@ -5448,7 +4902,7 @@ async function stopTimer(data, dpageiver, variables, space, topic) {
 
 /**
 * ---------------------------------------------------------------------------- 
- * @function <TBR>
+ * @function <OK>
  *   evaluateFunction: convert a function name into a selenium function
  *
  * @param {object} driver:      selenium driver
@@ -5517,17 +4971,17 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
 
             case 'dummyExtraInfo':
                 ret = await dummyExtraInfo(page, variables, data, param1, param2)
-                await logfile(data.userID, 'Info', ret.value)
+                await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
             case 'dummyLogin':
                 ret = await dummyLogin(page, variables, data, param1, param2)
-                await logfile(data.userID, 'Info', ret.value)
+                await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
             case 'detectGUI':
                 ret = await detectGUI(page, variables, data, param1, param2, param3, param4)
-                if (ret.success == 1) await logfile(data.userID, 'Info', 'patternID: ' + ret.patternID)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... patternID: ' + ret.patternID)
                 return ret
 
             case 'switchToFrame':
@@ -5556,13 +5010,16 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
 
             case 'click':
                 ret = await click(page, data, variables, param1, param2)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
                 return ret
 
             case 'JSclick':
                 ret = await JSclick(page, data, variables, param1, param2)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
                 return ret
 
             case 'doubleClick':
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
                 ret = await doubleClick(page, data, variables, param1, param2)
                 return ret
 
@@ -5572,44 +5029,53 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
 
             case 'getTableData':
                 ret = await getTableData(page, data, variables, param1, param2, param3, param4)
-                await logfile(data.userID, 'Info', ret.value)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
+                await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
             case 'getTableHeader':
                 ret = await getTableHeader(page, data, variables, param1, param2, param3, param4)
-                await logfile(data.userID, 'Info', ret.value)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
+                await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
             case 'setTableData':
                 ret = await setTableData(page, data, variables, param1, param2, param3, param4)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
                 return ret
 
             case 'countTableRow':
                 ret = await countTableRow(page, data, variables, param1, param2)
-                await logfile(data.userID, 'Info', ret.value)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
+                await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
             case 'searchTableData':
                 ret = await searchTableData(page, data, variables, param1, param2, param3, param4)
-                await logfile(data.userID, 'Info', '$Row: ' + ret.value)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
+                await logfile(data.userID, 'Info', '... $Row: ' + ret.value)
                 return ret
 
             case 'clickCell':
                 ret = await clickCell(page, data, variables, param1, param2, param3, param4)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
                 return ret
 
             case 'enable':
                 ret = await enable(page, data, variables, param1)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
                 return ret
 
             case 'isExist':
                 ret = await isExist(page, data, variables, param1, param2, param3)
-                await logfile(data.userID, 'Info', ret.message + ' : ' + ret.value)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
+                await logfile(data.userID, 'Info', '... ' + ret.message + ' : ' + ret.value)
                 return ret
 
             case 'isCheck':
                 ret = await isCheck(page, data, variables, param1, param2, param3)
-                await logfile(data.userID, 'Info', ret.message + ' : ' + ret.value)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
+                await logfile(data.userID, 'Info', '... ' + ret.message + ' : ' + ret.value)
                 return ret
 
             case 'ask':
@@ -5619,45 +5085,53 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
             case 'email':
                 ret = await email(variables, data, param1, param2, param3, param4)
                 if (ret == undefined) ret = { success: 1, message: 'Email sent OK', stop: 0 }
-                await logfile(data.userID, 'Info', ret.message)
+                await logfile(data.userID, 'Info', '... ' + ret.message)
                 return ret
 
             case 'check':
                 ret = await check(page, data, variables, param1, param2)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
                 return ret
 
             case 'uncheck':
                 ret = await uncheck(page, data, variables, param1, param2)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
                 return ret
 
             case 'isEnable':
                 ret = await isEnable(page, data, variables, param1, param2, param3)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
                 return ret
 
             case 'setValue':
                 ret = await setValue(page, data, variables, param1, param2, param3)
-                if (ret.success == 1) await logfile(data.userID, 'Info', ret.value)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
             case 'select':
                 ret = await select(page, data, variables, param1, param2, param3, param4)
-                if (ret.success == 1) await logfile(data.userID, 'Info', '$Value=' + ret.value)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... $Value=' + ret.value)
                 return ret
 
             case 'selectCount':
                 ret = await selectCount(page, data, variables, param1, param2)
-                if (ret.success == 1) await logfile(data.userID, 'Info', ret.value)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
 
             case 'countElement':
-                ret = await countElement(page, data, variables, param1, param2, param3, param4)
-                if (ret.success == 1) await logfile(data.userID, 'Info', ret.value)
+                ret = await countElement(page, data, variables, param1, param2, param3)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
             case 'getValue':
                 ret = await getValue(page, data, variables, param1, param2)
-                await logfile(data.userID, 'Info', ret.value)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
+                await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
             case 'pressTab':
@@ -5678,19 +5152,23 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
 
             case 'waitFor':
                 ret = await waitFor(page, data, variables, param1, param2, param3)
-                await logfile(data.userID, 'Info', ret.message)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
+                await logfile(data.userID, 'Info', '... ' + ret.message)
                 return ret
 
             case 'waitForNot':
                 ret = await waitForNot(page, data, variables, param1, param2, param3)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
                 return ret
 
             case 'isVisible':
                 ret = await isVisible(page, data, variables, param1, param2, param3)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
                 return ret
 
             case 'waitInvisible':
                 ret = await waitInvisible(page, data, variables, param1, param2, param3)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
                 return ret
 
             case 'setVariable':
@@ -5703,11 +5181,11 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 ret = { success: 1, message: 'listVariable OK', stop: 0 }
                 return ret
 
-            case 'refreshURL':
-                //variables.displayLog(1, 1,'listVariable')
-                ret = await refreshURL(data.userID, variables)
-                ret = { success: 1, message: 'refreshURL OK', stop: 0 }
-                return ret
+            // case 'refreshURL':
+            //     //variables.displayLog(1, 1,'listVariable')
+            //     ret = await refreshURL(data.userID, variables)
+            //     ret = { success: 1, message: 'refreshURL OK', stop: 0 }
+            //     return ret
 
             case 'speak':
                 //variables.displayLog(1, 1,'speaking')
@@ -5731,7 +5209,7 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
 
             case 'printScreen':
                 ret = await printScreen(page, data, param1)
-                if (ret.success == 1) await logfile(data.userID, 'Info', 'Print screen is in the slot: ' + ret.slot)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... Print screen is in the slot: ' + ret.slot)
                 return ret
 
             case 'pause':
@@ -5744,27 +5222,28 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
 
             case 'setReference':
                 ret = await setReference(variables, data.projectID, data.userID, param1, param2, param3)
-                if (ret.success == 1) await logfile(data.userID, 'Info', ret.message)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.message)
                 return ret
 
             case 'getReference':
                 ret = await getReference(variables, data.projectID, data.userID, param1, param2)
-                if (ret.success == 1) await logfile(data.userID, 'Info', ret.message)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.message)
                 return ret
 
             case 'getData':
                 ret = await getData(data, variables, param1, param2)
-                if (ret.success == 1) await logfile(data.userID, 'Info', ret.message)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.message)
                 return ret
 
             case 'setData':
                 ret = await setData(data, variables, param1, param2, param3)
-                if (ret.success == 1) await logfile(data.userID, 'Info', ret.message)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.message)
                 return ret
 
             case 'JSinput':
                 ret = await JSinput(page, data, variables, param1, param2, param3)
-                if (ret.success == 1) await logfile(data.userID, 'Info', ret.message)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.message)
                 return ret
 
             case 'skipIt':
@@ -5777,27 +5256,27 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
 
             case 'epoch':
                 ret = await epoch(variables, param1, param2, param3)
-                await logfile(data.userID, 'Info', ret.value)
+                await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
             case 'epochDate':
                 ret = await epochDate(variables, param1, param2, param3)
-                await logfile(data.userID, 'Info', ret.value)
+                await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
             case 'epochAddHour':
                 ret = await epochAddHour(variables, param1, param2, param3, param4)
-                await logfile(data.userID, 'Info', ret.value)
+                await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
             case 'epochAddMinute':
                 ret = await epochAddMinute(variables, param1, param2, param3, param4)
-                await logfile(data.userID, 'Info', ret.value)
+                await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
             case 'epochAddSecond':
                 ret = await epochAddSecond(variables, param1, param2, param3, param4)
-                await logfile(data.userID, 'Info', ret.value)
+                await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
             case 'getAllElements':
@@ -5811,32 +5290,35 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
 
             case 'dictionary':
                 ret = await dictionary(variables, data, param1, param2, param3)
-                if (ret.success == 1) await logfile(data.userID, 'Info', ret.value)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
             case 'removeAttribute':
                 ret = await removeAttribute(page, data, variables, param1, param2)
-                await logfile(data.userID, 'Info', 'Remove attribute - return:' + ret.success)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
+                await logfile(data.userID, 'Info', '... Remove attribute - return:' + ret.success)
                 return ret
 
             case 'setAttribute':
                 ret = await setAttribute(page, data, variables, param1, param2, param3)
-                await logfile(data.userID, 'Info', 'Set attribute - return: ' + ret.success)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
+                await logfile(data.userID, 'Info', '... Set attribute: ' + ret.value)
                 return ret
 
             case 'readAttribute':
                 ret = await readAttribute(page, data, variables, param1, param2, param3)
-                if (ret.success == 1) await logfile(data.userID, 'Info', ret.value)
+                if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
             case 'callScenario':
                 ret = await callScenario(data, page, variables, param1)
-                if (ret.success == 1) await logfile(data.userID, 'Info', ret.value)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
             case 'callSuite':
                 ret = await callSuite(data, page, variables, param1)
-                if (ret.success == 1) await logfile(data.userID, 'Info', ret.value)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
             case 'startTimer':
@@ -5850,8 +5332,8 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
             case 'promptAI':
                 ret = await promptAI(page, data, variables, param1, param2)
                 if (ret.success == 1) {
-                    await logfile(data.userID, 'Info', param1)
-                    await logfile(data.userID, 'Info', ret.value)
+                    await logfile(data.userID, 'Info', '... ' + param1)
+                    await logfile(data.userID, 'Info', '... ' + ret.value)
                 }
                 return ret
 
@@ -6637,7 +6119,7 @@ module.exports = {
     printScreen: printScreen,
     JSinput: JSinput,
     JSclick: JSclick,
-    refreshURL: refreshURL,
+    //refreshURL: refreshURL,
     enable: enable,
     removeAttribute: removeAttribute,
     setAttribute: setAttribute,
@@ -6659,7 +6141,6 @@ module.exports = {
     searchTableData: searchTableData,
     clickCell: clickCell,
     uploadFile: uploadFile,
-    //isBrowserAlive: isBrowserAlive,
     skipIt: skipIt,
     skipDescribe: skipDescribe,
     executeRules: executeRules,
@@ -6667,6 +6148,6 @@ module.exports = {
     callSuite: callSuite,
     startTimer: startTimer,
     stopTimer: stopTimer,
-    promptAI: promptAI,
+    promptAI: promptAI
 
 };

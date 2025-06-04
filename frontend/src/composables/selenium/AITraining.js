@@ -33,7 +33,7 @@ const AITraining = (projectID, subprojectID, userID, userName, link, targetlink,
                     throw Error('Error during the execution of the AI Training')
                 }
                 selenium.value = await data.json()
-                consoleLog('AITraining.js/analysePage', 3, '--- seleniumAITraining ---' + url + 'Selenium/robot/training', trace)
+                consoleLog('AITraining.js/analysePage', 3, '--- seleniumAITraining ---' + url + 'playwright/robot/training', trace)
                 consoleLog('AITraining.js/analysePage', 3, selenium.value, trace)
 
             }

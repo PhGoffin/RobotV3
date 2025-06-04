@@ -33,7 +33,7 @@ const AIAnalyseScreen = (projectID, subprojectID, userID, userName, link, target
                     throw Error('Error during the execution of the AI Analyse')
                 }
                 selenium.value = await data.json()
-                consoleLog('AIAnalyseScreen.js/analysePage', 3, '--- seleniumAIAnalyseScreen ---' + url + 'Selenium/robot/analysescreen', trace)
+                consoleLog('AIAnalyseScreen.js/analysePage', 3, '--- seleniumAIAnalyseScreen ---' + url + 'playwright/robot/analysescreen', trace)
                 consoleLog('AIAnalyseScreen.js/analysePage', 3, selenium.value, trace)
 
             }

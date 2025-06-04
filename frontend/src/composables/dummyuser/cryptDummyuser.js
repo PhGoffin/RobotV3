@@ -25,7 +25,7 @@ const crypyDummyuser = (textPassword) => {
                 consoleLog('crypyDummyuser.js/cryptPassword', 3, 'Password: ' + textPassword , trace)
 
                     const url = process.env.VUE_APP_MYSQL_API
-                    let data = await fetch(url + 'Selenium/robot/crypt', {
+                    let data = await fetch(url + 'playwright/robot/crypt', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({  'password': textPassword })

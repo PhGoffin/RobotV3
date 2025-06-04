@@ -29,7 +29,7 @@ const AIStopBrowser = () => {
                     throw Error('Error during the execution of the stop browser')
                 }
                 selenium.value = await data.json()
-                consoleLog('AIStopBrowser.js/StopBrowser', 3, '--- seleniumAIStopBrowser ---' + url + 'Selenium/robot/stopbrowser', trace)
+                consoleLog('AIStopBrowser.js/StopBrowser', 3, '--- seleniumAIStopBrowser ---' + url + 'playwright/robot/stopbrowser', trace)
                 consoleLog('AIStopBrowser.js/StopBrowser', 3, selenium.value, trace)
 
             }

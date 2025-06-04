@@ -2,8 +2,8 @@
  * @Author: Philippe Goffin 
  * @Email: artcomputer123@gmail.com
  * @Date: 2024-08-02
- * @Last Modified by: 
- * @Last Modified time: 2024-08-02 11:59:02
+ * @Last Modified by: Someone
+ * @Last Modified time: 2025-06-04 14:49:53
  * @Description: Execute a Suite sanity in batch mode
  */
 
@@ -16,7 +16,7 @@ const execAPI = async (dataAPI) => {
 
         const url = 'http://localhost:5000/api/'
         //let scenarioID = 101
-        let data = await fetch(url + 'Selenium/robot/suite', {
+        let data = await fetch(url + 'playwright/robot/suite', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 'suiteName': dataAPI.suiteName, 'suiteID': dataAPI.suiteID, 'projectID': dataAPI.projectID, 'subprojectID': dataAPI.subprojectID, 'userID': dataAPI.userID })

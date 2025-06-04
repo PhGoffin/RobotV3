@@ -25,7 +25,7 @@ const fileExist = (filename) => {
                 consoleLog('fileExist.js/checkFile', 3, 'filename: ' + filename, trace)
 
                     const url = process.env.VUE_APP_MYSQL_API
-                    let data = await fetch(url + 'Selenium/robot/isFile', {
+                    let data = await fetch(url + 'playwright/robot/isFile', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({  'filename': filename })
@@ -36,7 +36,7 @@ const fileExist = (filename) => {
                         throw Error('Error during the check of a file')
                     }
                     selenium.value = await data.json()
-                    consoleLog('fileExist.js/checkFile', 3, '--- checkFile ---' + url + 'Selenium/robot//isFile - filename: ' + filename, trace)
+                    consoleLog('fileExist.js/checkFile', 3, '--- checkFile ---' + url + 'playwright/robot//isFile - filename: ' + filename, trace)
                     consoleLog('fileExist.js/checkFile', 3, selenium.value, trace)
             }
 
