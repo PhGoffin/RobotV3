@@ -115,7 +115,7 @@ async function specialFunction(page, variables, data, rulePosition, functionName
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2)
             return ret
         case '#click':
-            ret = await click(page, data, variables, param1, param2)
+            ret = await click(page, data, variables, param1, param2, param3)
             //await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 )
             return ret
         case '#JSclick':

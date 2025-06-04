@@ -520,7 +520,7 @@ async function getElement(page, variables, data, tag, functionName) {
     }
     if (tag.substring(tag.length, tag.length - 1) == "'") {
         tag = tag.substring(0, tag.length - 1)
-    }   
+    }
 
 
     //console.log('******* ' + tag + '*********')
@@ -1538,22 +1538,23 @@ async function pause(page, variables, subprojectID, delay) {
 *
 */
 async function waitFor(page, data, variables, tagElement, delay, action) {
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     const { getReferenceByCode } = require("../../reference/reference.service.js");
     let timeout = 30 // 30 seconds by default
+    let ret
 
 
-    // Check if the tag is not on the dictionary
-    if (tagElement[0] == '@') {
-        const dataAPI = { projectID: data.projectID, code: tagElement, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tagElement = result[0].label
-        } else {
-            variables.displayLog(1, 1, 'Data: ' + tagElement + ' not found in the dictionary!')
-            return { success: 0, message: "Cannot find the code: " + tagElement + " in the dictionary!", stop: 1 }
-        }
-    }
+    // // Check if the tag is not on the dictionary
+    // if (tagElement[0] == '@') {
+    //     const dataAPI = { projectID: data.projectID, code: tagElement, language: '*', active: 1 }
+    //     const result = await getDictionaryByCode(dataAPI);
+    //     if (result.length) {
+    //         tagElement = result[0].label
+    //     } else {
+    //         variables.displayLog(1, 1, 'Data: ' + tagElement + ' not found in the dictionary!')
+    //         return { success: 0, message: "Cannot find the code: " + tagElement + " in the dictionary!", stop: 1 }
+    //     }
+    // }
 
 
     try {
@@ -1572,16 +1573,19 @@ async function waitFor(page, data, variables, tagElement, delay, action) {
 
         page.setDefaultTimeout(delay * 1000);
         //await page.locator(tagElement).last().waitFor()
-        let ret = await getElement(page, variables, data, tagElement, 'waitFor')
+        ret = await getElement(page, variables, data, tagElement, 'waitFor')
         page.setDefaultTimeout(timeout * 1000) // Back to the original timeout
 
-        if (ret.success) return { success: 1, message: "waitFor OK", stop: 0 }
+        if (ret.success) {
+            ret.message = "waitFor OK"
+            return ret
+        }
         else {
             variables.setVariable('$Error', "1")
             if (action == undefined) action = 0
             // action: 0 = continue, 1 = stop all the tests, 2 = skip the It
 
-            let ret = { success: 0, message: 'WaitFor KO', stop: 0 }
+            //let ret = { success: 0, message: 'WaitFor KO', stop: 0 }
             if (action == 1) {
                 ret.stop = 1
                 ret.message = 'WaitFor KO after ' + delay + ' sec. --> Stop the tests'
@@ -1604,7 +1608,7 @@ async function waitFor(page, data, variables, tagElement, delay, action) {
         if (action == undefined) action = 0
         // action: 0 = continue, 1 = stop all the tests, 2 = skip the It
 
-        let ret = { success: 0, message: 'WaitFor KO', stop: 0 }
+        //let ret = { success: 0, message: 'WaitFor KO', stop: 0 }
         if (action == 1) {
             ret.stop = 1
             ret.message = 'WaitFor KO after ' + delay + ' sec. --> Stop the tests'
@@ -2376,10 +2380,10 @@ async function setFocus(page, data, variables, tag, delay) {
 * @param {object} variables:    array of all the variables
 * @param {string} tagElement:   tag element
 * @param {number} delay:        delay after the click (in seconds)
+* @param {number} focus:        1: set the focus on the element, otherwise no focus (default value)
 *
 */
-async function click(page, data, variables, tag, delay) {
-
+async function click(page, data, variables, tag, delay, focus) {
     let ret
 
     ret = await getElement(page, variables, data, tag, 'click')
@@ -2389,8 +2393,16 @@ async function click(page, data, variables, tag, delay) {
     try {
         let page1 = ret.page
         tag = ret.tag
-        //console.log ('tag: ', tag)
 
+        if (focus == undefined) focus = 0
+        if (focus == 1) {
+            // Set the focus on the element
+            console.log('Set the focus on the element')
+            const elementHandle = await page1.locator(tag).elementHandle()
+            await page1.evaluate(element => { element.scrollIntoView() }, elementHandle)
+        } else console.log('No focus on the element')
+
+        // Click on the element
         await page1.locator(tag).click()
         if (delay != undefined) {
             delay = variables.evaluateVariable(delay)
@@ -4512,7 +4524,7 @@ async function printScreen(page, data, slotID) {
 
     try {
         let picture = './printscreen/' + data.userID + '_image' + slotID + '.png'
-        console.log('printScreen', picture)
+        //console.log('printScreen', picture)
         await page.screenshot({ path: picture })
         return { success: 1, message: 'Printscreen OK', slot: slotID, stop: 0 }
     } catch (err) {
@@ -5009,7 +5021,7 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 return ret
 
             case 'click':
-                ret = await click(page, data, variables, param1, param2)
+                ret = await click(page, data, variables, param1, param2, param3)
                 if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
                 return ret
 
