@@ -9,7 +9,7 @@ module.exports = {
   * @Email: artcomputer123@gmail.com
   * @Date: 2025-05-08
   * @Last Modified by: Someone
-  * @Last Modified time: 2025-06-05 11:08:16
+  * @Last Modified time: 2025-06-05 15:33:02
   * @Description: All the Playwright services available for robot
   */
 
@@ -237,48 +237,6 @@ module.exports = {
         return resolve(ret);
       }
 
-      // ret = await robot.evaluateFunction(page, variables, 'getAllElements', data, '$GUI')
-      // if (ret.success) {
-      // let elements = ret.element
-      // let size = elements.length
-      // for (let elt = 0; elt < size; elt++) {
-      //   // Extract the value of the cell
-      //   value = await elements[elt].getText();
-      //   if (value == undefined || value == '') {
-      //     // try with the value
-      //     value = await elements[elt].getAttribute('value');
-      //     if (value == '' || value == undefined) {
-      //       value = '<EMPTY>'
-      //     }
-      //   }
-      //   if (value.length > 80) value = value.substring(0, 80) + '....'
-      //   dataResult.push({ 'GUI': GUI, 'Occurence': elt + 1, 'Value': value, 'PatternID': patternID })
-      // }
-
-
-      // await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
-      // await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', "Analysis OK")
-      // await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
-      // ret = { success: 1, message: "Analysis OK", data: dataResult }
-      // return resolve(ret);
-      // }
-      // } else {
-      //   await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
-      //   await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', ret.message)
-      //   await robot.evaluateFunction(page, variables, 'logfile', data, 'Message', '**************************************')
-      //   ret = { success: 0, message: ret.message }
-      //   return resolve(ret);
-      // }
-
-      // ----------------------------------
-      // close the browser
-      // ----------------------------------
-      // await stopBrowser()
-      // await browserMiddelware.quitBrowser()
-      // variables.displayLog(1, 1, 'Analysis: OK!')
-      // ret = { success: 1, message: 'Analysis: OK!', data: dataResult }
-      // return resolve(ret);
-
     });
   },
 
@@ -468,7 +426,7 @@ module.exports = {
           timeout = reference4[0].label * 1
         }
       }
-      console.log('Training TimeOut: ' + timeout)
+      //console.log('Training TimeOut: ' + timeout)
       page.setDefaultTimeout(timeout * 1000)
 
       // ----------------------------------
@@ -494,7 +452,7 @@ module.exports = {
       } catch (err) {
         count = 0
       }
-      console.log('locators count: ' + count)
+      // console.log('locators count: ' + count)
 
       if (count > 0) {
 
@@ -547,7 +505,7 @@ module.exports = {
             // ---------------------------------------
             for (let path = 0; path < paths.length && !stop; path++) {
 
-              console.log('------ Path: ', paths[path].fullPath)
+              // console.log('------ Path: ', paths[path].fullPath)
               // --------------------------------------------------
               // Check if the path is compliant for this selector
               // --------------------------------------------------
@@ -558,13 +516,13 @@ module.exports = {
                 // Check if the selector is not excluded from this path
                 if (selectorCondition.includes('!' + data.selector)) {
                   // selector is exculde
-                  console.log('     ' + paths[path].fullPath + ' is excluded, selector ' + paths[path].pathCondition + ' is not compliant with ' + data.selector)
+                  // console.log('     ' + paths[path].fullPath + ' is excluded, selector ' + paths[path].pathCondition + ' is not compliant with ' + data.selector)
                   elementOK = 0
                 }
               } else {
                 if (!selectorCondition.includes(data.selector)) {
                   // path is not defined for this selector
-                  console.log('     ' + paths[path].fullPath + ' is excluded, selector ' + paths[path].pathCondition + ' is not compliant with ' + data.selector)
+                  // console.log('     ' + paths[path].fullPath + ' is excluded, selector ' + paths[path].pathCondition + ' is not compliant with ' + data.selector)
                   elementOK = 0
                 }
               }
@@ -581,7 +539,7 @@ module.exports = {
                 xpath = xpath.trim()
                 // In xpath, replace <PARAM> by the criteria
                 let xpath2 = xpath.replace(/<PARAM>/g, data.criteria)
-                console.log('xpath2', xpath2)
+                // console.log('xpath2', xpath2)
 
                 locators2 = page.locator(xpath2)
                 let count2 = 0
@@ -591,11 +549,11 @@ module.exports = {
                 } catch (err) {
                   let count2 = 0
                 }
-                console.log('locators2 count: ' + count2)
+                // console.log('locators2 count: ' + count2)
                 if (count2 > 0) {
                   for (let xpelt = 0; xpelt < count2; xpelt++) {
                     let tag = await locators2.nth(xpelt).evaluate(el => el.tagName);
-                    console.log('locators2 tag', tag)
+                    // console.log('locators2 tag', tag)
                     let endtag = selector[0].endTag.toUpperCase().split("|");
 
                     if (endtag.includes(tag.toUpperCase())) {
@@ -680,7 +638,7 @@ module.exports = {
                             } catch (err) {
                               xxcount2 = 0
                             }
-                            console.log('xxlocators2 count: ' + xxcount2)
+                            // console.log('xxlocators2 count: ' + xxcount2)
 
                             if (xxcount2 == 0) {
                               elementOK = 0
@@ -694,13 +652,12 @@ module.exports = {
                           let pathValue = ''
                           let sep = ''
                           for (let i = 0; i <= myLevel; i++) {
-                            console.log('===%%%%%%% ' + pathDepth[i])
+                            // console.log('===%%%%%%% ' + pathDepth[i])
                             pathValue = pathValue + sep + pathDepth[i]
                             sep = '/'
                           }
                           variables.displayLog(1, 1, '@@@@@@ PathValue: ', pathValue)
 
-                          //let outerHTML = await locators2.nth(xpelt).getAttribute('outerHTML')
                           let outerHTML = await locators2.nth(xpelt).evaluate(el => el.outerHTML);
                           //variables.displayLog(1, 1, 'outerHTML:' + outerHTML)
 
@@ -726,23 +683,11 @@ module.exports = {
                               valueAttr = await locators2.nth(xpelt).evaluate(el => el.name);
                             } else if (attributes[attr].name == 'class') {
                               valueAttr = await locators2.nth(xpelt).evaluate(el => el.className);
-                              console.log('Class: ', valueAttr)
+                              // console.log('Class: ', valueAttr)
                             } else {
                               retTraining = { success: 0, message: "Inavlid attribute: " + attributes[attr].name }
                               return resolve(retTraining);
                             }
-                            // } else {
-                            //   let valueAttr = await locators2.nth(xpelt).getAttribute(attributes[attr].name)
-                            //   if (attributes[attr].name != 'textContent' && attributes[attr].name != 'tagName') {
-                            //     // check if the attribute is visible in the outerHTML
-                            //     if (outerHTML.includes(attributes[attr].name)) {
-                            //       variables.displayLog(1, 2, 'Attribute: ' + attributes[attr].name + ' is included in the html')
-                            //     } else {
-                            //       variables.displayLog(1, 2, 'Attribute: ' + attributes[attr].name + ' is NOT INCLUDED in the html')
-                            //       valueAttr = undefined
-                            //     }
-                            //   }
-                            // }
 
                             //variables.displayLog(1, 1, 'Attribute before: ' + attributes[attr].name + ' = ' + valueAttr)
                             if (valueAttr == undefined || valueAttr == null || valueAttr == '' || valueAttr.length > 255) {
@@ -1280,11 +1225,11 @@ module.exports = {
                 variables.displayLog(1, 2, 'display')
                 if (statistics[eltStat].value == 'true') {
                   myResultTag = myResultTag + ' [' + AIDisplay + ']'
-                  console.log('myResultTag 3:', myResultTag)
+                  // console.log('myResultTag 3:', myResultTag)
 
                 } else if (statistics[eltStat].value == 'false') {
                   myResultTag = myResultTag + ' [' + AINotDisplay + ']'
-                  console.log('myResultTag 4:', myResultTag)
+                  // console.log('myResultTag 4:', myResultTag)
 
                 }
               }
@@ -1308,7 +1253,7 @@ module.exports = {
                   mysep = ' or '
                 }
                 myResultTag = myResultTag + ']'
-                console.log('myResultTag 5:', myResultTag)
+                // console.log('myResultTag 5:', myResultTag)
 
 
               } // end else textContent/type               
@@ -1417,7 +1362,7 @@ module.exports = {
       // const BrowserMiddelware = require("../library/browser.library.js")
       // const browserMiddelware = new BrowserMiddelware
 
-      console.log('**********  Playwright ****************')
+      // console.log('**********  Playwright ****************')
 
 
       const Variables = require('../library/variable.library.js');
@@ -1467,7 +1412,7 @@ module.exports = {
       // ----------------------------------
       const log = await deleteLogfile(data.userID);
 
-      console.log('***** before test playwright')
+      // console.log('***** before test playwright')
 
       //----------------------------------
       // launch the browser
@@ -1495,7 +1440,7 @@ module.exports = {
           timeout = reference4[0].label * 1
         }
       }
-      console.log('TimeOut: ' + timeout)
+      // console.log('TimeOut: ' + timeout)
       page.setDefaultTimeout(timeout * 1000)
       await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "Timeout is set to " + timeout + " second(s)")
       await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "Browser is: " + browserName + " - Headless: " + headless + " - Device is: " + device)
@@ -1511,13 +1456,11 @@ module.exports = {
         variables.setVariable("$error", "0");
         ret = await robot.executeScenario(data, page, steps)
         variables.displayLog(1, 1, 'Finalize the closure of the test')
-        console.log(ret)
+        // console.log(ret)
 
         if (!ret.success) await robot.evaluateFunction(page, variables, 'setReference', data, 'Execution Status', 0, 'Error during the execuction')
         else await robot.evaluateFunction(page, variables, 'setReference', data, 'Execution Status', 1, 'Test OK')
-        //console.log('step 1')
         await robot.evaluateFunction(page, variables, 'listVariable', data, '', '')
-        //console.log('step 2')
 
         // Stop the test
         await robot.evaluateFunction(page, variables, 'pause', 3)
@@ -1538,7 +1481,6 @@ module.exports = {
       }
 
     })
-
 
   },
 
@@ -1564,13 +1506,6 @@ module.exports = {
       const { getSuiteByHeader } = require("../../suite/suite.service.js");
       const { deleteLogfile } = require("../../logfile/logfile.service.js");
       const { getReferenceByCode } = require("../../reference/reference.service.js");
-      //const { startBrowser, stopBrowser } = require("../browser/browser.service.js")
-      //const { startBrowser } = require("../library/browser.library.js")
-
-      // const BrowserMiddelware = require("../library/browser.library.js")
-      // const browserMiddelware = new BrowserMiddelware
-
-
 
       const Variables = require('../library/variable.library.js');
       let variables = new Variables();
@@ -1646,12 +1581,10 @@ module.exports = {
           timeout = reference4[0].label * 1
         }
       }
-      console.log('TimeOut: ' + timeout)
+      // console.log('TimeOut: ' + timeout)
       page.setDefaultTimeout(timeout * 1000)
       await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "Timeout is set to " + timeout + " second(s)")
       await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "Browser is: " + browserName + " - Headless: " + headless + " - Device is: " + device)
-
-
 
 
       // write the scenario name in the reference for the title in the logfile
@@ -1733,9 +1666,7 @@ module.exports = {
           data.scenarioID = scenarioID
           variables.displayLog(1, 1, 'Before execute scenario: ', data.context)
 
-
           ret = await robot.executeScenario(data, page, tests)
-
 
           if (!ret.success) {
             stop = true
@@ -1788,8 +1719,6 @@ module.exports = {
 
     return new Promise(async (resolve, reject) => {
 
-      //const { chromium, firefox, webkit, devices } = require('playwright'); // chromium, firefox or webkit
-      //const { Builder, By, Key, ChromeOptions } = require("selenium-webdriver")
       const robot = require("../library/robot.library.js")
       const { getScenarioById } = require("../../scenario/scenario.service.js");
       const { getTestByScenario } = require("../../test/test.service.js");
@@ -1797,11 +1726,6 @@ module.exports = {
       const { getStory } = require("../../story/story.service.js");
       const { deleteLogfile } = require("../../logfile/logfile.service.js");
       const { getReferenceByCode } = require("../../reference/reference.service.js");
-      //const { startBrowser, stopBrowser } = require("../browser/browser.service.js")
-      //const { startBrowser } = require("../library/browser.library.js")
-      // const BrowserMiddelware = require("../library/browser.library.js")
-      // const browserMiddelware = new BrowserMiddelware
-
 
       const Variables = require('../library/variable.library.js');
       let variables = new Variables();
@@ -1878,11 +1802,10 @@ module.exports = {
           timeout = reference4[0].label * 1
         }
       }
-      console.log('TimeOut: ' + timeout)
+      // console.log('TimeOut: ' + timeout)
       page.setDefaultTimeout(timeout * 1000)
       await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "Timeout is set to " + timeout + " second(s)")
       await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "Browser is: " + browserName + " - Headless: " + headless + " - Device is: " + device)
-
 
 
       // write the scenario name in the reference for the title in the logfile
@@ -2082,7 +2005,6 @@ module.exports = {
 
     return new Promise(async (resolve, reject) => {
 
-      //const { Builder, By, Key, ChromeOptions } = require("selenium-webdriver")
       const robot = require("../library/robot.library.js")
       const { getScenarioById } = require("../../scenario/scenario.service.js");
       const { getTestByScenario } = require("../../test/test.service.js");
@@ -2090,11 +2012,6 @@ module.exports = {
       const { getStoryByHeader } = require("../../story/story.service.js");
       const { getReferenceByCode } = require("../../reference/reference.service.js");
       const { deleteLogfile } = require("../../logfile/logfile.service.js");
-      //const { startBrowser, stopBrowser } = require("../browser/browser.service.js")
-      //const { startBrowser } = require("../library/browser.library.js")
-      // const BrowserMiddelware = require("../library/browser.library.js")
-      // const browserMiddelware = new BrowserMiddelware
-
 
       const Variables = require('../library/variable.library.js');
       let variables = new Variables();
@@ -2172,7 +2089,7 @@ module.exports = {
           timeout = reference4[0].label * 1
         }
       }
-      console.log('TimeOut: ' + timeout)
+      // console.log('TimeOut: ' + timeout)
       page.setDefaultTimeout(timeout * 1000)
       await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "Timeout is set to " + timeout + " second(s)")
       await robot.evaluateFunction(page, variables, 'logfile', data, 'Title', "Browser is: " + browserName + " - Headless: " + headless + " - Device is: " + device)

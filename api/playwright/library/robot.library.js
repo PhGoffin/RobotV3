@@ -1,7 +1,5 @@
 const { By, Key, Keys, until } = require("selenium-webdriver")
-let frameCount = 0;
 let frameID = 0;
-let Frames = [];
 let frameLocator = null;
 
 
@@ -52,11 +50,8 @@ async function dictionary(variables, data, code, language, variable) {
         code = code.substring(0, code.length - 1)
     }
 
-
     code = variables.evaluateVariable(code)
     code = code.replace(/'/g, "");
-
-
 
     // Check if the code is expressed in a valid dictionary format
     if (code[0] == '@') {
@@ -125,7 +120,6 @@ async function ask(driver, variables, myMessage, myDefault, myVariable, myTimeou
     } catch (err) {
         return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
     }
-
 
 
     try {
@@ -401,7 +395,6 @@ async function switchToBrowserTab(page, tabID) {
         return { success: 0, message: `Error switching tab: ${error.message}`, stop: 1 };
     }
 
-
 }
 
 /**
@@ -409,7 +402,7 @@ async function switchToBrowserTab(page, tabID) {
  * @function <OK>
  *  CloseBrowserTab:  Close the last tab of the browser
  *  
-* @param {object} page:         playwright page
+ * @param {object} page:         playwright page
  * 
  */
 async function closeBrowserTab(page) {
@@ -542,7 +535,6 @@ async function getElement(page, variables, data, tag, functionName) {
             return { success: 1, message: functionName + "::getElement: element detected on the page", page: frameLocator, tag: tag, frameID: (frameID + 1), stop: 0 }
         }
 
-
     } catch (err) {
 
         // The page is already refreshed, we don't need to wait so long
@@ -594,7 +586,6 @@ async function getElement(page, variables, data, tag, functionName) {
     }
 
 }
-
 
 
 /**
