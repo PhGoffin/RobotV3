@@ -1076,7 +1076,7 @@ export default {
             let seqID = 0
             for (let i = 0; i < performances.value.data.length; i++) {
                 let seqID = performances.value.data[i].sequenceID - 1
-                if (seqID > 0) {
+                if (seqID >= 0) {
                     graphData[seqID][id] = performances.value.data[i].measure
                     if (performances.value.data[i].sequenceID == 11) {
                         id++

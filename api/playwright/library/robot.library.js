@@ -1953,7 +1953,7 @@ async function getValue(page, data, variables, tag, variableName) {
 /**
 * ---------------------------------------------------------------------------- 
 * @function <OK>
-*   select: select a value from a list of options
+*   select: select a value from a list of options (becareful it's case sensitive)
 *
 * @param {object} page:         playwright page
 * @param {object} data:         all the parameters
@@ -2315,11 +2315,12 @@ async function JSclick(page, data, variables, tag, delay) {
         tag = ret.tag
         const locator = page1.locator(tag)
         const elementHandle = await locator.elementHandle()
+        await page1.evaluate(element => { element.scrollIntoView(); }, elementHandle)        
         await page1.evaluate(element => { element.click(); }, elementHandle)
 
         if (delay != undefined) {
             delay = variables.evaluateVariable(delay)
-            console.log('Delay:', delay)
+            // console.log('Delay:', delay)
             await page.waitForTimeout(delay * 1000);
         }
         return { success: 1, message: "JSclick OK!", stop: 0 }
@@ -4016,6 +4017,7 @@ async function JSinput(page, data, variables, tag, value) {
         const locator = await page1.locator(tag).first()
 
         const elementHandle = await locator.elementHandle();
+        await page1.evaluate(element => { element.scrollIntoView(); }, elementHandle)        
         await page1.evaluate(
             (elementData) => {
                 elementData.element.setAttribute(elementData.attribute, elementData.value);
