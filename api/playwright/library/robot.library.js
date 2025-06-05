@@ -1539,23 +1539,9 @@ async function pause(page, variables, subprojectID, delay) {
 *
 */
 async function waitFor(page, data, variables, tagElement, delay, action) {
-    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     const { getReferenceByCode } = require("../../reference/reference.service.js");
     let timeout = 30 // 30 seconds by default
     let ret
-
-
-    // // Check if the tag is not on the dictionary
-    // if (tagElement[0] == '@') {
-    //     const dataAPI = { projectID: data.projectID, code: tagElement, language: '*', active: 1 }
-    //     const result = await getDictionaryByCode(dataAPI);
-    //     if (result.length) {
-    //         tagElement = result[0].label
-    //     } else {
-    //         variables.displayLog(1, 1, 'Data: ' + tagElement + ' not found in the dictionary!')
-    //         return { success: 0, message: "Cannot find the code: " + tagElement + " in the dictionary!", stop: 1 }
-    //     }
-    // }
 
 
     try {
@@ -1573,7 +1559,6 @@ async function waitFor(page, data, variables, tagElement, delay, action) {
         if (delay == undefined) delay = 10    // delay = number of second(s) to wait for the element
 
         page.setDefaultTimeout(delay * 1000);
-        //await page.locator(tagElement).last().waitFor()
         ret = await getElement(page, variables, data, tagElement, 'waitFor')
         page.setDefaultTimeout(timeout * 1000) // Back to the original timeout
 
@@ -1585,8 +1570,6 @@ async function waitFor(page, data, variables, tagElement, delay, action) {
             variables.setVariable('$Error', "1")
             if (action == undefined) action = 0
             // action: 0 = continue, 1 = stop all the tests, 2 = skip the It
-
-            //let ret = { success: 0, message: 'WaitFor KO', stop: 0 }
             if (action == 1) {
                 ret.stop = 1
                 ret.message = 'WaitFor KO after ' + delay + ' sec. --> Stop the tests'
@@ -1608,8 +1591,6 @@ async function waitFor(page, data, variables, tagElement, delay, action) {
         variables.setVariable('$Error', "1")
         if (action == undefined) action = 0
         // action: 0 = continue, 1 = stop all the tests, 2 = skip the It
-
-        //let ret = { success: 0, message: 'WaitFor KO', stop: 0 }
         if (action == 1) {
             ret.stop = 1
             ret.message = 'WaitFor KO after ' + delay + ' sec. --> Stop the tests'
@@ -1816,8 +1797,6 @@ async function skipDescribe(variables, expression, message) {
 */
 async function setValue(page, data, variables, tag, value, delay) {
     const { getDatasetByCode } = require("../../dataset/dataset.service.js");
-    //const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
-
 
     try {
 
@@ -1890,32 +1869,10 @@ async function setValue(page, data, variables, tag, value, delay) {
         if (tabFlag == 1) value = value + '<TAB>'
 
 
-
-
-
-        // if (tag == undefined) {
-        //     return { success: 0, message: "setValue: tag cannot be empty!", stop: 1 }
-        // } else if (tag[0] == '@') {
-        //     // Search the tag in the dictionary
-        //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-        //     const result = await getDictionaryByCode(dataAPI);
-        //     if (result.length) {
-        //         tag = result[0].label
-        //         //console.log (link)
-        //     } else {
-        //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
-        //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-        //     }
-        // }
-
-        // tag = variables.evaluateVariable(tag)
-
-
         ret = await getElement(page, variables, data, tag, 'click')
         if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
         let page1 = ret.page
         tag = ret.tag
-
 
 
         // Special clear when the normal function doesn't work!
@@ -1971,25 +1928,7 @@ async function setValue(page, data, variables, tag, value, delay) {
 *
 */
 async function getValue(page, data, variables, tag, variableName) {
-    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     let ret
-
-    // if (tag == undefined) {
-    //     return { success: 0, message: "getValue: tag cannot be empty!", stop: 1 }
-    // } else if (tag[0] == '@') {
-    //     // Search the tag in the dictionary
-    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-    //     const result = await getDictionaryByCode(dataAPI);
-    //     if (result.length) {
-    //         tag = result[0].label
-    //         //console.log (link)
-    //     } else {
-    //         variables.displayLog(1, 2, 'Data not found in the dictionary!')
-    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-    //     }
-    // }
-    // tag = variables.evaluateVariable(tag)
-
 
     ret = await getElement(page, variables, data, tag, 'getValue')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
@@ -2025,8 +1964,6 @@ async function getValue(page, data, variables, tag, variableName) {
 *
 */
 async function select(page, data, variables, tag, value, delay) {
-    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
-
     let ret
 
     // Evaluate the value
@@ -2065,24 +2002,6 @@ async function select(page, data, variables, tag, value, delay) {
         return ret
     }
 
-    // if (tag == undefined) {
-    //     console.log("select: tag cannot be empty!")
-    //     return { success: 0, message: "select: tag cannot be empty!", stop: 1 }
-    // } else if (tag[0] == '@') {
-    //     //console.log('In the dictionary.........', data.projectID)
-    //     // Search the tag in the dictionary
-    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-    //     const result = await getDictionaryByCode(dataAPI);
-    //     if (result.length) {
-    //         tag = result[0].label
-    //         //console.log("Find the code: " + tag)
-    //     } else {
-    //         console.log("Cannot find the code: " + tag)
-    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
-    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-    //     }
-    // }
-
     ret = await getElement(page, variables, data, tag, 'select')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
@@ -2119,27 +2038,8 @@ async function select(page, data, variables, tag, value, delay) {
 *
 */
 async function selectCount(page, data, variables, tag, variable) {
-    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
     let ret
-
-    // if (tag == undefined) {
-    //     console.log("select: tag cannot be empty!")
-    //     return { success: 0, message: "select: tag cannot be empty!", stop: 1 }
-    // } else if (tag[0] == '@') {
-    //     //console.log('In the dictionary.........', data.projectID)
-    //     // Search the tag in the dictionary
-    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-    //     const result = await getDictionaryByCode(dataAPI);
-    //     if (result.length) {
-    //         tag = result[0].label
-    //         //console.log("Find the code: " + tag)
-    //     } else {
-    //         console.log("Cannot find the code: " + tag)
-    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
-    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-    //     }
-    // }
 
     ret = await getElement(page, variables, data, tag, 'selectCount')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
@@ -2179,7 +2079,6 @@ async function selectCount(page, data, variables, tag, variable) {
 *
 */
 async function uploadFile(page, data, variables, tag, fileName) {
-    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     const { getProjectById } = require("../../project/project.service.js")
     const { getDatasetByCode } = require("../../dataset/dataset.service.js");
     const { fileExist } = require("./file.library")
@@ -2230,22 +2129,6 @@ async function uploadFile(page, data, variables, tag, fileName) {
         return { success: 0, message: "uploadFile: file not found! : " + fileName, stop: 1 }
     }
 
-    // if (tag == undefined) {
-    //     return { success: 0, message: "uploadFile: tag cannot be empty!", stop: 1 }
-    // } else if (tag[0] == '@') {
-    //     // Search the tag in the dictionary
-    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-    //     const result = await getDictionaryByCode(dataAPI);
-    //     if (result.length) {
-    //         tag = result[0].label
-    //         //console.log (link)
-    //     } else {
-    //         variables.displayLog(1, 2, 'Data not found in the dictionary!')
-    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-    //     }
-    // }
-    // tag = variables.evaluateVariable(tag)
-
     ret = await getElement(page, variables, data, tag, 'uploadFile')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
     let page1 = ret.page
@@ -2281,32 +2164,6 @@ async function uploadFile(page, data, variables, tag, fileName) {
         ret = { success: 0, message: err.message, value: '<ERROR>', stop: 1 }
     }
 
-
-    // try {
-    //     ret = await getElement(driver, variables, data, tag)
-    // }
-    // catch (err) {
-    //     variables.displayLog(1, 1, 'uploadFile: Fatal error: Browser not responding!')
-    //     return { success: 0, message: ret.message, stop: 1 }
-    // }
-    // if (!ret.success) {
-    //     variables.displayLog(1, 2, '>>>>> Warning: Tag not found! - tag: ' + tag)
-    //     variables.displayLog(1, 2, ret)
-    //     return { success: 0, message: "uploadFile: Cannot detect the element ! " + tag, stop: 1 }
-    // }
-
-    // try {
-    //     driver.executeScript('arguments[0].scrollIntoView()', ret.element);
-    //     variables.displayLog(1, 2, ">-->   sendKey: " + fullName);
-    //     return driver.executeScript("arguments[0].style.display = 'inline'; arguments[0].style.height = '1px'; arguments[0].style.width = '1px'; arguments[0].style.opacity = 1;", ret.element).then(() => {
-    //         ret.element.sendKeys(fullName);
-    //         return driver.sleep(2 * 1000);
-    //     })
-    // } catch (err) {
-    //     variables.displayLog(1, 1, err.message)
-    //     ret = { success: 0, message: err.message, value: '<ERROR>', stop: 1 }
-    // }
-
     variables.displayLog(1, 2, 'uploadFile ret', ret)
     return ret
 }
@@ -2325,28 +2182,7 @@ async function uploadFile(page, data, variables, tag, fileName) {
 *
 */
 async function setFocus(page, data, variables, tag, delay) {
-
-    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
-
     let ret
-
-    // if (tag == undefined) {
-    //     console.log("setFocus: tag cannot be empty!")
-    //     return { success: 0, message: "setFocus: tag cannot be empty!", stop: 1 }
-    // } else if (tag[0] == '@') {
-    //     //console.log('In the dictionary.........', data.projectID)
-    //     // Search the tag in the dictionary
-    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-    //     const result = await getDictionaryByCode(dataAPI);
-    //     if (result.length) {
-    //         tag = result[0].label
-    //         //console.log("Find the code: " + tag)
-    //     } else {
-    //         console.log("Cannot find the code: " + tag)
-    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
-    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-    //     }
-    // }
 
     ret = await getElement(page, variables, data, tag, 'setFocus')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
@@ -2432,34 +2268,12 @@ async function click(page, data, variables, tag, delay, focus) {
 */
 
 async function doubleClick(page, data, variables, tag, delay) {
-    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
-
     let ret
-
-    // if (tag == undefined) {
-    //     console.log("doubleClick: tag cannot be empty!")
-    //     return { success: 0, message: "doubleClick: tag cannot be empty!", stop: 1 }
-    // } else if (tag[0] == '@') {
-    //     //console.log('In the dictionary.........', data.projectID)
-    //     // Search the tag in the dictionary
-    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-    //     const result = await getDictionaryByCode(dataAPI);
-    //     if (result.length) {
-    //         tag = result[0].label
-    //         //console.log("Find the code: " + tag)
-    //     } else {
-    //         console.log("Cannot find the code: " + tag)
-    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
-    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-    //     }
-    // }
 
     ret = await getElement(page, variables, data, tag, 'doubleClick')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
-
     try {
-        // tag = variables.evaluateVariable(tag)
         let page1 = ret.page
         tag = ret.tag
         await page1.locator(tag).doubleClick()
@@ -2490,27 +2304,7 @@ async function doubleClick(page, data, variables, tag, delay) {
 *
 */
 async function JSclick(page, data, variables, tag, delay) {
-    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
-
     let ret
-
-    // if (tag == undefined) {
-    //     console.log("JSclick: tag cannot be empty!")
-    //     return { success: 0, message: "JSclick: tag cannot be empty!", stop: 1 }
-    // } else if (tag[0] == '@') {
-    //     //console.log('In the dictionary.........', data.projectID)
-    //     // Search the tag in the dictionary
-    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-    //     const result = await getDictionaryByCode(dataAPI);
-    //     if (result.length) {
-    //         tag = result[0].label
-    //         //console.log("Find the code: " + tag)
-    //     } else {
-    //         console.log("Cannot find the code: " + tag)
-    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
-    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-    //     }
-    // }
 
     ret = await getElement(page, variables, data, tag, 'JSclick')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
@@ -3068,29 +2862,7 @@ async function clickCell(page, data, variables, tagElement, row, column, delay) 
 *
 */
 async function enable(page, data, variables, tag) {
-    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
-
     let ret
-
-
-    // if (tag == undefined) {
-    //     console.log("remove: tag cannot be empty!")
-    //     return { success: 0, message: "remove: tag cannot be empty!", stop: 1 }
-    // } else if (tag[0] == '@') {
-    //     //console.log('In the dictionary.........', data.projectID)
-    //     // Search the tag in the dictionary
-    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-    //     const result = await getDictionaryByCode(dataAPI);
-    //     if (result.length) {
-    //         tag = result[0].label
-    //         //console.log("Find the code: " + tag)
-    //     } else {
-    //         console.log("Cannot find the code: " + tag)
-    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
-    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-    //     }
-    // }
-
 
     ret = await getElement(page, variables, data, tag, 'enable')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
@@ -3124,27 +2896,7 @@ async function enable(page, data, variables, tag) {
 *
 */
 async function removeAttribute(page, data, variables, tag, attribute) {
-    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
-
     let ret
-
-    // if (tag == undefined) {
-    //     console.log("removeAttribute: tag cannot be empty!")
-    //     return { success: 0, message: "removeAttribute: tag cannot be empty!", stop: 1 }
-    // } else if (tag[0] == '@') {
-    //     //console.log('In the dictionary.........', data.projectID)
-    //     // Search the tag in the dictionary
-    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-    //     const result = await getDictionaryByCode(dataAPI);
-    //     if (result.length) {
-    //         tag = result[0].label
-    //         //console.log("Find the code: " + tag)
-    //     } else {
-    //         console.log("Cannot find the code: " + tag)
-    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
-    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-    //     }
-    // }
 
     ret = await getElement(page, variables, data, tag, 'removeAttribute')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
@@ -3186,29 +2938,7 @@ async function removeAttribute(page, data, variables, tag, attribute) {
 *
 */
 async function setAttribute(page, data, variables, tag, attribute, value) {
-
-    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
-
     let ret
-
-    // if (tag == undefined) {
-    //     console.log("setAttribute: tag cannot be empty!")
-    //     return { success: 0, message: "setAttribute: tag cannot be empty!", stop: 1 }
-    // } else if (tag[0] == '@') {
-    //     //console.log('In the dictionary.........', data.projectID)
-    //     // Search the tag in the dictionary
-    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-    //     const result = await getDictionaryByCode(dataAPI);
-    //     if (result.length) {
-    //         tag = result[0].label
-    //         //console.log("Find the code: " + tag)
-    //     } else {
-    //         console.log("Cannot find the code: " + tag)
-    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
-    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-    //     }
-    // }
-
 
     ret = await getElement(page, variables, data, tag, 'setAttribute')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
@@ -3217,8 +2947,6 @@ async function setAttribute(page, data, variables, tag, attribute, value) {
     tag = ret.tag
 
     try {
-        //tag = variables.evaluateVariable(tag)
-
         // Set the attribute
         const locator = await page1.locator(tag).first()
 
@@ -3261,27 +2989,7 @@ async function setAttribute(page, data, variables, tag, attribute, value) {
 *
 */
 async function readAttribute(page, data, variables, tag, attribute, variableName) {
-    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
-
     let ret
-
-    // if (tag == undefined) {
-    //     console.log("readAttribute: tag cannot be empty!")
-    //     return { success: 0, message: "readAttribute: tag cannot be empty!", stop: 1 }
-    // } else if (tag[0] == '@') {
-    //     //console.log('In the dictionary.........', data.projectID)
-    //     // Search the tag in the dictionary
-    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-    //     const result = await getDictionaryByCode(dataAPI);
-    //     if (result.length) {
-    //         tag = result[0].label
-    //         //console.log("Find the code: " + tag)
-    //     } else {
-    //         console.log("Cannot find the code: " + tag)
-    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
-    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-    //     }
-    // }
 
     ret = await getElement(page, variables, data, tag, 'readAttribute')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
@@ -3290,8 +2998,6 @@ async function readAttribute(page, data, variables, tag, attribute, variableName
     tag = ret.tag
 
     try {
-        //tag = variables.evaluateVariable(tag)
-
         // Read the attribute
         let myValue = await page1.locator(tag).first().getAttribute(attribute);
         if (myValue == undefined) myValue = '<EMPTY>'
@@ -3319,30 +3025,12 @@ async function readAttribute(page, data, variables, tag, attribute, variableName
 *
 */
 async function isExist(page, data, variables, tag, variableName, delay) {
-    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     const { getReferenceByCode } = require("../../reference/reference.service.js");
 
     let timeout = 30 // 30 seconds by default
     let ret
 
 
-    // if (tag == undefined) {
-    //     console.log("isExist: tag cannot be empty!")
-    //     return { success: 0, message: "isExist: tag cannot be empty!", stop: 1 }
-    // } else if (tag[0] == '@') {
-    //     //console.log('In the dictionary.........', data.projectID)
-    //     // Search the tag in the dictionary
-    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-    //     const result = await getDictionaryByCode(dataAPI);
-    //     if (result.length) {
-    //         tag = result[0].label
-    //         //console.log("Find the code: " + tag)
-    //     } else {
-    //         console.log("Cannot find the code: " + tag)
-    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
-    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-    //     }
-    // }
     ret = await getElement(page, variables, data, tag, 'isExist')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
@@ -3400,30 +3088,11 @@ async function isExist(page, data, variables, tag, variableName, delay) {
 */
 
 async function isCheck(page, data, variables, tag, variableName, delay) {
-    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     const { getReferenceByCode } = require("../../reference/reference.service.js");
 
     let ret
     let timeout = 30 // 30 seconds by default
 
-
-    // if (tag == undefined) {
-    //     console.log("isCheck: tag cannot be empty!")
-    //     return { success: 0, message: "isCheck: tag cannot be empty!", stop: 1 }
-    // } else if (tag[0] == '@') {
-    //     //console.log('In the dictionary.........', data.projectID)
-    //     // Search the tag in the dictionary
-    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-    //     const result = await getDictionaryByCode(dataAPI);
-    //     if (result.length) {
-    //         tag = result[0].label
-    //         //console.log("Find the code: " + tag)
-    //     } else {
-    //         console.log("Cannot find the code: " + tag)
-    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
-    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-    //     }
-    // }
 
     ret = await getElement(page, variables, data, tag, 'isCheck')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
@@ -3479,29 +3148,10 @@ async function isCheck(page, data, variables, tag, variableName, delay) {
 *
 */
 async function isEnable(page, data, variables, tag, variableName, delay) {
-    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     const { getReferenceByCode } = require("../../reference/reference.service.js");
 
     let ret
     let timeout = 30 // 30 seconds by default
-
-    // if (tag == undefined) {
-    //     console.log("isEnable: tag cannot be empty!")
-    //     return { success: 0, message: "isEnable: tag cannot be empty!", stop: 1 }
-    // } else if (tag[0] == '@') {
-    //     //console.log('In the dictionary.........', data.projectID)
-    //     // Search the tag in the dictionary
-    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-    //     const result = await getDictionaryByCode(dataAPI);
-    //     if (result.length) {
-    //         tag = result[0].label
-    //         //console.log("Find the code: " + tag)
-    //     } else {
-    //         console.log("Cannot find the code: " + tag)
-    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
-    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-    //     }
-    // }
 
     ret = await getElement(page, variables, data, tag, 'isEnable')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
@@ -3556,29 +3206,10 @@ async function isEnable(page, data, variables, tag, variableName, delay) {
 *
 */
 async function isVisible(page, data, variables, tag, variableName, delay) {
-    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     const { getReferenceByCode } = require("../../reference/reference.service.js");
 
     let ret
     let timeout = 30 // 30 seconds by default
-
-    // if (tag == undefined) {
-    //     console.log("isVisible: tag cannot be empty!")
-    //     return { success: 0, message: "isVisible: tag cannot be empty!", stop: 1 }
-    // } else if (tag[0] == '@') {
-    //     //console.log('In the dictionary.........', data.projectID)
-    //     // Search the tag in the dictionary
-    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-    //     const result = await getDictionaryByCode(dataAPI);
-    //     if (result.length) {
-    //         tag = result[0].label
-    //         //console.log("Find the code: " + tag)
-    //     } else {
-    //         console.log("Cannot find the code: " + tag)
-    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
-    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-    //     }
-    // }
 
     ret = await getElement(page, variables, data, tag, 'click')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
@@ -3633,24 +3264,10 @@ async function isVisible(page, data, variables, tag, variableName, delay) {
 *
 */
 async function waitInvisible(page, data, variables, tagElement, delay, action) {
-
-    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     const { getReferenceByCode } = require("../../reference/reference.service.js");
+
     let timeout = 30 // 30 seconds by default
     let ret
-
-
-    // Check if the tag is not on the dictionary
-    // if (tagElement[0] == '@') {
-    //     const dataAPI = { projectID: data.projectID, code: tagElement, language: '*', active: 1 }
-    //     const result = await getDictionaryByCode(dataAPI);
-    //     if (result.length) {
-    //         tagElement = result[0].label
-    //     } else {
-    //         variables.displayLog(1, 1, 'Data: ' + tagElement + ' not found in the dictionary!')
-    //         return { success: 0, message: "Cannot find the code: " + tagElement + " in the dictionary!", stop: 1 }
-    //     }
-    // }
 
     ret = await getElement(page, variables, data, tagElement, 'waitInvisible')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
@@ -3722,27 +3339,7 @@ async function waitInvisible(page, data, variables, tagElement, delay, action) {
 */
 
 async function check(driver, data, variables, tag, delay) {
-    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
-
     let ret
-
-    // if (tag == undefined) {
-    //     console.log("check: tag cannot be empty!")
-    //     return { success: 0, message: "check: tag cannot be empty!", stop: 1 }
-    // } else if (tag[0] == '@') {
-    //     //console.log('In the dictionary.........', data.projectID)
-    //     // Search the tag in the dictionary
-    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-    //     const result = await getDictionaryByCode(dataAPI);
-    //     if (result.length) {
-    //         tag = result[0].label
-    //         //console.log("Find the code: " + tag)
-    //     } else {
-    //         console.log("Cannot find the code: " + tag)
-    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
-    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-    //     }
-    // }
 
     ret = await getElement(page, variables, data, tag, 'check')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
@@ -3779,27 +3376,7 @@ async function check(driver, data, variables, tag, delay) {
 *
 */
 async function uncheck(page, data, variables, tag, delay) {
-    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
-
     let ret
-
-    // if (tag == undefined) {
-    //     console.log("uncheck: tag cannot be empty!")
-    //     return { success: 0, message: "uncheck: tag cannot be empty!", stop: 1 }
-    // } else if (tag[0] == '@') {
-    //     //console.log('In the dictionary.........', data.projectID)
-    //     // Search the tag in the dictionary
-    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-    //     const result = await getDictionaryByCode(dataAPI);
-    //     if (result.length) {
-    //         tag = result[0].label
-    //         //console.log("Find the code: " + tag)
-    //     } else {
-    //         console.log("Cannot find the code: " + tag)
-    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
-    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-    //     }
-    // }
 
     ret = await getElement(page, variables, data, tag, 'uncheck')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
@@ -3969,8 +3546,6 @@ async function keyboard(page, data, variables, text) {
 
     try {
         for (let i = 0; i < text.length; i++) {
-            //console.log('keyboard sends: ' + text[i])
-            //driver.actions().sendKeys(text[i]).perform();
             await page.keyboard.press(text[i])
         }
         return { success: 1, message: 'keyboard Ok!', stop: 0 }
@@ -4059,8 +3634,6 @@ async function logfile(userID, category, message) {
 async function setVariable(variables, variable, value) {
     let ret = { success: 1, message: 'setVariable', stop: 0 }
 
-    //variables.displayLog(1, 1,'--- setVariable ---- ' + variable + ' ' + value)
-
     variable = variable.trim()
     if (typeof (value) == "string") value = value.trim()
 
@@ -4087,30 +3660,6 @@ async function setVariable(variables, variable, value) {
     }
 
 }
-
-
-
-/**
-* ---------------------------------------------------------------------------- 
-* @function <TBR>
-*   refreshURL: refresh the current page (equivalent to F5)
-*
-* @param {number} userID:   userID
-* @param {object} variables: array of all the variables
-*
-*/
-/*
-async function refreshURL(userID, variables) {
-
-    try {
-        await browser.driver.navigate().refresh();
-        ret = { success: 1, message: 'refreshURL OK', stop: 0 }
-        return ret
-    } catch (err) {
-        return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
-    }
-}
-*/
 
 
 /**
@@ -4460,27 +4009,7 @@ async function setData(data, variables, code, value, comment) {
 *
 */
 async function JSinput(page, data, variables, tag, value) {
-    // const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
-
     let ret
-
-    // if (tag == undefined) {
-    //     console.log("JSinput: tag cannot be empty!")
-    //     return { success: 0, message: "JSinput: tag cannot be empty!", stop: 1 }
-    // } else if (tag[0] == '@') {
-    //     //console.log('In the dictionary.........', data.projectID)
-    //     // Search the tag in the dictionary
-    //     const dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-    //     const result = await getDictionaryByCode(dataAPI);
-    //     if (result.length) {
-    //         tag = result[0].label
-    //         //console.log("Find the code: " + tag)
-    //     } else {
-    //         console.log("Cannot find the code: " + tag)
-    //         variables.displayLog(1, 1, 'Data not found in the dictionary!')
-    //         return { success: 0, message: "Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
-    //     }
-    // }
 
     ret = await getElement(page, variables, data, tag, 'JSinput')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
