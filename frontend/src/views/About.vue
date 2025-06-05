@@ -5,7 +5,7 @@
     <h4>I am a professional in IT, working for a big IT Company since 1991.<br>
       In 2018, I decided to develop a tool to help the Testers with automated tests.
       My objective was to provide a tool that can be used without any technical skills.<br>
-      In 2024, I decided to fully rewrite the tool to offer a more flexible solution, that can be used by a Team.</h4>
+      In 2024/2025, I decided to fully rewrite the tool to offer a more flexible solution, that can be used by a Team.</h4>
   </div>
 
   <div class="about">

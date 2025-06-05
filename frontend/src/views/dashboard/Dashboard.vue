@@ -1056,7 +1056,6 @@ export default {
             graphLabels.value = []
             graphDetailDataset.value = []
 
-
             // Detect the number of group
             for (let i = 0; i < performances.value.data.length; i++) {
                 if (performances.value.data[i].sequenceID == 11) {
@@ -1064,6 +1063,7 @@ export default {
                     graphLabels.value.push(performances.value.data[i].scenario + '/' + performances.value.data[i].topic)
                 }
             }
+
             // Reset the graphdata
             for (let i = 0; i < 11; i++) {
                 for (let j = 0; j < groupID; j++) {
@@ -1071,17 +1071,20 @@ export default {
                     graphData[i][j] = null
                 }
             }
+
             // Process the performances
+            let seqID = 0
             for (let i = 0; i < performances.value.data.length; i++) {
                 let seqID = performances.value.data[i].sequenceID - 1
-                graphData[seqID][id] = performances.value.data[i].measure
-                if (performances.value.data[i].sequenceID == 11) {
-                    id++
+                if (seqID > 0) {
+                    graphData[seqID][id] = performances.value.data[i].measure
+                    if (performances.value.data[i].sequenceID == 11) {
+                        id++
+                    }
                 }
             }
 
-
-            console.log('GRAPH DATA', graphData)
+            // console.log('GRAPH DATA', graphData)
 
             let color = ''
             let label = ''
@@ -1097,8 +1100,6 @@ export default {
                     borderColor: '#1abc9c', borderWidth: 2, borderRadius: 20
                 })
             }
-
-
         }
 
 
