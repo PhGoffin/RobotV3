@@ -1,18 +1,53 @@
 <template>
 
+  <div v-if="showPopup">
+    <PopupConfirm @close="handleCancelDelete" @confirm="handleConfirmDelete" />
+  </div>  
+
+  <div :class="recordSelected ? 'entity selected' : 'entity'">
 
     <div class="actions">
 
-      <h3 @click="showDetails = !showDetails" title="Click to show details" class="data"  ref="single">
-        {{ performance.space }} > {{ performance.scenario }} > {{ performance.topic }} ==> Measure: {{ performance.sequencePad }} )  {{ performance.measure }} Created on : {{ performance.created }}
-      </h3>
+      <table>
+        <tbody>
+          <tr>
+            <td>
+              <span>&nbsp;</span>
+            </td>
+            <td>
+              <div class="actions">
+
+
+
+                <div class="icons" v-if="actionAllowed">
+                  <input type="checkbox" name="selection" class="input checkbox" @change="handleSelect"
+                    title="Check to select the record" />
+                </div>
+
+                <div class="icons" v-if="actionAllowed">
+                  <i class="fa-regular fa-trash-can" @click="handleConfirmation" title="Delete the performance"></i>
+                </div>
+              </div>
+            </td>
+            <td>
+              <h3 @click="showDetails = !showDetails" title="Click to show details" class="data" ref="single">
+                {{ performance.space }} > {{ performance.scenario }} > {{ performance.topic }} ==> Measure: {{
+                  performance.sequencePad }} ) {{ performance.measure }}  --> {{ performance.created }}
+              </h3>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+
 
     </div>
     <div class="details" v-if="showDetails">
       <p>ID: {{ performance.performanceID }}</p>
     </div>
 
-  
+  </div>
+
 </template>
 
 <script>
@@ -41,11 +76,54 @@ export default {
     const performanceID = ref(performance.value.performanceID)
     const projectID = ref(props.projectID)
     const userID = ref(props.userID)
+    const recordSelected = ref(false)
 
 
+    // --------------------------------------------------------------------------
+    // User select a record
+    // --------------------------------------------------------------------------
+    const handleSelect = () => {
+      consoleLog('PerformanceSingle.vue/handleSelect', 2, 'Select a record', trace.value)
+      recordSelected.value = !recordSelected.value
+      context.emit('selectrecord', performanceID.value)
+    }
+
+    // --------------------------------------------------------------------------
+    // User cancel the delete action
+    // --------------------------------------------------------------------------
+    const handleConfirmation = () => {
+      consoleLog('PerformanceSingle.vue/handleConfirmation', 2, 'Ask for a confirmation to delete', trace.value)
+      showPopup.value = true
+    }    
+
+    // --------------------------------------------------------------------------
+    // User cancel the delete action
+    // --------------------------------------------------------------------------
+    const handleCancelDelete = () => {
+      consoleLog('PerformanceSingle.vue/handleCancelDelete', 2, 'Cancel the delete', trace.value)
+      showPopup.value = false
+    }    
+
+    // --------------------------------------------------------------------------
+    // User confirm the delete action
+    // --------------------------------------------------------------------------
+    const handleConfirmDelete = () => {
+      consoleLog('PerformanceSingle.vue/handleConfirmDelete', 2, 'Confirm the delete', trace.value)
+      showPopup.value = false
+      handelDelete()
+    }
+
+    // -------------------------------------------
+    // User asks to delete a performance
+    // -------------------------------------------
+    const handelDelete = () => {
+      consoleLog('PerformanceSingle.vue/handelDelete', 2, 'Emit event to delete a record', trace.value)
+      context.emit('handledelete', performance.value.performanceID)
+    }    
 
     return {
-      showDetails, projectID, userID, performance, performanceID, actionAllowed, showPopup
+      showDetails, projectID, userID, performance, performanceID, recordSelected, actionAllowed,
+      showPopup, handleConfirmation, handleSelect, handleCancelDelete, handleConfirmDelete, handelDelete
     }
   }
 }

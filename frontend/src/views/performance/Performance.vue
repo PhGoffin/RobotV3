@@ -50,8 +50,8 @@
                     <div v-if="filteredData.length" class="layout">
                         <PerformancesList class="performancesList" :performances="filteredData"
                             :workspaceID="workspaceID" :workspace="workspace" :superUser="superUser"
-                            :projectID="projectID" :performanceID="performanceID" :userID="userID" :trace="trace"
-                            :location="location" @storelocation="storeLocation" />
+                            :projectID="projectID" :userID="userID" :trace="trace"
+                            :location="location" @handledelete="handleDelete" @selectrecord="selectRecord" @storelocation="storeLocation" />
                     </div>
                 </div>
                 <div class="input-group">
@@ -73,6 +73,8 @@ import { useRouter } from 'vue-router'
 import PerformancesList from '../../components/performance/PerformancesList.vue'
 import getPerformanceByProject from '../../composables/performance/getPerformanceByProject'
 import exportPerformance from '../../composables/performance/exportPerformance'
+import deletePerformance from '../../composables/performance/deletePerformance'
+
 
 
 import Spinner from '../../components/Spinner.vue'
@@ -89,8 +91,8 @@ export default {
         const trace = ref(props.trace)
         const actionAllowed = ref(true)
 
-        displayMsg('Performances.vue', trace.value)
-        consoleLog('Performances.vue - props', 1, props, trace.value)
+        displayMsg('Performance.vue', trace.value)
+        consoleLog('Performance.vue - props', 1, props, trace.value)
 
         const workspaceID = ref(props.workspaceID)
         const workspace = ref(props.workspace)
@@ -118,6 +120,7 @@ export default {
         const URL = ref(process.env.VUE_APP_MYSQL_API + 'performance/download/')
         const jsonFile = ref(userName.value + '_performance.json')
         const viewLink = ref(false)
+        const recordSelected = ref([])
 
 
         // -------------------------------------------
@@ -151,7 +154,7 @@ export default {
         const DisplayError = (myMessage, myStyle, myCallback) => {
             errorMessage.value = myMessage
             styleMessage.value = myStyle.toLowerCase()
-            consoleLog('Performances.vue/DisplayError', 2, 'Message: ' + errorMessage.value + ', Style: ' + styleMessage.value, trace.value)
+            consoleLog('Performance.vue/DisplayError', 2, 'Message: ' + errorMessage.value + ', Style: ' + styleMessage.value, trace.value)
             if (myStyle != 'Alert') {
                 setTimeout(() => displayErrorFunction(myCallback), 3000)
             }
@@ -162,19 +165,19 @@ export default {
         // load all the performances of the project 
         // -------------------------------------------
         const loadPerformanceData = async () => {
-            consoleLog('Performances.vue/loadPerformanceData', 2, 'Loading performance by subproject: ' + projectID.value, trace.value)
+            consoleLog('Performance.vue/loadPerformanceData', 2, 'Loading performance by subproject: ' + projectID.value, trace.value)
             const { error, loadPerformance } = getPerformanceByProject(projectID.value)
             loadPerformance(performances, trace.value)
                 .then(function () {
                     // check the status of the load
-                    consoleLog('Performances.vue/loadPerformanceData', 2, 'Performance Load by subproject status: ' + performances.value.success, trace.value)
+                    consoleLog('Performance.vue/loadPerformanceData', 2, 'Performance Load by subproject status: ' + performances.value.success, trace.value)
                     if (performances.value.success && performances.value.data.length) {
                         performances.value = performances.value.data
                         filteredData.value = performances.value
-                        consoleLog('Performances.vue/loadPerformanceData', 2, performances.value, trace.value)
+                        consoleLog('Performance.vue/loadPerformanceData', 2, performances.value, trace.value)
                         return (1)
                     } else {
-                        consoleLog('Performances.vue/loadPerformanceData', 2, 'No performance found!', trace.value)
+                        consoleLog('Performance.vue/loadPerformanceData', 2, 'No performance found!', trace.value)
                         return (0)
                     }
                 })
@@ -189,7 +192,7 @@ export default {
         // Compute the performances depending of the filter
         // ---------------------------------------------
         const filteredData = computed(() => {
-            consoleLog('Performances.vue/filteredData', 2, 'computed value', trace.value)
+            consoleLog('Performance.vue/filteredData', 2, 'computed value', trace.value)
             if (performances.value.length) {
                 return performances.value.filter((ar) => ar.space.toUpperCase().includes(filterValue.value.toUpperCase())
                     || ar.scenario.toUpperCase().includes(filterValue.value.toUpperCase()) || ar.topic.toUpperCase().includes(filterValue.value.toUpperCase()))
@@ -211,7 +214,7 @@ export default {
         // PerformancesList emits a request to update the location
         // --------------------------------------------------------------------------
         const storeLocation = (location) => {
-            consoleLog('Performances.vue/storeLocation', 2, 'Emit a request to the parent to update the location', trace.value)
+            consoleLog('Performance.vue/storeLocation', 2, 'Emit a request to the parent to update the location', trace.value)
             context.emit('storelocation', location)
         }
 
@@ -223,17 +226,17 @@ export default {
             let performance = []
             let filename = './data/' + jsonFile.value
 
-            consoleLog('Performances.vue/doExport', 2, 'Export performance in ' + filename, trace.value)
+            consoleLog('Performance.vue/doExport', 2, 'Export performance in ' + filename, trace.value)
             const { error, exportThePerformance } = exportPerformance(projectID.value, filename)
             return await exportThePerformance(performance, trace.value)
                 .then(function () {
                     // check the status of the export
-                    consoleLog('Performances.vue/doExport', 2, 'Performance export status: ' + performance.value.success, trace.value)
+                    consoleLog('Performance.vue/doExport', 2, 'Performance export status: ' + performance.value.success, trace.value)
                     if (performance.value.success) {
-                        consoleLog('Performances.vue/doExport', 2, performance, trace.value)
+                        consoleLog('Performance.vue/doExport', 2, performance, trace.value)
                         return (1)
                     } else {
-                        consoleLog('Performances.vue/doExport', 2, 'Error during the export of the performances', trace.value)
+                        consoleLog('Performance.vue/doExport', 2, 'Error during the export of the performances', trace.value)
                         return (0)
                     }
                 })
@@ -269,14 +272,82 @@ export default {
         // User cancel the action, Back to the control panel or the dashboard
         // --------------------------------------------------------------------------
         const handleCancel = () => {
-            consoleLog('Performances.vue/handleCancel', 2, 'User Cancel the action', trace.value)
+            consoleLog('Performance.vue/handleCancel', 2, 'User Cancel the action', trace.value)
             router.push({ name: 'ControlPanel' })
         }
+
+
+        // --------------------------------------------------------------------------
+        // Performances received a request to select a record
+        // --------------------------------------------------------------------------
+        const selectRecord = (performanceID) => {
+            consoleLog('Performance.vue/selectRecord', 2, 'Received a request to select a record: ' + performanceID, trace.value)
+            if (!recordSelected.value.includes(performanceID)) {
+                recordSelected.value.push(performanceID)
+            } else {
+                recordSelected.value = recordSelected.value.filter((ar) => ar != performanceID)
+            }
+            consoleLog('Performance.vue/selectRecord', 2, recordSelected.value, trace.value)
+            consoleLog('Performance.vue/selectRecord', 2, 'Length: ' + recordSelected.value.length, trace.value)
+        }
+
+
+        // --------------------------------------------------------------------------
+        // Call the API to delete a performance 
+        // --------------------------------------------------------------------------
+        const doDelete = async (performanceID) => {
+            let performance = []
+            consoleLog('Performance.vue/doDelete', 2, 'Delete an existing Performance - projectID: ' + projectID.value + ', performanceID: ' + performanceID, trace.value)
+            const { error, deleteThePerformance } = deletePerformance(performanceID)
+            return await deleteThePerformance(performance, trace.value)
+                .then(function () {
+                    // check the status of the delete
+                    consoleLog('Performance.vue/doDelete', 2, 'Performance delete status: ' + performance.value.success, trace.value)
+                    if (performance.value.success) {
+                        consoleLog('Performance.vue/doDelete', 2, performance, trace.value)
+                        return (1)
+                    } else {
+                        consoleLog('Performance.vue/doDelete', 2, 'Error during the delete of a performance', trace.value)
+                        return (0)
+                    }
+                })
+        }
+
+
+
+        // --------------------------------------------------------------------------
+        // Performances received a request to delete selected record(s)
+        // --------------------------------------------------------------------------
+        const handleDelete = async (performanceID) => {
+            consoleLog('Performance.vue/handleDelete', 2, 'Delete ' + recordSelected.value.length + ' performance(s) and the performance: ' + performanceID, trace.value)
+            let status = 1;
+            //console.log (' ******** 1 ******* Loop')
+
+            // Add the performanceID if it's not already in the list
+            if (!recordSelected.value.includes(performanceID)) {
+                recordSelected.value.push(performanceID)
+            }
+
+            // Delete the selected performance(s)
+            for (let recordID of recordSelected.value) {
+                if (await doDelete(recordID) == 0) status = 0
+            }
+            if (status == 0) {
+                DisplayError('Error during the delete of the selected reference(s)', 'Alert')
+            } else {
+                DisplayError('Selected reference(s) deleted successfully', 'Info')
+            }
+            //console.log (' ******** 2 ******* refresh')
+            // Refresh the list
+            await loadPerformanceData()
+            recordSelected.value = []
+        }
+
 
         return {
             errorMessage, styleMessage, performances, filteredData, filterValue, filteredRows, workspaceID, workspace, actionAllowed,
             superUser, projectID, projectName, subprojectName, userID, displayInfo, trace, URL, jsonFile, viewLink,
-            handleCancel, handleFocus, handleBlur, storeLocation, handleExportJSON
+            handleCancel, handleFocus, handleBlur, handleDelete, selectRecord, storeLocation, handleExportJSON
         }
 
 

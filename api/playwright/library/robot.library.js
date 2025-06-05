@@ -3786,18 +3786,12 @@ async function setReference(variables, projectID, userID, code, label, comment) 
             comment = comment.replace(/'/g, "");
         }
 
-        //variables.displayLog(1, 1,'setReference')
-        console.log('before: getReference')
         ret = await getReference(variables, projectID, userID, code)
-        console.log('after: getReference')
-        //variables.displayLog(1, 1,ret)
 
         if (ret.success == 1) {
             // We found a reference, we can update it
             data = { code: code, label: label, comment: comment, active: 1, projectID: projectID, userID: userID, referenceID: ret.id }
-            console.log('before: updateReference')
             result = await updateReference(data);
-            console.log('after: updateReference')
             if (!result.affectedRows) {
                 ret = { success: 0, message: 'Internal Error in the update after a successfull getReference with code: ' + code, stop: 0 }
             } else {
@@ -3806,9 +3800,7 @@ async function setReference(variables, projectID, userID, code, label, comment) 
         } else {
             // Create a new reference
             data = { projectID: projectID, userID: userID, code: code, label: label, comment: comment, position: '99999', active: 1 }
-            //console.log('before: createReference')
             result = await createReference(data);
-            //console.log('after: createReference')
             if (!result.affectedRows) {
                 ret = { success: 0, message: 'Error in the insert of a reference: ' + code, stop: 0 }
             } else {

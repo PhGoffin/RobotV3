@@ -9,7 +9,7 @@ module.exports = {
   * @Email: artcomputer123@gmail.com
   * @Date: 2025-05-08
   * @Last Modified by: Someone
-  * @Last Modified time: 2025-06-03 09:40:40
+  * @Last Modified time: 2025-06-05 11:08:16
   * @Description: All the Playwright services available for robot
   */
 
@@ -1625,7 +1625,7 @@ module.exports = {
       // launch the browser
       // ----------------------------------
       let retBrowser = await browserMiddelware.startBrowser(data)
-      console.log('RetBrowser', retBrowser)
+      //console.log('RetBrowser', retBrowser)
       if (!retBrowser.success) {
         ret = { success: 0, message: "No way to start the browser: " + retBrowser.message }
         return resolve(ret);
@@ -1856,7 +1856,7 @@ module.exports = {
       // launch the browser
       // ----------------------------------
       let retBrowser = await browserMiddelware.startBrowser(data)
-      console.log('RetBrowser', retBrowser)
+      //console.log('RetBrowser', retBrowser)
       if (!retBrowser.success) {
         ret = { success: 0, message: "No way to start the browser: " + retBrowser.message }
         return resolve(ret);
@@ -2150,7 +2150,7 @@ module.exports = {
       // launch the browser
       // ----------------------------------
       let retBrowser = await browserMiddelware.startBrowser(data)
-      console.log('RetBrowser', retBrowser)
+      //console.log('RetBrowser', retBrowser)
       if (!retBrowser.success) {
         ret = { success: 0, message: "No way to start the browser: " + retBrowser.message }
         return resolve(ret);
