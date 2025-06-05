@@ -15,34 +15,36 @@
                 <form @submit.prevent="">
 
                     <table>
-                        <tr>
-                            <td class="menu">
-                                <!-- <div class="input-container focus" style="max-width: 10rem">
+                        <tbody>
+                            <tr>
+                                <td class="menu">
+                                    <!-- <div class="input-container focus" style="max-width: 10rem">
                                     <input type="text" name="RowNb" class="input" @focus="handleFocus($event)"
                                         @blur="handleBlur($event)" @change="handleRowToInsert" v-model="rowToInsert"
                                         required />
                                     <label>Row(s) to insert</label>
                                     <span>Row(s) to insert</span>
                                 </div> -->
-                            </td>
-                            <td class="menu">
-                                <div class="actions3">
-                                    <div class="input-container focus" style="min-width: 30rem; max-width: 30rem">
-                                        <input type="text" name="dataFilter" class="input" @focus="handleFocus($event)"
-                                            title="type <ACTIVE> to filter only by active attributes"
-                                            @blur="handleBlur($event)" v-model="filterValue" />
-                                        <label>Filter {{ filteredRows }}</label>
-                                        <span>Filter {{ filteredRows }}</span>
+                                </td>
+                                <td class="menu">
+                                    <div class="actions3">
+                                        <div class="input-container focus" style="min-width: 30rem; max-width: 30rem">
+                                            <input type="text" name="dataFilter" class="input"
+                                                @focus="handleFocus($event)"
+                                                title="type <ACTIVE> to filter only by active attributes"
+                                                @blur="handleBlur($event)" v-model="filterValue" />
+                                            <label>Filter {{ filteredRows }}</label>
+                                            <span>Filter {{ filteredRows }}</span>
+                                        </div>
+                                        <i class="fa-regular fa-trash-can" @click="filterValue = ''"
+                                            title="Reset the filter"></i>
+
+                                        <i class="fa-regular fa-eye" @click="filterValue = '<ACTIVE>'"
+                                            title="Only active attributes"></i>
                                     </div>
-                                    <i class="fa-regular fa-trash-can" @click="filterValue = ''"
-                                        title="Reset the filter"></i>
-
-                                    <i class="fa-regular fa-eye" @click="filterValue = '<ACTIVE>'"
-                                        title="Only active attributes"></i>
-                                </div>
-                            </td>
-                        </tr>
-
+                                </td>
+                            </tr>
+                        </tbody>
                     </table>
 
                 </form>
@@ -204,7 +206,7 @@ export default {
                 if (filterValue.value != '<ACTIVE>')
                     return aitagattributes.value.filter((ar) => ('#' + ar.tagattributeID).includes(filterValue.value) || ('=' + ar.active) == filterValue.value)
                 else
-                    return aitagattributes.value.filter((ar) => !( ar.active == 0 || ar.value == '??') )
+                    return aitagattributes.value.filter((ar) => !(ar.active == 0 || ar.value == '??'))
             } else {
                 filteredRows.value = ''
                 return aitagattributes.value

@@ -23,22 +23,24 @@
                 <form @submit.prevent="">
 
                     <table>
-                        <tr>
-                            <td class="menu">
-                                <div class="actions3">
-                                    <div class="input-container focus" style="min-width: 30rem; max-width: 30rem">
-                                        <input type="text" name="dataFilter" class="input" @focus="handleFocus($event)"
-                                            title="You can filter by the Environment, Scenario or by Topic"
-                                            @blur="handleBlur($event)" v-model="filterValue" />
-                                        <label>Filter {{ filteredRows }}</label>
-                                        <span>Filter {{ filteredRows }}</span>
+                        <tbody>
+                            <tr>
+                                <td class="menu">
+                                    <div class="actions3">
+                                        <div class="input-container focus" style="min-width: 30rem; max-width: 30rem">
+                                            <input type="text" name="dataFilter" class="input"
+                                                @focus="handleFocus($event)"
+                                                title="You can filter by the Environment, Scenario or by Topic"
+                                                @blur="handleBlur($event)" v-model="filterValue" />
+                                            <label>Filter {{ filteredRows }}</label>
+                                            <span>Filter {{ filteredRows }}</span>
+                                        </div>
+                                        <i class="fa-regular fa-trash-can" @click="filterValue = ''"
+                                            title="Reset the filter"></i>
                                     </div>
-                                    <i class="fa-regular fa-trash-can" @click="filterValue = ''"
-                                        title="Reset the filter"></i>
-                                </div>
-                            </td>
-                        </tr>
-
+                                </td>
+                            </tr>
+                        </tbody>
                     </table>
                 </form>
 
@@ -49,8 +51,7 @@
                         <PerformancesList class="performancesList" :performances="filteredData"
                             :workspaceID="workspaceID" :workspace="workspace" :superUser="superUser"
                             :projectID="projectID" :performanceID="performanceID" :userID="userID" :trace="trace"
-                            :location="location"
-                            @storelocation="storeLocation" />
+                            :location="location" @storelocation="storeLocation" />
                     </div>
                 </div>
                 <div class="input-group">

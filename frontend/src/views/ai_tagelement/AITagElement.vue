@@ -15,24 +15,25 @@
                 <form @submit.prevent="">
 
                     <table>
-                        <tr>
-                            <td class="menu">
-                            </td>
-                            <td class="menu">
-                                <div class="actions3">
-                                    <div class="input-container focus" style="min-width: 30rem; max-width: 30rem">
-                                        <input type="text" name="dataFilter" class="input" @focus="handleFocus($event)"
-                                            title="You can filter by the Path" @blur="handleBlur($event)"
-                                            v-model="filterValue" />
-                                        <label>Filter {{ filteredRows }}</label>
-                                        <span>Filter {{ filteredRows }}</span>
+                        <tbody>
+                            <tr>
+                                <td class="menu">
+                                </td>
+                                <td class="menu">
+                                    <div class="actions3">
+                                        <div class="input-container focus" style="min-width: 30rem; max-width: 30rem">
+                                            <input type="text" name="dataFilter" class="input"
+                                                @focus="handleFocus($event)" title="You can filter by the Path"
+                                                @blur="handleBlur($event)" v-model="filterValue" />
+                                            <label>Filter {{ filteredRows }}</label>
+                                            <span>Filter {{ filteredRows }}</span>
+                                        </div>
+                                        <i class="fa-regular fa-trash-can" @click="filterValue = ''"
+                                            title="Reset the filter"></i>
                                     </div>
-                                    <i class="fa-regular fa-trash-can" @click="filterValue = ''"
-                                        title="Reset the filter"></i>
-                                </div>
-                            </td>
-                        </tr>
-
+                                </td>
+                            </tr>
+                        </tbody>
                     </table>
 
                 </form>
@@ -40,8 +41,8 @@
 
                 <div class="entities" height="150px">
                     <div v-if="error"> {{ error }}</div>
-                    <div class="layout"  v-if="refresh">
-                        <AITagElementList  class="AITagElementList" :aitagelements="filteredData"
+                    <div class="layout" v-if="refresh">
+                        <AITagElementList class="AITagElementList" :aitagelements="filteredData"
                             :workspaceID="workspaceID" :workspace="workspace" :superUser="superUser"
                             :projectID="projectID" :userID="userID" :trace="trace"
                             @refreshtagelement="refreshTagElement" @selectrecord="selectRecord"
@@ -179,7 +180,7 @@ export default {
         const filteredData = computed(() => {
             consoleLog('AI_TagElement.vue/filteredData', 2, 'computed value', trace.value)
             if (aitagelements.value.length) {
-                console.log ('Refresh', refresh.value)
+                console.log('Refresh', refresh.value)
                 // 28/05 - the following line crashes the refresh !!! no idea why
                 //refresh.value = !refresh.value
                 return aitagelements.value.filter((ar) => ('#' + ar.tagelementID).includes(filterValue.value) ||
@@ -788,6 +789,7 @@ button.action:hover {
 .actions3 i:hover {
     color: #777;
 }
+
 .entities {
     overflow: scroll;
     scrollbar-width: thin;

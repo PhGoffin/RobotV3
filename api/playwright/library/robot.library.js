@@ -492,6 +492,7 @@ async function getElement(page, variables, data, tag, functionName) {
             timeout = ref[0].label * 1
         }
     }
+    page.setDefaultTimeout(timeout * 1000)
 
     if (tag == undefined) {
         console.log(functionName + "::getElement: tag cannot be empty!")

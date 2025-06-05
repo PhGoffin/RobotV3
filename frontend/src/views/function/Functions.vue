@@ -13,48 +13,52 @@
             <div class="entity">
 
                 <button @click="handleInsert('-1')">
-                    <i class="fa-solid fa-circle-plus"></i>                    
+                    <i class="fa-solid fa-circle-plus"></i>
                     Function</button>
 
 
                 <form @submit.prevent="">
 
                     <table>
-                        <tr>
-                            <td class="menu">
-                                <div class="input-container focus" style="max-width: 10rem">
-                                    <input type="text" name="RowNb" class="input" @focus="handleFocus($event)"
-                                        @blur="handleBlur($event)" @change="handleRowToInsert" v-model="rowToInsert" required />
-                                    <label>Row(s) to insert</label>
-                                    <span>Row(s) to insert</span>
-                                </div>
-                            </td>
-                            <td class="menu">
-                                <div class="actions3">
-                                    <div class="input-container focus" style="min-width: 30rem; max-width: 30rem">
-                                        <input type="text" name="dataFilter" class="input" @focus="handleFocus($event)"
-                                            title="You can filter by the code, label or by comment"
-                                            @blur="handleBlur($event)" v-model="filterValue" />
-                                        <label>Filter {{ filteredRows }}</label>
-                                        <span>Filter {{ filteredRows }}</span>
+                        <tbody>
+                            <tr>
+                                <td class="menu">
+                                    <div class="input-container focus" style="max-width: 10rem">
+                                        <input type="text" name="RowNb" class="input" @focus="handleFocus($event)"
+                                            @blur="handleBlur($event)" @change="handleRowToInsert" v-model="rowToInsert"
+                                            required />
+                                        <label>Row(s) to insert</label>
+                                        <span>Row(s) to insert</span>
                                     </div>
-                                    <i class="fa-regular fa-trash-can" @click="filterValue=''" title="Reset the filter"></i>
-                                </div>
-                            </td>
-                        </tr>
-
+                                </td>
+                                <td class="menu">
+                                    <div class="actions3">
+                                        <div class="input-container focus" style="min-width: 30rem; max-width: 30rem">
+                                            <input type="text" name="dataFilter" class="input"
+                                                @focus="handleFocus($event)"
+                                                title="You can filter by the code, label or by comment"
+                                                @blur="handleBlur($event)" v-model="filterValue" />
+                                            <label>Filter {{ filteredRows }}</label>
+                                            <span>Filter {{ filteredRows }}</span>
+                                        </div>
+                                        <i class="fa-regular fa-trash-can" @click="filterValue = ''"
+                                            title="Reset the filter"></i>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
                     </table>
 
                 </form>
 
-                <div class="entities"  height="150px">
+                <div class="entities" height="150px">
                     <div v-if="error"> {{ error }}</div>
                     <div v-if="filteredData.length" class="layout">
-                        <FunctionsList class="FunctionsList" :testfunctions="filteredData"
-                            :workspaceID="workspaceID" :workspace="workspace" :superUser="superUser" :projectID="projectID"
-                            :userID="userID" :trace="trace" @refreshfunctions="refreshFunctions"
-                            @selectrecord="selectRecord" @handleinsert="handleInsert" @handlecopy="handleCopy"
-                            @handlemove="handleMove" @handledelete="handleDelete" />
+                        <FunctionsList class="FunctionsList" :testfunctions="filteredData" :workspaceID="workspaceID"
+                            :workspace="workspace" :superUser="superUser" :projectID="projectID" :userID="userID"
+                            :trace="trace" @refreshfunctions="refreshFunctions" @selectrecord="selectRecord"
+                            @handleinsert="handleInsert" @handlecopy="handleCopy" @handlemove="handleMove"
+                            @handledelete="handleDelete" />
                     </div>
                 </div>
                 <div class="input-group">
@@ -107,7 +111,7 @@ export default {
         if (!props.connected) {
             router.push({ name: 'Login' })
             return
-        }        
+        }
 
 
         const workspaceID = ref(props.workspaceID)
@@ -185,7 +189,7 @@ export default {
             consoleLog('Functions.vue/filteredData', 2, 'computed value', trace.value)
             if (testfunctions.value.length) {
                 return testfunctions.value.filter((ar) => ar.functionName.toUpperCase().includes(filterValue.value.toUpperCase())
-                || ar.comment.toUpperCase().includes(filterValue.value.toUpperCase()))
+                    || ar.comment.toUpperCase().includes(filterValue.value.toUpperCase()))
             } else {
                 filteredRows.value = ''
                 return testfunctions.value
@@ -196,7 +200,7 @@ export default {
         // Compute the filter rows(s) indicator
         // ---------------------------------------------
         const filteredRows = computed(() => {
-           return '( ' + filteredData.value.length + ' )'
+            return '( ' + filteredData.value.length + ' )'
         })
 
 
@@ -290,7 +294,7 @@ export default {
             consoleLog('Functions.vue/doInsert', 2, 'Insert a new Function - position: ' + position, trace.value)
             // const addFunction = (functionName, comment, tip1, parameter1, defaultValue1, natural1, tip2, parameter2, defaultValue2, natural2, tip3, parameter3, defaultValue3, natural3, tip4, parameter4, defaultValue4, natural4, position, active) => {
 
-            const { error, addNewFunction } = addFunction(functionName, '#', comment, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', position, 1 )
+            const { error, addNewFunction } = addFunction(functionName, '#', comment, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', position, 1)
             return await addNewFunction(testfunction, trace.value)
                 .then(function () {
                     // check the status of the insert
@@ -515,7 +519,7 @@ export default {
 
 
         return {
-            errorMessage, styleMessage, testfunctions, filteredData, filterValue, filteredRows, workspaceID, workspace, 
+            errorMessage, styleMessage, testfunctions, filteredData, filterValue, filteredRows, workspaceID, workspace,
             superUser, projectID, projectName, userID, displayInfo, trace, rowToInsert,
             handleCancel, refreshFunctions, handleInsert, handleCopy, handleMove, handleDelete, selectRecord,
             handleFocus, handleBlur, handleCancel, handleRowToInsert
@@ -875,6 +879,7 @@ td.menu {
     padding: 0 1.2rem 0 0;
     text-align: left;
 }
+
 .actions3 {
     display: flex;
     flex-direction: row;
@@ -905,6 +910,7 @@ td.menu {
 .actions3 i:hover {
     color: #777;
 }
+
 .entities {
     overflow: scroll;
     /* scrollbar-color: red orange; */

@@ -22,20 +22,21 @@
 
                 <div class="entities">
                     <table class="scroll">
-                        <tr>
-                            <th class="ref">Category</th>
-                            <th class="ref">Message</th>
-                        </tr>
+                        <tbody>
+                            <tr>
+                                <th class="ref">Category</th>
+                                <th class="ref">Message</th>
+                            </tr>
 
-                        <tr v-for="log in logfiles" :key="log.logID" v-bind:value="{ id: log.logID }">
-                            <td class="ref bold label begin" :class="log.category">
-                                {{ log.category }}
-                            </td>
-                            <td class="ref bold value end" :class="log.category">
-                                {{ log.message }}
-                            </td>
-                        </tr>
-
+                            <tr v-for="log in logfiles" :key="log.logID" v-bind:value="{ id: log.logID }">
+                                <td class="ref bold label begin" :class="log.category">
+                                    {{ log.category }}
+                                </td>
+                                <td class="ref bold value end" :class="log.category">
+                                    {{ log.message }}
+                                </td>
+                            </tr>
+                        </tbody>
                     </table>
 
                 </div>
@@ -163,9 +164,9 @@ export default {
                             console.log('Item:', logfiles.value[id])
                         } else logfiles.value[id].position = -1
                     }
-                    console.log ('Before:', logfiles.value.length)
+                    console.log('Before:', logfiles.value.length)
                     logfiles.value = logfiles.value.filter((ar) => ar.position == 1)
-                    console.log ('After:', logfiles.value.length)
+                    console.log('After:', logfiles.value.length)
 
                     return (1)
                 } else {

@@ -22,20 +22,21 @@
 
                 <div class="entities">
                     <table class="scroll">
-                        <tr>
-                            <th class="ref">Category</th>
-                            <th class="ref">Message</th>
-                        </tr>
+                        <tbody>
+                            <tr>
+                                <th class="ref">Category</th>
+                                <th class="ref">Message</th>
+                            </tr>
 
-                        <tr v-for="log in logfiles" :key="log.logID" v-bind:value="{ id: log.logID }">
-                            <td class="ref bold label begin" :class="log.category">
-                                {{ log.category }}
-                            </td>
-                            <td class="ref bold value end" :class="log.category">
-                                {{ log.message }}
-                            </td>
-                        </tr>
-
+                            <tr v-for="log in logfiles" :key="log.logID" v-bind:value="{ id: log.logID }">
+                                <td class="ref bold label begin" :class="log.category">
+                                    {{ log.category }}
+                                </td>
+                                <td class="ref bold value end" :class="log.category">
+                                    {{ log.message }}
+                                </td>
+                            </tr>
+                        </tbody>
                     </table>
 
                 </div>
@@ -88,7 +89,7 @@ export default {
         if (!props.connected) {
             router.push({ name: 'Login' })
             return
-        }        
+        }
 
 
         // -------------------------------------------
@@ -169,13 +170,13 @@ export default {
             consoleLog('Logfiles.vue/handleCancel', 2, 'User Cancel the action', trace.value)
             if (location.value == 'dashboard') {
                 router.push({ name: 'Dashboard' })
-            } else if (location.value == 'AIdashboard')  {
+            } else if (location.value == 'AIdashboard') {
                 router.push({ name: 'AIDashboard' })
-            } else if (location.value == 'scenario')  {
+            } else if (location.value == 'scenario') {
                 router.push({ name: 'Scenarios' })
-            } else if (location.value == 'suite')  {
+            } else if (location.value == 'suite') {
                 router.push({ name: 'Suite Set' })
-            } else if (location.value == 'story')  {
+            } else if (location.value == 'story') {
                 router.push({ name: 'Story Set' })
             }
 
@@ -312,7 +313,8 @@ td.ref.Step {
 
 td.ref.Skip {
     background-color: #c2c6ca;
-    border-left: 4px solid #f57575;}
+    border-left: 4px solid #f57575;
+}
 
 td.ref.Loop {
     background-color: #e9cff3;
@@ -726,6 +728,7 @@ button.reset:hover {
     background-color: #1abc9c;
     height: 100%;
 }
+
 .entities {
     overflow: scroll;
     /* scrollbar-color: red orange; */

@@ -15,24 +15,26 @@
                 <form @submit.prevent="">
 
                     <table>
-                        <tr>
-                            <td class="menu">
-                            </td>
-                            <td class="menu">
-                                <div class="actions3">
-                                    <div class="input-container focus" style="min-width: 30rem; max-width: 30rem">
-                                        <input type="text" name="dataFilter" class="input" @focus="handleFocus($event)"
-                                            title="You can filter by the criteria or by #id" @blur="handleBlur($event)"
-                                            v-model="filterValue" />
-                                        <label>Filter {{ filteredRows }}</label>
-                                        <span>Filter {{ filteredRows }}</span>
+                        <tbody>
+                            <tr>
+                                <td class="menu">
+                                </td>
+                                <td class="menu">
+                                    <div class="actions3">
+                                        <div class="input-container focus" style="min-width: 30rem; max-width: 30rem">
+                                            <input type="text" name="dataFilter" class="input"
+                                                @focus="handleFocus($event)"
+                                                title="You can filter by the criteria or by #id"
+                                                @blur="handleBlur($event)" v-model="filterValue" />
+                                            <label>Filter {{ filteredRows }}</label>
+                                            <span>Filter {{ filteredRows }}</span>
+                                        </div>
+                                        <i class="fa-regular fa-trash-can" @click="filterValue = ''"
+                                            title="Reset the filter"></i>
                                     </div>
-                                    <i class="fa-regular fa-trash-can" @click="filterValue = ''"
-                                        title="Reset the filter"></i>
-                                </div>
-                            </td>
-                        </tr>
-
+                                </td>
+                            </tr>
+                        </tbody>
                     </table>
 
                 </form>
@@ -930,6 +932,7 @@ button.action:hover {
 .actions3 i:hover {
     color: #777;
 }
+
 .entities {
     overflow: scroll;
     scrollbar-width: thin;

@@ -36,6 +36,7 @@
                 <form @submit.prevent="">
 
                     <table>
+                        <tbody>
                         <tr>
                             <td class="menu">
                                 <div class="input-container focus" style="max-width: 10rem" v-if="!backToScenarioID">
@@ -65,6 +66,7 @@
                                 </div>
                             </td>
                         </tr>
+                        </tbody>
                     </table>
                     <h3 class="subtitle" v-if="backToScenarioID">Select the Test(s) to import</h3>
 

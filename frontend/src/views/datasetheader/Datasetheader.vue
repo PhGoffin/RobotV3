@@ -25,31 +25,33 @@
                 <form @submit.prevent="">
 
                     <table>
-                        <tr>
-                            <td class="menu" v-if="!backToDataHeaderID">
-                                <div class="input-container focus" style="max-width: 10rem">
-                                    <input type="text" name="RowNb" class="input" @focus="handleFocus($event)"
-                                        @blur="handleBlur($event)" @change="handleRowToInsert" v-model="rowToInsert"
-                                        required />
-                                    <label>Row(s) to insert</label>
-                                    <span>Row(s) to insert</span>
-                                </div>
-                            </td>
-                            <td class="menu">
-                                <div class="actions3">
-                                    <div class="input-container focus" style="min-width: 30rem; max-width: 30rem">
-                                        <input type="text" name="dataFilter" class="input" @focus="handleFocus($event)"
-                                            title="You can filter by code or by comment" @blur="handleBlur($event)"
-                                            v-model="filterValue" />
-                                        <label>Filter {{ filteredRows }}</label>
-                                        <span>Filter {{ filteredRows }}</span>
+                        <tbody>
+                            <tr>
+                                <td class="menu" v-if="!backToDataHeaderID">
+                                    <div class="input-container focus" style="max-width: 10rem">
+                                        <input type="text" name="RowNb" class="input" @focus="handleFocus($event)"
+                                            @blur="handleBlur($event)" @change="handleRowToInsert" v-model="rowToInsert"
+                                            required />
+                                        <label>Row(s) to insert</label>
+                                        <span>Row(s) to insert</span>
                                     </div>
-                                    <i class="fa-regular fa-trash-can" @click="filterValue = ''"
-                                        title="Reset the filter"></i>
-                                </div>
-                            </td>
-                        </tr>
-
+                                </td>
+                                <td class="menu">
+                                    <div class="actions3">
+                                        <div class="input-container focus" style="min-width: 30rem; max-width: 30rem">
+                                            <input type="text" name="dataFilter" class="input"
+                                                @focus="handleFocus($event)"
+                                                title="You can filter by code or by comment" @blur="handleBlur($event)"
+                                                v-model="filterValue" />
+                                            <label>Filter {{ filteredRows }}</label>
+                                            <span>Filter {{ filteredRows }}</span>
+                                        </div>
+                                        <i class="fa-regular fa-trash-can" @click="filterValue = ''"
+                                            title="Reset the filter"></i>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
                     </table>
                     <h3 class="subtitle" v-if="backToDataHeaderID">Select a dataset for the import of the data</h3>
 

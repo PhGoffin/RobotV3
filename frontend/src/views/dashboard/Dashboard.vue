@@ -30,84 +30,87 @@
                 <div class="actions">
 
                     <table class="scroll2">
-                        <tr>
-                            <td colspan="2">
-                                <div class="input-container focus">
-                                    <select id="test" class="input select" @focus="handleFocus($event)"
-                                        @change="handleStoryheaderChange()" title="Select a story to test"
-                                        @blur="handleBlur($event)" v-model="selectedStoryheader">
-                                        <option v-for="story in storiesheader" :key="story.storyheaderID"
-                                            :title="story.comment" v-bind:value="{ id: story.storyheaderID }">
-                                            {{ story.label }}</option>
-                                    </select>
-                                    <label>Story</label>
-                                    <span>Story</span>
-                                </div>
-                            </td>
-                            <td>
-                                <span>&nbsp;&nbsp;</span>
-                            </td>
+                        <tbody>
+                            <tr>
+                                <td colspan="2">
+                                    <div class="input-container focus">
+                                        <select id="test" class="input select" @focus="handleFocus($event)"
+                                            @change="handleStoryheaderChange()" title="Select a story to test"
+                                            @blur="handleBlur($event)" v-model="selectedStoryheader">
+                                            <option v-for="story in storiesheader" :key="story.storyheaderID"
+                                                :title="story.comment" v-bind:value="{ id: story.storyheaderID }">
+                                                {{ story.label }}</option>
+                                        </select>
+                                        <label>Story</label>
+                                        <span>Story</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span>&nbsp;&nbsp;</span>
+                                </td>
 
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="input-container focus">
-                                    <select id="test" class="input select" @focus="handleFocus($event)"
-                                        @change="handleStepChange()" title="Select a step to execute"
-                                        @blur="handleBlur($event)" v-model="selectedStory">
-                                        <option v-for="test in stories" :key="test.storyheaderID" :title="test.comment"
-                                            v-bind:value="{ id: test.storyID }">
-                                            {{ test.story }}</option>
-                                    </select>
-                                    <label>Step</label>
-                                    <span>Step</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="input-container">
-                                    <button @click="handleLogfile" class="init" title="Goto the Logfile">
-                                        <i class="fa-regular fa-eye"></i>
-                                        Log</button>
-                                </div>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="input-container focus">
+                                        <select id="test" class="input select" @focus="handleFocus($event)"
+                                            @change="handleStepChange()" title="Select a step to execute"
+                                            @blur="handleBlur($event)" v-model="selectedStory">
+                                            <option v-for="test in stories" :key="test.storyheaderID"
+                                                :title="test.comment" v-bind:value="{ id: test.storyID }">
+                                                {{ test.story }}</option>
+                                        </select>
+                                        <label>Step</label>
+                                        <span>Step</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="input-container">
+                                        <button @click="handleLogfile" class="init" title="Goto the Logfile">
+                                            <i class="fa-regular fa-eye"></i>
+                                            Log</button>
+                                    </div>
 
-                            </td>
-                        </tr>
+                                </td>
+                            </tr>
 
-                        <tr>
-                            <td>
-                                <div class="input-container">
-                                    <button @click="handleExecute" class="init" title="Execute the scenario"
-                                        v-if="status != 99">
-                                        <i class="fa-regular fa-circle-play"></i>
-                                        Execute</button>
-                                    <i class="fa-solid fa-rotate" :style="executeStyle"
-                                        @click="continuousExec = !continuousExec" :title="executeTitle"></i>
-                                    <i class="fa-solid fa-hand icon" @click="storyRetry = !storyRetry"
-                                        title="Stop in case of error" v-if="continuousExec && !storyRetry"></i>
-                                    <i class="fa-solid fa-person-running icon" @click="storyRetry = !storyRetry"
-                                        title="retry 5 times in case of error" v-if="continuousExec && storyRetry"></i>
+                            <tr>
+                                <td>
+                                    <div class="input-container">
+                                        <button @click="handleExecute" class="init" title="Execute the scenario"
+                                            v-if="status != 99">
+                                            <i class="fa-regular fa-circle-play"></i>
+                                            Execute</button>
+                                        <i class="fa-solid fa-rotate" :style="executeStyle"
+                                            @click="continuousExec = !continuousExec" :title="executeTitle"></i>
+                                        <i class="fa-solid fa-hand icon" @click="storyRetry = !storyRetry"
+                                            title="Stop in case of error" v-if="continuousExec && !storyRetry"></i>
+                                        <i class="fa-solid fa-person-running icon" @click="storyRetry = !storyRetry"
+                                            title="retry 5 times in case of error"
+                                            v-if="continuousExec && storyRetry"></i>
 
-                                </div>
+                                    </div>
 
-                                <div class="input-container" v-if="status == 99">
-                                    <button
-                                        @click="handleEmergency(); status = -1; mainTitle = 'Emergency stop in progress, please wait...'"
-                                        class="stop" title="Emergency Stop scenario">
-                                        <i class="fa-regular fa-circle-play"></i>
-                                        Stop</button>
-                                </div>
+                                    <div class="input-container" v-if="status == 99">
+                                        <button
+                                            @click="handleEmergency(); status = -1; mainTitle = 'Emergency stop in progress, please wait...'"
+                                            class="stop" title="Emergency Stop scenario">
+                                            <i class="fa-regular fa-circle-play"></i>
+                                            Stop</button>
+                                    </div>
 
 
-                            </td>
+                                </td>
 
-                            <td>
-                                <div class="input-container" v-if="status != 99">
-                                    <button @click="handleCancel" class="cancel" title="Back to the Control Panel">
-                                        <i class="fa-solid fa-ban"></i>
-                                        Cancel</button>
-                                </div>
-                            </td>
-                        </tr>
+                                <td>
+                                    <div class="input-container" v-if="status != 99">
+                                        <button @click="handleCancel" class="cancel" title="Back to the Control Panel">
+                                            <i class="fa-solid fa-ban"></i>
+                                            Cancel</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
                     </table>
 
                 </div>
@@ -115,34 +118,36 @@
 
                 <div class="actions">
                     <table class="scroll">
-                        <tr>
-                            <td colspan="2">
-                                <div class="input-container">
-                                    <button @click="handleReference" class="init" title="Goto the Reference">
-                                        <i class="fa-regular fa-eye"></i>
-                                        Reference</button>
-                                </div>
+                        <tbody>
+                            <tr>
+                                <td colspan="2">
+                                    <div class="input-container">
+                                        <button @click="handleReference" class="init" title="Goto the Reference">
+                                            <i class="fa-regular fa-eye"></i>
+                                            Reference</button>
+                                    </div>
 
-                            </td>
-                        </tr>
+                                </td>
+                            </tr>
 
-                        <tr v-for="ref in references" :key="ref.code">
-                            <td class="ref bold label">
-                                <i class="fa-regular fa-pen-to-square" title="You can edit this value"
-                                    v-if="ref.inputoutput"></i>
-                                <i class="fa-solid fa-circle-info" title="Just for your information" v-else></i>
-                                {{ ref.paramComment }}
-                            </td>
-                            <td class="ref bold value" :title="ref.comment">
-                                <i class="fa-regular fa-copy" @click="handleClipboard(ref.label, 1, ref.referenceID)"
-                                    title="Copy the value to the clipboard" v-if="!clipboard1"></i>
-                                <i class="fa-solid fa-copy" @click="handleClipboard(ref.label, 1, ref.referenceID)"
-                                    title="Copy the value to the clipboard"
-                                    v-if="clipboard1 == 1 && clipboardID == ref.referenceID"></i>
-                                {{ ref.label }}
-                            </td>
-                        </tr>
-
+                            <tr v-for="ref in references" :key="ref.code">
+                                <td class="ref bold label">
+                                    <i class="fa-regular fa-pen-to-square" title="You can edit this value"
+                                        v-if="ref.inputoutput"></i>
+                                    <i class="fa-solid fa-circle-info" title="Just for your information" v-else></i>
+                                    {{ ref.paramComment }}
+                                </td>
+                                <td class="ref bold value" :title="ref.comment">
+                                    <i class="fa-regular fa-copy"
+                                        @click="handleClipboard(ref.label, 1, ref.referenceID)"
+                                        title="Copy the value to the clipboard" v-if="!clipboard1"></i>
+                                    <i class="fa-solid fa-copy" @click="handleClipboard(ref.label, 1, ref.referenceID)"
+                                        title="Copy the value to the clipboard"
+                                        v-if="clipboard1 == 1 && clipboardID == ref.referenceID"></i>
+                                    {{ ref.label }}
+                                </td>
+                            </tr>
+                        </tbody>
                     </table>
 
                 </div>
@@ -152,37 +157,40 @@
 
             <div class="entity">
                 <table>
-                    <tr>
-                        <td>
-                            <div>
-                                <h2 class="title" :key="mainTitle">{{ mainTitle }}
-                                    <p>{{ graphTitle }}</p>
-                                </h2>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="input-container focus" v-if="graphType == 1 || graphType == 2">
-                                <select id="test" class="input select" @focus="handleFocus($event)"
-                                    @change="handleEnvironmentChange()" title="Select a environment"
-                                    @blur="handleBlur($event)" v-model="selectedEnvironment">
-                                    <option v-for="Env in AllEnvironment" :key="Env" title="Select an environment"
-                                        v-bind:value="{ Env }">
-                                        {{ Env }}</option>
-                                </select>
-                                <label style="background-color: #B7C39A;">Environment</label>
-                                <span>Environment</span>
-                            </div>
-                        </td>
-                        <td>
-                            <span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                            <i class="fa-solid fa-magnifying-glass" @click="handleGraphDetail()"
-                                style="font-size: 25px;" title="Display data performance"
-                                v-if="graphType > 0 && graphDetail == 0"></i>
-                            <i class="fa-regular fa-circle-xmark" @click="handleGraphDetail()" style="font-size: 25px;"
-                                title="Hide data performance" v-if="graphType > 0 && graphDetail == 1"></i>
-                        </td>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div>
+                                    <h2 class="title" :key="mainTitle">{{ mainTitle }}
+                                        <p>{{ graphTitle }}</p>
+                                    </h2>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="input-container focus" v-if="graphType == 1 || graphType == 2">
+                                    <select id="test" class="input select" @focus="handleFocus($event)"
+                                        @change="handleEnvironmentChange()" title="Select a environment"
+                                        @blur="handleBlur($event)" v-model="selectedEnvironment">
+                                        <option v-for="Env in AllEnvironment" :key="Env" title="Select an environment"
+                                            v-bind:value="{ Env }">
+                                            {{ Env }}</option>
+                                    </select>
+                                    <label style="background-color: #B7C39A;">Environment</label>
+                                    <span>Environment</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                                <i class="fa-solid fa-magnifying-glass" @click="handleGraphDetail()"
+                                    style="font-size: 25px;" title="Display data performance"
+                                    v-if="graphType > 0 && graphDetail == 0"></i>
+                                <i class="fa-regular fa-circle-xmark" @click="handleGraphDetail()"
+                                    style="font-size: 25px;" title="Hide data performance"
+                                    v-if="graphType > 0 && graphDetail == 1"></i>
+                            </td>
 
-                    </tr>
+                        </tr>
+                    </tbody>
                 </table>
 
 

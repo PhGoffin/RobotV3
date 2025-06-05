@@ -13,10 +13,10 @@
             <div class="entity">
 
                 <button @click="handleInsert('-1')">
-                    <i class="fa-solid fa-circle-plus"></i>                    
+                    <i class="fa-solid fa-circle-plus"></i>
                     Pattern</button>
 
-                    <button @click="handleImport()" class="action">
+                <button @click="handleImport()" class="action">
                     <i class="fa-solid fa-download"></i>
                     Import Patterns</button>
 
@@ -24,40 +24,44 @@
                 <form @submit.prevent="">
 
                     <table>
-                        <tr>
-                            <td class="menu">
-                                <div class="input-container focus" style="max-width: 10rem">
-                                    <input type="text" name="RowNb" class="input" @focus="handleFocus($event)"
-                                        @blur="handleBlur($event)" @change="handleRowToInsert" v-model="rowToInsert" required />
-                                    <label>Row(s) to insert</label>
-                                    <span>Row(s) to insert</span>
-                                </div>
-                            </td>
-                            <td class="menu">
-                                <div class="actions3">
-                                    <div class="input-container focus" style="min-width: 30rem; max-width: 30rem">
-                                        <input type="text" name="dataFilter" class="input" @focus="handleFocus($event)"
-                                            title="You can filter by the pattern, by the tag or by the id (format: =<id>)"
-                                            @blur="handleBlur($event)" v-model="filterValue" />
-                                        <label>Filter {{ filteredRows }}</label>
-                                        <span>Filter {{ filteredRows }}</span>
+                        <tbody>
+                            <tr>
+                                <td class="menu">
+                                    <div class="input-container focus" style="max-width: 10rem">
+                                        <input type="text" name="RowNb" class="input" @focus="handleFocus($event)"
+                                            @blur="handleBlur($event)" @change="handleRowToInsert" v-model="rowToInsert"
+                                            required />
+                                        <label>Row(s) to insert</label>
+                                        <span>Row(s) to insert</span>
                                     </div>
-                                    <i class="fa-regular fa-trash-can" @click="filterValue=''" title="Reset the filter"></i>
-                                </div>
-                            </td>
-                        </tr>
-
+                                </td>
+                                <td class="menu">
+                                    <div class="actions3">
+                                        <div class="input-container focus" style="min-width: 30rem; max-width: 30rem">
+                                            <input type="text" name="dataFilter" class="input"
+                                                @focus="handleFocus($event)"
+                                                title="You can filter by the pattern, by the tag or by the id (format: =<id>)"
+                                                @blur="handleBlur($event)" v-model="filterValue" />
+                                            <label>Filter {{ filteredRows }}</label>
+                                            <span>Filter {{ filteredRows }}</span>
+                                        </div>
+                                        <i class="fa-regular fa-trash-can" @click="filterValue = ''"
+                                            title="Reset the filter"></i>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
                     </table>
 
                 </form>
 
 
-                <div class="entities"  height="150px">
+                <div class="entities" height="150px">
                     <div v-if="error"> {{ error }}</div>
                     <div v-if="filteredData.length" class="layout">
                         <patternList class="patternList" :key="filterValue" :patterns="filteredData"
-                            :workspaceID="workspaceID" :workspace="workspace" :superUser="superUser" :projectID="projectID"
-                            :userID="userID" :trace="trace" @refreshPattern="refreshPattern"
+                            :workspaceID="workspaceID" :workspace="workspace" :superUser="superUser"
+                            :projectID="projectID" :userID="userID" :trace="trace" @refreshPattern="refreshPattern"
                             @selectrecord="selectRecord" @handleinsert="handleInsert" @handlecopy="handleCopy"
                             @handlemove="handleMove" @handledelete="handleDelete" />
                     </div>
@@ -114,7 +118,7 @@ export default {
         if (!props.connected) {
             router.push({ name: 'Login' })
             return
-        }        
+        }
 
 
         const workspaceID = ref(props.workspaceID)
@@ -192,7 +196,7 @@ export default {
             consoleLog('Pattern.vue/filteredData', 2, 'computed value', trace.value)
             if (patterns.value.length) {
                 return patterns.value.filter((ar) => ar.selector.toUpperCase().includes(filterValue.value.toUpperCase())
-                || ar.tag.toUpperCase().includes(filterValue.value.toUpperCase()) || ('='+ar.patternID).includes(filterValue.value))
+                    || ar.tag.toUpperCase().includes(filterValue.value.toUpperCase()) || ('=' + ar.patternID).includes(filterValue.value))
             } else {
                 filteredRows.value = ''
                 return patterns.value
@@ -203,7 +207,7 @@ export default {
         // Compute the filter rows(s) indicator
         // ---------------------------------------------
         const filteredRows = computed(() => {
-           return '( ' + filteredData.value.length + ' )'
+            return '( ' + filteredData.value.length + ' )'
         })
 
 
@@ -292,13 +296,13 @@ export default {
         // --------------------------------------------------------------------------
         const doInsert = async (position) => {
             let pattern = []
-            let name = 'New' 
+            let name = 'New'
             let comment = 'New'
 
 
             consoleLog('Pattern.vue/doInsert', 2, 'Insert a new selector - position: ' + position, trace.value)
             // projectID, patternName, pattern, tag, attribute, result, weight, comment, position, active
-            const { error, addNewPattern } = addPattern(projectID.value, name, '', '', '', '', 100, comment, position, 1 )
+            const { error, addNewPattern } = addPattern(projectID.value, name, '', '', '', '', 100, comment, position, 1)
             return await addNewPattern(pattern, trace.value)
                 .then(function () {
                     // check the status of the insert
@@ -531,11 +535,11 @@ export default {
                         return (0)
                     }
                 })
-        }        
+        }
 
 
         return {
-            errorMessage, styleMessage, patterns, filteredData, filterValue, filteredRows, workspaceID, workspace, 
+            errorMessage, styleMessage, patterns, filteredData, filterValue, filteredRows, workspaceID, workspace,
             superUser, projectID, projectName, userID, displayInfo, trace, rowToInsert,
             handleCancel, refreshPattern, handleInsert, handleCopy, handleMove, handleDelete, selectRecord,
             handleFocus, handleBlur, handleCancel, handleRowToInsert, handleImport
@@ -895,6 +899,7 @@ td.menu {
     padding: 0 1.2rem 0 0;
     text-align: left;
 }
+
 button.action {
     background-color: #7cbcbc;
 }
@@ -903,6 +908,7 @@ button.action:hover {
     background-color: white;
     color: black;
 }
+
 .actions3 {
     display: flex;
     flex-direction: row;
@@ -933,6 +939,7 @@ button.action:hover {
 .actions3 i:hover {
     color: #777;
 }
+
 .entities {
     overflow: scroll;
     /* scrollbar-color: red orange; */

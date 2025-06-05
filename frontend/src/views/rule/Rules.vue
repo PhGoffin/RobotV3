@@ -25,36 +25,38 @@
                 <form @submit.prevent="">
 
                     <table>
-                        <tr>
-                            <td class="menu">
-                                <div class="input-container focus" style="max-width: 10rem">
-                                    <input type="text" name="RowNb" class="input" @focus="handleFocus($event)"
-                                        @blur="handleBlur($event)" @change="handleRowToInsert" v-model="rowToInsert"
-                                        required />
-                                    <label>Row(s) to insert</label>
-                                    <span>Row(s) to insert</span>
-                                </div>
-                            </td>
-                            <td class="menu">
-                                <div class="actions3">
-                                    <div class="input-container focus" style="min-width: 30rem; max-width: 30rem">
-                                        <input type="text" name="dataFilter" class="input" @focus="handleFocus($event)"
-                                            title="You can filter by the code, label or by comment"
-                                            @blur="handleBlur($event)" v-model="filterValue" />
-                                        <label>Filter {{ filteredRows }}</label>
-                                        <span>Filter {{ filteredRows }}</span>
+                        <tbody>
+                            <tr>
+                                <td class="menu">
+                                    <div class="input-container focus" style="max-width: 10rem">
+                                        <input type="text" name="RowNb" class="input" @focus="handleFocus($event)"
+                                            @blur="handleBlur($event)" @change="handleRowToInsert" v-model="rowToInsert"
+                                            required />
+                                        <label>Row(s) to insert</label>
+                                        <span>Row(s) to insert</span>
                                     </div>
-                                    <i class="fa-regular fa-trash-can" @click="filterValue = ''"
-                                        title="Reset the filter"></i>
+                                </td>
+                                <td class="menu">
+                                    <div class="actions3">
+                                        <div class="input-container focus" style="min-width: 30rem; max-width: 30rem">
+                                            <input type="text" name="dataFilter" class="input"
+                                                @focus="handleFocus($event)"
+                                                title="You can filter by the code, label or by comment"
+                                                @blur="handleBlur($event)" v-model="filterValue" />
+                                            <label>Filter {{ filteredRows }}</label>
+                                            <span>Filter {{ filteredRows }}</span>
+                                        </div>
+                                        <i class="fa-regular fa-trash-can" @click="filterValue = ''"
+                                            title="Reset the filter"></i>
                                         <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                                    <input type="radio" id="type1" value="0" v-model="commentSwitch"
-                                         /><label for="type1">All&nbsp;&nbsp;</label>
-                                    <input type="radio" id="type2" value="1" v-model="commentSwitch"
-                                         /><label for="type2">Business&nbsp;&nbsp;</label>                                        
-                                </div>
-                            </td>
-                        </tr>
-
+                                        <input type="radio" id="type1" value="0" v-model="commentSwitch" /><label
+                                            for="type1">All&nbsp;&nbsp;</label>
+                                        <input type="radio" id="type2" value="1" v-model="commentSwitch" /><label
+                                            for="type2">Business&nbsp;&nbsp;</label>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
                     </table>
 
                 </form>
@@ -142,9 +144,9 @@ export default {
         const URL = ref(process.env.VUE_APP_MYSQL_API + 'rule/download/')
         const jsonFile = ref(userName.value + '_rule.json')
         const viewLink = ref(false)
-        const commentSwitch = ref(0)        
+        const commentSwitch = ref(0)
 
-        
+
         // -------------------------------------------
         // Management of the errors
         // -------------------------------------------
@@ -207,16 +209,16 @@ export default {
         // ---------------------------------------------
         const filteredData = computed(() => {
             consoleLog('Rule.vue/filteredData', 2, 'computed value', trace.value)
-            
+
             if (rules.value.length) {
                 //console.log ('commentSwitch: ', commentSwitch.value)
                 if (commentSwitch.value == 0) {
                     return rules.value.filter((ar) => ar.rule.toUpperCase().includes(filterValue.value.toUpperCase())
-                    || ar.comment.toUpperCase().includes(filterValue.value.toUpperCase()))
+                        || ar.comment.toUpperCase().includes(filterValue.value.toUpperCase()))
 
                 } else {
                     return rules.value.filter((ar) => (ar.rule.toUpperCase().includes(filterValue.value.toUpperCase())
-                    || ar.comment.toUpperCase().includes(filterValue.value.toUpperCase())) & ar.commentType == commentSwitch.value)
+                        || ar.comment.toUpperCase().includes(filterValue.value.toUpperCase())) & ar.commentType == commentSwitch.value)
                 }
             } else {
                 filteredRows.value = ''
@@ -924,6 +926,7 @@ td.menu {
     padding: 0 1.2rem 0 0;
     text-align: left;
 }
+
 button.action {
     background-color: #7cbcbc;
 }

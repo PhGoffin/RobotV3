@@ -9,109 +9,111 @@
                 <div class="actions" style="width: 95%; left: 15px">
 
                     <table class="scroll2">
-                        <tr>
-                            <td>
-                                <div class="input-container focus">
-                                    <select id="selector" class="input select" @focus="handleFocus($event)"
-                                        @change="handleSelectorChange()" title="Select a selector"
-                                        @blur="handleBlur($event)" v-model="selectedSelector">
-                                        <option v-for="selector in selectors" :key="selector.selectorID"
-                                            v-bind:value="{ id: selector.selectorID, name: selector.name }">
-                                            {{ selector.name }}</option>
-                                    </select>
-                                    <label>Selector</label>
-                                    <span>Selector</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="input-container" v-if="training == 1">
-                                    <button @click="handleStatistic" class="init" title="Execute the Statistics">
-                                        <i class="fa-solid fa-chart-line"></i>
-                                        Statistics(3)</button>
-                                </div>
-                                <div class="input-container" v-else>
-                                    <button @click="handleStatistic" class="init" title="Execute the Statistics">
-                                        <i class="fa-solid fa-chart-line"></i>
-                                        Statistics</button>
-                                </div>
-
-                            </td>
-
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="input-container focus">
-                                    <input type="text" name="criteria" class="input" v-model="criteria"
-                                        title="Label or relevant text to use to detect the element"
-                                        style="width: 95%" />
-                                    <label>Criteria</label>
-                                    <span>Criteria</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="actions3">
+                        <tbody>
+                            <tr>
+                                <td>
                                     <div class="input-container focus">
-                                        <input type="text" name="criteria" class="input" v-model="expected"
-                                            title="[For training only - Optional]: expected value of the element"
+                                        <select id="selector" class="input select" @focus="handleFocus($event)"
+                                            @change="handleSelectorChange()" title="Select a selector"
+                                            @blur="handleBlur($event)" v-model="selectedSelector">
+                                            <option v-for="selector in selectors" :key="selector.selectorID"
+                                                v-bind:value="{ id: selector.selectorID, name: selector.name }">
+                                                {{ selector.name }}</option>
+                                        </select>
+                                        <label>Selector</label>
+                                        <span>Selector</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="input-container" v-if="training == 1">
+                                        <button @click="handleStatistic" class="init" title="Execute the Statistics">
+                                            <i class="fa-solid fa-chart-line"></i>
+                                            Statistics(3)</button>
+                                    </div>
+                                    <div class="input-container" v-else>
+                                        <button @click="handleStatistic" class="init" title="Execute the Statistics">
+                                            <i class="fa-solid fa-chart-line"></i>
+                                            Statistics</button>
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="input-container focus">
+                                        <input type="text" name="criteria" class="input" v-model="criteria"
+                                            title="Label or relevant text to use to detect the element"
                                             style="width: 95%" />
-                                        <label>Expected value</label>
-                                        <span>Expected value</span>
+                                        <label>Criteria</label>
+                                        <span>Criteria</span>
                                     </div>
-                                    <div class="input-container focus">
-                                        <input type="text" name="occurence" class="input" v-model="occurence"
-                                            title="[For Analysis only - Optional]: empty for all the occurences"
-                                            style="width: 55%" />
-                                        <label>Occurence</label>
-                                        <span>Occurence</span>
-                                    </div>                                    
-                                </div>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td colspan="2">
-                                <div class="input-container focus">
-                                    <select id="link" class="input select" @focus="handleFocus($event)"
-                                        @change="handleLinkChange()" title="Select a link" @blur="handleBlur($event)"
-                                        v-model="selectedLink" style="width: 95%">
-                                        <option v-for="link in links" :key="link.id" v-bind:value="{ id: link.id }">
-                                            {{ link.label }}</option>
-                                    </select>
-                                    <label>Link</label>
-                                    <span>Link</span>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="input-container focus" v-if="linkID == 1">
-                                    <input type="text" name="url" class="input" v-model="targetLink" />
-                                    <label>URL</label>
-                                    <span>URL</span>
-                                </div>
-                                <div class="actions3" v-if="linkID == 2">
-                                    <div class="input-container focus">
-                                        <input type="text" name="scenario" class="input disabled"
-                                            title="Use the selector to select a scenario" v-model="targetLink"
-                                            disabled  />
-                                        <label>Scenario</label>
-                                        <span>Scenario</span>
+                                </td>
+                                <td>
+                                    <div class="actions3">
+                                        <div class="input-container focus">
+                                            <input type="text" name="criteria" class="input" v-model="expected"
+                                                title="[For training only - Optional]: expected value of the element"
+                                                style="width: 95%" />
+                                            <label>Expected value</label>
+                                            <span>Expected value</span>
+                                        </div>
+                                        <div class="input-container focus">
+                                            <input type="text" name="occurence" class="input" v-model="occurence"
+                                                title="[For Analysis only - Optional]: empty for all the occurences"
+                                                style="width: 55%" />
+                                            <label>Occurence</label>
+                                            <span>Occurence</span>
+                                        </div>
                                     </div>
-                                    <i class="fa-solid fa-bars" @click="handleScenario()" title="Go to Scenario"> </i>
-                                </div>
+                                </td>
+                            </tr>
 
-                            </td>
-                            <td>
-                                <div class="input-container">
-                                    <button @click="handelGotoScreen" class="init" title="Open the webpage">
-                                        <i class="fa-solid fa-globe"></i>
-                                        Goto screen</button>
-                                </div>
-                            </td>
+                            <tr>
+                                <td colspan="2">
+                                    <div class="input-container focus">
+                                        <select id="link" class="input select" @focus="handleFocus($event)"
+                                            @change="handleLinkChange()" title="Select a link"
+                                            @blur="handleBlur($event)" v-model="selectedLink" style="width: 95%">
+                                            <option v-for="link in links" :key="link.id" v-bind:value="{ id: link.id }">
+                                                {{ link.label }}</option>
+                                        </select>
+                                        <label>Link</label>
+                                        <span>Link</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="input-container focus" v-if="linkID == 1">
+                                        <input type="text" name="url" class="input" v-model="targetLink" />
+                                        <label>URL</label>
+                                        <span>URL</span>
+                                    </div>
+                                    <div class="actions3" v-if="linkID == 2">
+                                        <div class="input-container focus">
+                                            <input type="text" name="scenario" class="input disabled"
+                                                title="Use the selector to select a scenario" v-model="targetLink"
+                                                disabled />
+                                            <label>Scenario</label>
+                                            <span>Scenario</span>
+                                        </div>
+                                        <i class="fa-solid fa-bars" @click="handleScenario()" title="Go to Scenario">
+                                        </i>
+                                    </div>
 
-                        </tr>
+                                </td>
+                                <td>
+                                    <div class="input-container">
+                                        <button @click="handelGotoScreen" class="init" title="Open the webpage">
+                                            <i class="fa-solid fa-globe"></i>
+                                            Goto screen</button>
+                                    </div>
+                                </td>
 
-                        <tr>
+                            </tr>
+
+                            <tr>
                                 <div class="input-container focus" v-if="linkID == 2">
                                     <input type="text" name="comment" class="input disabled" style="width: 200%"
                                         v-model="comment" disabled />
@@ -119,78 +121,78 @@
                                     <span>Comment</span>
                                 </div>
 
-                        </tr>
+                            </tr>
 
 
-                        <tr>
-                            <td>
-                                <div class="input-container" v-if="started == 1">
-                                    <button @click="handelAnalyseTraining" class="init" title="Train the Robot">
-                                        <i class="fa-solid fa-chalkboard-user"></i>
-                                        Training(1)</button>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="input-container" v-if="started == 1">
-                                    <button @click="handelAnalyse" class="init"
-                                        title="Analyse the page with the existing patterns">
-                                        <i class="fa-solid fa-binoculars"></i>
-                                        Analysis</button>
-                                </div>
-                            </td>
-                        </tr>
+                            <tr>
+                                <td>
+                                    <div class="input-container" v-if="started == 1">
+                                        <button @click="handelAnalyseTraining" class="init" title="Train the Robot">
+                                            <i class="fa-solid fa-chalkboard-user"></i>
+                                            Training(1)</button>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="input-container" v-if="started == 1">
+                                        <button @click="handelAnalyse" class="init"
+                                            title="Analyse the page with the existing patterns">
+                                            <i class="fa-solid fa-binoculars"></i>
+                                            Analysis</button>
+                                    </div>
+                                </td>
+                            </tr>
 
-                        <tr>
-                            <td>
-                                <div class="input-container" v-if="training == 1">
-                                    <button @click="handleAttribute" class="init" title="Attribute after trainings">
-                                        <i class="fa-brands fa-elementor"></i>
-                                        Session(2)</button>
-                                </div>
-                                <div class="input-container" v-else>
-                                    <button @click="handleAttribute" class="init" title="Attribute after trainings">
-                                        <i class="fa-brands fa-elementor"></i>
-                                        Session</button>
-                                </div>
+                            <tr>
+                                <td>
+                                    <div class="input-container" v-if="training == 1">
+                                        <button @click="handleAttribute" class="init" title="Attribute after trainings">
+                                            <i class="fa-brands fa-elementor"></i>
+                                            Session(2)</button>
+                                    </div>
+                                    <div class="input-container" v-else>
+                                        <button @click="handleAttribute" class="init" title="Attribute after trainings">
+                                            <i class="fa-brands fa-elementor"></i>
+                                            Session</button>
+                                    </div>
 
-                            </td>
+                                </td>
 
-                            <td>
-                                <div class="input-container">
-                                    <button @click="handleLogfile" class="init" title="Goto the Logfile">
-                                        <i class="fa-regular fa-eye"></i>
-                                        Log</button>
-                                </div>
-                            </td>
+                                <td>
+                                    <div class="input-container">
+                                        <button @click="handleLogfile" class="init" title="Goto the Logfile">
+                                            <i class="fa-regular fa-eye"></i>
+                                            Log</button>
+                                    </div>
+                                </td>
 
-                        </tr>
+                            </tr>
 
-                        <tr>
-                            <td>
-                                <div class="input-container">
-                                    <button @click="handlePattern()" class="init" title="Goto the Patterns">
-                                        <i class="fa-solid fa-briefcase-medical"></i>
-                                        Patterns</button>
-                                </div>
-                            </td>
+                            <tr>
+                                <td>
+                                    <div class="input-container">
+                                        <button @click="handlePattern()" class="init" title="Goto the Patterns">
+                                            <i class="fa-solid fa-briefcase-medical"></i>
+                                            Patterns</button>
+                                    </div>
+                                </td>
 
-                            <td>
-                                <div class="input-container" v-if="started == 0">
-                                    <button @click="handleCancel" class="cancel" title="Back to the Control Panel">
-                                        <i class="fa-solid fa-ban"></i>
-                                        Cancel</button>
-                                </div>
+                                <td>
+                                    <div class="input-container" v-if="started == 0">
+                                        <button @click="handleCancel" class="cancel" title="Back to the Control Panel">
+                                            <i class="fa-solid fa-ban"></i>
+                                            Cancel</button>
+                                    </div>
 
-                                <div class="input-container" v-else>
-                                    <button @click="handleStopBrowser()" class="stop" title="Close the Browser">
-                                        <i class="fa-regular fa-circle-play"></i>
-                                        Stop</button>
-                                </div>
+                                    <div class="input-container" v-else>
+                                        <button @click="handleStopBrowser()" class="stop" title="Close the Browser">
+                                            <i class="fa-regular fa-circle-play"></i>
+                                            Stop</button>
+                                    </div>
 
-                            </td>
+                                </td>
 
-                        </tr>
-
+                            </tr>
+                        </tbody>
                     </table>
 
                 </div>
@@ -206,55 +208,59 @@
 
 
                 <table class="scroll" v-if="training == 2">
-                    <tr>
-                        <th class="ref">Occurence</th>
-                        <th class="ref">Pattern</th>
-                        <th class="ref">GUI</th>
-                        <th class="ref">Value</th>
-                    </tr>
+                    <tbody>
+                        <tr>
+                            <th class="ref">Occurence</th>
+                            <th class="ref">Pattern</th>
+                            <th class="ref">GUI</th>
+                            <th class="ref">Value</th>
+                        </tr>
 
-                    <tr v-for="(analyze, index) in analysis" :key="analyze.Occurence">
-                        <td class="ref bold label" title="Occurence of the element">
-                            {{ analyze.Occurence }}
-                        </td>
-                        <td class="ref bold label" title="patternID detected by the detectGUI function">
-                            {{ analyze.PatternID }}
-                        </td>
-                        <td class="ref bold value" title="XPath of the element">
-                            <i class="fa-regular fa-copy" @click="handleClipboard(analyze.GUI, index)"
-                                title="Copy to the clipboard" v-if="!analyze.Clipboard">&nbsp;</i>
-                            <i class="fa-solid fa-copy" @click="handleClipboard(analyze.GUI, index)"
-                                title="Copy to the clipboard" v-else>&nbsp;</i>
-                            {{ analyze.GUI }}
-                        </td>
-                        <td class="ref bold value" title="Value of the element">
-                            {{ analyze.Value }}
-                        </td>
-                    </tr>
+                        <tr v-for="(analyze, index) in analysis" :key="analyze.Occurence">
+                            <td class="ref bold label" title="Occurence of the element">
+                                {{ analyze.Occurence }}
+                            </td>
+                            <td class="ref bold label" title="patternID detected by the detectGUI function">
+                                {{ analyze.PatternID }}
+                            </td>
+                            <td class="ref bold value" title="XPath of the element">
+                                <i class="fa-regular fa-copy" @click="handleClipboard(analyze.GUI, index)"
+                                    title="Copy to the clipboard" v-if="!analyze.Clipboard">&nbsp;</i>
+                                <i class="fa-solid fa-copy" @click="handleClipboard(analyze.GUI, index)"
+                                    title="Copy to the clipboard" v-else>&nbsp;</i>
+                                {{ analyze.GUI }}
+                            </td>
+                            <td class="ref bold value" title="Value of the element">
+                                {{ analyze.Value }}
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
 
                 <table class="scroll" v-if="training == 1">
-                    <tr>
-                        <th class="ref">ID</th>
-                        <th class="ref">PathId</th>
-                        <th class="ref">Path</th>
-                        <th class="ref">Criteria/Value</th>
-                    </tr>
+                    <tbody>
+                        <tr>
+                            <th class="ref">ID</th>
+                            <th class="ref">PathId</th>
+                            <th class="ref">Path</th>
+                            <th class="ref">Criteria/Value</th>
+                        </tr>
 
-                    <tr v-for="analyze in analysis" :key="analyze.Occurence">
-                        <td class="ref bold label" title="Occurence of the element">
-                            {{ analyze.Occurence }}
-                        </td>
-                        <td class="ref bold label" title="patternID detected by the detectGUI function">
-                            {{ analyze.PatternID }}
-                        </td>
-                        <td class="ref bold value" title="XPath of the element">
-                            {{ analyze.GUI }}
-                        </td>
-                        <td class="ref bold value" title="Value of the element">
-                            {{ analyze.Value }}
-                        </td>
-                    </tr>
+                        <tr v-for="analyze in analysis" :key="analyze.Occurence">
+                            <td class="ref bold label" title="Occurence of the element">
+                                {{ analyze.Occurence }}
+                            </td>
+                            <td class="ref bold label" title="patternID detected by the detectGUI function">
+                                {{ analyze.PatternID }}
+                            </td>
+                            <td class="ref bold value" title="XPath of the element">
+                                {{ analyze.GUI }}
+                            </td>
+                            <td class="ref bold value" title="Value of the element">
+                                {{ analyze.Value }}
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
 
 
@@ -517,7 +523,7 @@ export default {
             router.push({ name: 'Logfiles' })
         }
 
-        
+
         // --------------------------------------------------------------------------
         // User ask to go to the pattern
         // --------------------------------------------------------------------------

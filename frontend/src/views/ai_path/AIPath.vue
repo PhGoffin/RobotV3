@@ -24,31 +24,33 @@
                 <form @submit.prevent="">
 
                     <table>
-                        <tr>
-                            <td class="menu">
-                                <div class="input-container focus" style="max-width: 10rem">
-                                    <input type="text" name="RowNb" class="input" @focus="handleFocus($event)"
-                                        @blur="handleBlur($event)" @change="handleRowToInsert" v-model="rowToInsert"
-                                        required />
-                                    <label>Row(s) to insert</label>
-                                    <span>Row(s) to insert</span>
-                                </div>
-                            </td>
-                            <td class="menu">
-                                <div class="actions3">
-                                    <div class="input-container focus" style="min-width: 30rem; max-width: 30rem">
-                                        <input type="text" name="dataFilter" class="input" @focus="handleFocus($event)"
-                                            title="You can filter by the path or by comment" @blur="handleBlur($event)"
-                                            v-model="filterValue" />
-                                        <label>Filter {{ filteredRows }}</label>
-                                        <span>Filter {{ filteredRows }}</span>
+                        <tbody>
+                            <tr>
+                                <td class="menu">
+                                    <div class="input-container focus" style="max-width: 10rem">
+                                        <input type="text" name="RowNb" class="input" @focus="handleFocus($event)"
+                                            @blur="handleBlur($event)" @change="handleRowToInsert" v-model="rowToInsert"
+                                            required />
+                                        <label>Row(s) to insert</label>
+                                        <span>Row(s) to insert</span>
                                     </div>
-                                    <i class="fa-regular fa-trash-can" @click="filterValue = ''"
-                                        title="Reset the filter"></i>
-                                </div>
-                            </td>
-                        </tr>
-
+                                </td>
+                                <td class="menu">
+                                    <div class="actions3">
+                                        <div class="input-container focus" style="min-width: 30rem; max-width: 30rem">
+                                            <input type="text" name="dataFilter" class="input"
+                                                @focus="handleFocus($event)"
+                                                title="You can filter by the path or by comment"
+                                                @blur="handleBlur($event)" v-model="filterValue" />
+                                            <label>Filter {{ filteredRows }}</label>
+                                            <span>Filter {{ filteredRows }}</span>
+                                        </div>
+                                        <i class="fa-regular fa-trash-can" @click="filterValue = ''"
+                                            title="Reset the filter"></i>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
                     </table>
 
                 </form>
@@ -57,11 +59,11 @@
                 <div class="entities" height="150px">
                     <div v-if="error"> {{ error }}</div>
                     <div v-if="filteredData.length" class="layout">
-                        <AIPathList class="AIPathList" :key="filterValue" :aipaths="filteredData" :workspaceID="workspaceID"
-                            :workspace="workspace" :superUser="superUser" :projectID="projectID" :userID="userID"
-                            :trace="trace" @refreshPath="refreshPath" @selectrecord="selectRecord"
-                            @handleinsert="handleInsert" @handlecopy="handleCopy" @handlemove="handleMove"
-                            @handledelete="handleDelete" />
+                        <AIPathList class="AIPathList" :key="filterValue" :aipaths="filteredData"
+                            :workspaceID="workspaceID" :workspace="workspace" :superUser="superUser"
+                            :projectID="projectID" :userID="userID" :trace="trace" @refreshPath="refreshPath"
+                            @selectrecord="selectRecord" @handleinsert="handleInsert" @handlecopy="handleCopy"
+                            @handlemove="handleMove" @handledelete="handleDelete" />
                     </div>
                 </div>
                 <div class="input-group">
@@ -894,6 +896,7 @@ td.menu {
     padding: 0 1.2rem 0 0;
     text-align: left;
 }
+
 button.action {
     background-color: #7cbcbc;
 }
@@ -902,6 +905,7 @@ button.action:hover {
     background-color: white;
     color: black;
 }
+
 .actions3 {
     display: flex;
     flex-direction: row;
@@ -932,6 +936,7 @@ button.action:hover {
 .actions3 i:hover {
     color: #777;
 }
+
 .entities {
     overflow: scroll;
     scrollbar-width: thin;
