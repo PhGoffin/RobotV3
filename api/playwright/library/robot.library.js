@@ -4806,9 +4806,9 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
-            case 'getAllElements':
-                ret = await getAllElements(page, variables, data, param1)
-                return ret
+            // case 'getAllElements':
+            //     ret = await getAllElements(page, variables, data, param1)
+            //     return ret
 
             case 'rule':
                 ret = await executeRules(page, variables, data, param1, param2, param3, param4)
