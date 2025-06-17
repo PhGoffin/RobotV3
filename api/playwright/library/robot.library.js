@@ -473,6 +473,7 @@ async function switchToFrame(page, variables, data, frameId) {
 async function getElement(page, variables, data, tag, functionName) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     const { getReferenceByCode } = require("../../reference/reference.service.js");
+    const { Left } = require("./string.library.js");
 
 
     // Get the current timeout (default is 30 seconds)
@@ -507,8 +508,22 @@ async function getElement(page, variables, data, tag, functionName) {
         }
     }
 
+    // detect the position (if any)
+    let myOccurence = 0;
+    if (tag[0] == "(" && tag[1] != '/') {
+        // tag contains the occurence (in the case of non unique identifier)
+        let j = tag.indexOf(')', 0);
+        myOccurence = tag.substring(1, j);
+        if (Left(myOccurence, 4) != 'LAST') {
+            if (Left(myOccurence, 1) == '$') {
+                myOccurence = variables.evaluateVariable(myOccurence);
+            }
+            myOccurence--;
+        }
+        tag = tag.substring(j + 1);
+    }
+    console.log('myOccurence', myOccurence)
     // remove the first and the last character if it's a quote
-
     if (tag[0] == "'") {
         tag = tag.substring(1, tag.length)
     }
@@ -520,19 +535,34 @@ async function getElement(page, variables, data, tag, functionName) {
     //console.log('******* ' + tag + '*********')
 
     // Check if the element is found in the current page
+    let locator = null
     try {
         // If frame was previously detected, reuse it
         if (frameID == 0) {
             console.log('Try without frames')
-            await page.locator(tag).last().waitFor()
+            if (myOccurence == 'LAST') {
+                await page.locator(tag).last().waitFor()
+                locator = page.locator(tag).last()
+            }
+            else {
+                await page.locator(tag).nth(myOccurence).waitFor()
+                locator = page.locator(tag).nth(myOccurence)
+            }
             console.log('Element detected!')
-            return { success: 1, message: functionName + "::getElement: element detected on the page", page: page, tag: tag, frameID: 0, stop: 0 }
+            return { success: 1, message: functionName + "::getElement: element detected on the page", page: page, tag: tag, locator: locator, occurence: myOccurence, frameID: 0, stop: 0 }
         }
         else {
             console.log('try with the previous frame: ' + frameID)
-            await frameLocator.locator(tag).last().waitFor()
+            if (myOccurence == 'LAST') {
+                await frameLocator.locator(tag).last().waitFor()
+                locator = frameLocator.locator(tag).last()
+            }
+            else {
+                await frameLocator.locator(tag).nth(myOccurence).waitFor()
+                locator = frameLocator.locator(tag).nth(myOccurence)
+            }
             console.log('Element detected!')
-            return { success: 1, message: functionName + "::getElement: element detected on the page", page: frameLocator, tag: tag, frameID: (frameID + 1), stop: 0 }
+            return { success: 1, message: functionName + "::getElement: element detected on the page", page: frameLocator, tag: tag, locator: locator, occurence: myOccurence, frameID: (frameID + 1), stop: 0 }
         }
 
     } catch (err) {
@@ -543,11 +573,18 @@ async function getElement(page, variables, data, tag, functionName) {
         if (frameID > 0) {
             try {
                 // Retry without frame
-                await page.locator(tag).last().waitFor()
+                if (myOccurence == 'LAST') {
+                    await page.locator(tag).last().waitFor()
+                    locator = page.locator(tag).last()
+                }
+                else {
+                    await page.locator(tag).nth(myOccurence).waitFor()
+                    locator = page.locator(tag).nth(myOccurence)
+                }
                 frameID = 0
                 frameLocator = null
                 page.setDefaultTimeout(timeout * 1000)
-                return { success: 1, message: functionName + "::getElement: element detected without frame: ", page: page, tag: tag, frameID: 0, stop: 0 }
+                return { success: 1, message: functionName + "::getElement: element detected without frame: ", page: page, tag: tag, locator: locator, occurence: myOccurence, frameID: 0, stop: 0 }
 
             } catch (err) {
                 // nothing to do
@@ -566,12 +603,22 @@ async function getElement(page, variables, data, tag, functionName) {
                 frame = await page.frame({ url: url })
                 try {
                     await frame.locator(tag).last().waitFor()
+
+                    if (myOccurence == 'LAST') {
+                        await frame.locator(tag).last().waitFor()
+                        locator = frame.locator(tag).last()
+                    }
+                    else {
+                        await frame.locator(tag).nth(myOccurence).waitFor()
+                        locator = frame.locator(tag).nth(myOccurence)
+                    }
+
                     console.log('find in the frame: ' + i)
                     frameID = i
                     frameLocator = frame
                     // restore the original timeout
                     page.setDefaultTimeout(timeout * 1000)
-                    return { success: 1, message: functionName + "::getElement: element detected on the frame: " + i, page: frame, tag: tag, frameID: (frameID + 1), stop: 0 }
+                    return { success: 1, message: functionName + "::getElement: element detected on the frame: " + i, page: frame, tag: tag, locator: locator, occurence: myOccurence, frameID: (frameID + 1), stop: 0 }
 
                 } catch (err) {
                     //console.log('not found for the frame: ' + i)
@@ -581,7 +628,7 @@ async function getElement(page, variables, data, tag, functionName) {
         // restore the original timeout
         page.setDefaultTimeout(timeout * 1000)
         console.log(functionName + "::getElement: Cannot find element: " + tag + "!")
-        return { success: 0, message: functionName + "::getElement: Cannot find element: " + tag + "!", stop: 1 }
+        return { success: 0, message: functionName + "::getElement: Cannot find the element: " + (myOccurence + 1) + ", tag: " + tag + "!", stop: 1 }
 
     }
 
@@ -610,10 +657,11 @@ async function countElement(page, data, variables, tag, variable, action) {
     try {
         if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
         let page1 = ret.page
+        let locator = ret.locator
         tag = ret.tag
 
-        await page1.locator(tag).last().waitFor()
-        const count = await page.locator(tag).count()
+        //await locator.waitFor()
+        const count = await locator.count()
         // store the value into the variable
         variables.setVariable(variable, count)
         variables.displayLog(1, 2, 'countElement: ' + count)
@@ -1863,6 +1911,7 @@ async function setValue(page, data, variables, tag, value, delay) {
         ret = await getElement(page, variables, data, tag, 'click')
         if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
         let page1 = ret.page
+        let locator = ret.locator
         tag = ret.tag
 
 
@@ -1878,18 +1927,18 @@ async function setValue(page, data, variables, tag, value, delay) {
         }
         if (value.indexOf('<ENTER>', 0) >= 0) {
             value = value.replace('<ENTER>', '')
-            await page1.locator(tag).fill(value)
+            await locator.fill(value)
             variables.displayLog(1, 1, '----' + value.trim() + '(' + value.trim().length + ')---- Press Enter')
             if (delay != undefined && delay > 0) await page1.waitForTimeout(delay * 1000);
             await page1.keyboard.sendCharacter('\r'); // ASCI 10
             await page1.keyboard.sendCharacter('\n'); // ASCI 13"
         } else if (value.indexOf('<TAB>', 0) >= 0) {
             value = value.replace('<TAB>', '')
-            await page1.locator(tag).fill(value)
+            await locator.fill(value)
             if (delay != undefined && delay > 0) await page1.waitForTimeout(delay * 1000);
             await page1.keyboard.sendCharacter('\t'); // ASCI 9
         } else {
-            await page1.locator(tag).fill(value)
+            await locator.fill(value)
             if (delay != undefined && delay > 0) await page1.waitForTimeout(delay * 1000);
         }
         ret = { success: 1, message: 'setValue OK', value: value, stop: 0 }
@@ -1928,8 +1977,9 @@ async function getValue(page, data, variables, tag, variableName) {
     // Get the element for the tag
     try {
         let page1 = ret.page
+        let locator = ret.locator
         tag = ret.tag
-        let text = await page1.locator(tag).textContent()
+        let text = await locator.textContent()
         variables.setVariable(variableName, text)
         variables.displayLog(1, 1, 'getValue: ' + text)
         return { success: 1, message: 'getValue OK', value: text, stop: 0 }
@@ -2000,8 +2050,9 @@ async function select(page, data, variables, tag, value, delay) {
     try {
         // tag = variables.evaluateVariable(tag)
         let page1 = ret.page
+        let locator = ret.locator
         tag = ret.tag
-        await page1.locator(tag).selectOption(value)
+        await locator.selectOption(value)
 
         if (delay != undefined && delay != 0) await page1.waitForTimeout(delay * 1000);
 
@@ -2039,8 +2090,9 @@ async function selectCount(page, data, variables, tag, variable) {
     try {
         //tag = variables.evaluateVariable(tag)
         let page1 = ret.page
+        let locator = ret.locator
         tag = ret.tag
-        await page1.locator(tag).last().waitFor()
+        //await page1.locator(tag).last().waitFor()
 
         let tagElement = tag + '/option'
         const count = await page1.locator(tagElement).count()
@@ -2181,7 +2233,7 @@ async function setFocus(page, data, variables, tag, delay) {
     try {
         let page1 = ret.page
         tag = ret
-        const locator = page1.locator(tag)
+        const locator = ret.locator
         const elementHandle = await locator.elementHandle()
         await page1.evaluate(element => { element.scrollIntoView(); }, elementHandle)
 
@@ -2220,18 +2272,19 @@ async function click(page, data, variables, tag, delay, focus) {
 
     try {
         let page1 = ret.page
+        let locator = ret.locator
         tag = ret.tag
 
         if (focus == undefined) focus = 0
         if (focus == 1) {
             // Set the focus on the element
             console.log('Set the focus on the element')
-            const elementHandle = await page1.locator(tag).elementHandle()
+            const elementHandle = await locator.elementHandle()
             await page1.evaluate(element => { element.scrollIntoView() }, elementHandle)
         } else console.log('No focus on the element')
 
         // Click on the element
-        await page1.locator(tag).click()
+        await locator.click()
         if (delay != undefined) {
             delay = variables.evaluateVariable(delay)
             console.log('Delay:', delay)
@@ -2266,8 +2319,9 @@ async function doubleClick(page, data, variables, tag, delay) {
 
     try {
         let page1 = ret.page
+        let locator = ret.locator
         tag = ret.tag
-        await page1.locator(tag).doubleClick()
+        await locator.doubleClick()
         if (delay != undefined) {
             delay = variables.evaluateVariable(delay)
             console.log('Delay:', delay)
@@ -2303,10 +2357,10 @@ async function JSclick(page, data, variables, tag, delay) {
 
     try {
         let page1 = ret.page
+        let locator = ret.locator
         tag = ret.tag
-        const locator = page1.locator(tag)
         const elementHandle = await locator.elementHandle()
-        await page1.evaluate(element => { element.scrollIntoView(); }, elementHandle)        
+        await page1.evaluate(element => { element.scrollIntoView(); }, elementHandle)
         await page1.evaluate(element => { element.click(); }, elementHandle)
 
         if (delay != undefined) {
@@ -2373,10 +2427,11 @@ async function getTableData(page, data, variables, tagElement, row, column, vari
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tagElement = ret.tag
 
     try {
-        let myValue = await page1.locator(tagElement).textContent()
+        let myValue = await locator.textContent()
         variables.displayLog(1, 2, "getTableHeader - getText: " + myValue);
 
         if (myValue == '' || myValue == undefined) myValue = '<EMPTY>'
@@ -2443,10 +2498,11 @@ async function getTableHeader(page, data, variables, tagElement, row, column, va
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tagElement = ret.tag
 
     try {
-        let myValue = await page1.locator(tagElement).textContent()
+        let myValue = await locator.textContent()
         variables.displayLog(1, 2, "getTableHeader - getText: " + myValue);
 
         if (myValue == '' || myValue == undefined) myValue = '<EMPTY>'
@@ -2543,22 +2599,23 @@ async function setTableData(page, data, variables, tagElement, row, column, valu
     ret = await getElement(page, variables, data, tagElement2, 'setTableData')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
     let page1 = ret.page
+    let locator = ret.locator
     tagElement2 = ret.tag
 
     try {
-        await page1.locator(tagElement2).click()
+        await locator.click()
         if (value.indexOf('<ENTER>', 0) >= 0) {
             value = value.replace('<ENTER>', '')
-            await page1.locator(tagElement2).fill(value)
+            await locator.fill(value)
             variables.displayLog(1, 1, '     ----- Press Enter')
             await page1.keyboard.sendCharacter('\r'); // ASCI 10
             await page1.keyboard.sendCharacter('\n'); // ASCI 13"
         } else if (value.indexOf('<TAB>', 0) >= 0) {
             value = value.replace('<TAB>', '')
-            await page1.locator(tagElement2).fill(value)
+            await locator.fill(value)
             await page1.keyboard.sendCharacter('\t'); // ASCI 9"
         } else {
-            await page1.locator(tagElement2).fill(value)
+            await locator.fill(value)
         }
         variables.displayLog(1, 1, '---- setTableValue: OK!')
         ret = { success: 1, message: 'setTableValue OK', stop: 0 }
@@ -2611,11 +2668,11 @@ async function countTableRow(page, data, variables, tagElement, variable) {
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tagElement = ret.tag
 
     try {
-        //await page1.locator(tagElement).last().waitFor()
-        const count = await page1.locator(tagElement).count()
+        const count = await locator.count()
         // store the value into the variable
         variables.setVariable(variable, count)
         variables.displayLog(1, 2, 'countTableRow: ' + count)
@@ -2819,11 +2876,12 @@ async function clickCell(page, data, variables, tagElement, row, column, delay) 
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tagElement = tagElement.tag
 
 
     try {
-        await page1.locator(tagElement).click()
+        await locator.click()
         ret = { success: 1, message: 'clickCell OK', stop: 0 }
         variables.displayLog(1, 2, 'clickCell: wait ' + delay + ' second(s) after the click')
         if (delay != undefined) {
@@ -2860,10 +2918,10 @@ async function enable(page, data, variables, tag) {
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tag = ret.tag
 
     try {
-        const locator = page1.locator(tag)
         const elementHandle = await locator.elementHandle()
         await page1.evaluate(element => { element.removeAttribute('disabled'); }, elementHandle)
         return { success: 1, message: "enable OK!", stop: 0 }
@@ -2893,10 +2951,10 @@ async function removeAttribute(page, data, variables, tag, attribute) {
     ret = await getElement(page, variables, data, tag, 'removeAttribute')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
     let page1 = ret.page
+    let locator = ret.locator
     tag = ret.tag
 
     try {
-        const locator = page1.locator(tag)
         const elementHandle = await locator.elementHandle()
 
         await page1.evaluate(
@@ -2936,11 +2994,12 @@ async function setAttribute(page, data, variables, tag, attribute, value) {
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tag = ret.tag
 
     try {
         // Set the attribute
-        const locator = await page1.locator(tag).first()
+        //const locator = await page1.locator(tag).first()
 
         let myValue2 = await locator.getAttribute(attribute);
         if (myValue2 == undefined) myValue = '<EMPTY>'
@@ -2987,11 +3046,12 @@ async function readAttribute(page, data, variables, tag, attribute, variableName
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tag = ret.tag
 
     try {
         // Read the attribute
-        let myValue = await page1.locator(tag).first().getAttribute(attribute);
+        let myValue = await locator.getAttribute(attribute);
         if (myValue == undefined) myValue = '<EMPTY>'
         if (variableName != undefined && variableName != '') variables.setVariable(variableName, myValue)
         return { success: 1, message: 'readAttribute OK!', value: myValue, stop: 0 }
@@ -3027,6 +3087,7 @@ async function isExist(page, data, variables, tag, variableName, delay) {
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tag = ret.tag
 
     try {
@@ -3046,10 +3107,10 @@ async function isExist(page, data, variables, tag, variableName, delay) {
         console.log('Tag', tag)
 
         page.setDefaultTimeout(delay * 1000);
-        await page1.locator(tag).last().waitFor()
+        await locator.waitFor()
         page.setDefaultTimeout(timeout * 1000) // Back to the original timeout
 
-        let isExist = await page1.locator(tag).first().isVisible()
+        let isExist = await locator.isVisible()
         console.log('Visible:', isExist)
 
         if (variableName != undefined && variableName != '') variables.setVariable(variableName, isExist)
@@ -3090,6 +3151,7 @@ async function isCheck(page, data, variables, tag, variableName, delay) {
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tag = ret.tag
 
     try {
@@ -3109,10 +3171,10 @@ async function isCheck(page, data, variables, tag, variableName, delay) {
         console.log('Tag', tag)
 
         page.setDefaultTimeout(delay * 1000);
-        await page1.locator(tag).last().waitFor()
+        await locator.waitFor()
         page.setDefaultTimeout(timeout * 1000) // Back to the original timeout
 
-        let isChecked = await page.locator1(tag).first().isChecked()
+        let isChecked = await locator.isChecked()
 
         if (variableName != undefined && variableName != '') variables.setVariable(variableName, isChecked)
         return { success: 1, message: "isCheck Ok!", value: isChecked, stop: 0 }
@@ -3149,6 +3211,7 @@ async function isEnable(page, data, variables, tag, variableName, delay) {
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tag = ret.tag
 
     try {
@@ -3168,10 +3231,10 @@ async function isEnable(page, data, variables, tag, variableName, delay) {
         console.log('Tag', tag)
 
         page.setDefaultTimeout(delay * 1000);
-        await page1.locator(tag).last().waitFor()
+        await locator.waitFor()
         page.setDefaultTimeout(timeout * 1000) // Back to the original timeout
 
-        let isEnabled = await page1.locator(tag).nth(0).isEnabled()
+        let isEnabled = await locator.isEnabled()
 
         if (variableName != undefined && variableName != '') variables.setVariable(variableName, isEnabled)
         return { success: 1, message: "isEnabled Ok!", value: isEnabled, stop: 0 }
@@ -3207,6 +3270,7 @@ async function isVisible(page, data, variables, tag, variableName, delay) {
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tag = ret.tag
 
     try {
@@ -3226,10 +3290,10 @@ async function isVisible(page, data, variables, tag, variableName, delay) {
         console.log('Tag', tag)
 
         page.setDefaultTimeout(delay * 1000);
-        await page1.locator(tag).last().waitFor()
+        await locator.waitFor()
         page.setDefaultTimeout(timeout * 1000) // Back to the original timeout
 
-        let isVisible = await page1.locator(tag).nth(0).isVisible()
+        let isVisible = await locator.isVisible()
 
         if (variableName != undefined && variableName != '') variables.setVariable(variableName, isVisible)
         return { success: 1, message: "isVisible Ok!", value: isVisible, stop: 0 }
@@ -3265,6 +3329,7 @@ async function waitInvisible(page, data, variables, tagElement, delay, action) {
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tagElement = ret.tag
 
     try {
@@ -3283,7 +3348,6 @@ async function waitInvisible(page, data, variables, tagElement, delay, action) {
         delay = delay * 1000
         page.setDefaultTimeout(delay);
 
-        const locator = page1.locator(tagElement).first()
         await locator.waitFor({ state: 'hidden', delay });
 
         page.setDefaultTimeout(timeout * 1000) // Back to the original timeout
@@ -3330,18 +3394,19 @@ async function waitInvisible(page, data, variables, tagElement, delay, action) {
 *
 */
 
-async function check(driver, data, variables, tag, delay) {
+async function check(page, data, variables, tag, delay) {
     let ret
 
     ret = await getElement(page, variables, data, tag, 'check')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tag = ret.tag
 
     try {
         //tag = variables.evaluateVariable(tag)
-        await page1.locator(tag).check()
+        await locator.check()
         if (delay != undefined) {
             delay = variables.evaluateVariable(delay)
             console.log('Delay:', delay)
@@ -3374,11 +3439,12 @@ async function uncheck(page, data, variables, tag, delay) {
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tag = ret.tag
 
     try {
-        tag = variables.evaluateVariable(tag)
-        await page1.locator(tag).uncheck()
+        //tag = variables.evaluateVariable(tag)
+        await locator.uncheck()
         if (delay != undefined) {
             delay = variables.evaluateVariable(delay)
             console.log('Delay:', delay)
@@ -3999,16 +4065,17 @@ async function JSinput(page, data, variables, tag, value) {
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tag = ret.tag
 
     try {
-        tag = variables.evaluateVariable(tag)
+        //tag = variables.evaluateVariable(tag)
 
         // Set the attribute value
-        const locator = await page1.locator(tag).first()
+        //const locator = await page1.locator(tag).first()
 
         const elementHandle = await locator.elementHandle();
-        await page1.evaluate(element => { element.scrollIntoView(); }, elementHandle)        
+        await page1.evaluate(element => { element.scrollIntoView(); }, elementHandle)
         await page1.evaluate(
             (elementData) => {
                 elementData.element.setAttribute(elementData.attribute, elementData.value);
