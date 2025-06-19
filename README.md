@@ -1,5 +1,5 @@
 ---
-title: RobotV3
+title: RobotV3: The Automated Testing Tool
 ---
 
 ## A version of the automated testing tool based on the Playwright library (backend)
