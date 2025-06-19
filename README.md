@@ -8,24 +8,25 @@ RobotV3: The Automated Testing Tool
 
 Prior to the installation of the tool, you need to install:
 
-\> node.js
-\> MYSQL
-\> apache
-\> PHP
-\> PhpMyAdmin
+\> node.js\
+\> MYSQL\
+\> apache\
+\> PHP\
+\> PhpMyAdmin\
 
 ### How to install it, 
 
 In the Terminal of Visual Code:
 
 \> echo \"# RobotV3\" \>\> README.md\
-\> git init \> git add README.md\
+\> git init\ 
+\> git add README.md\
 \> git commit -m \"first commit\"\
 \> git branch -M main\
 \> git remote update origin <https://github.com/PhGoffin/RobotV3.git> \
 \> git push -u origin main\
 \> npm install\
-\> cd .\\frontend\\\
+\> cd .\\frontend\
 \> npm install\
 \> cd ..\
 \> npm init playwright\
