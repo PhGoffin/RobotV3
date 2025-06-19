@@ -8,11 +8,11 @@ RobotV3: The Automated Testing Tool
 
 Prior to the installation of the tool, you need to install:
 
-\> node.js\
-\> MYSQL\
-\> apache\
-\> PHP\
-\> PhpMyAdmin\
+\* node.js\
+\* MYSQL\
+\* apache\
+\* PHP\
+\* PhpMyAdmin
 
 ### How to install it, 
 
