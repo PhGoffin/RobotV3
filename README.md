@@ -18,7 +18,8 @@ RobotV3: The Automated Testing Tool
 
 \* **PhpMyAdmin**: see https://www.phpmyadmin.net/downloads/
 
-
+&nbsp;
+&nbsp;
 ### How to install it, 
 
 **In the Terminal of Visual Code:**
@@ -39,7 +40,8 @@ RobotV3: The Automated Testing Tool
 \> npm i \@zerostep/ai -D\
 \> npx playwright install webkit
 
-
+&nbsp;
+&nbsp;
 ### How to start the servers: 
 
 **open the folder\"robot3\" with visual code**
@@ -50,7 +52,8 @@ RobotV3: The Automated Testing Tool
 
 \> npm start
 
-
+&nbsp;
+&nbsp;
 ### Run the web user interface:
 
 **open the browser with the link:**
