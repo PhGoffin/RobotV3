@@ -4,6 +4,15 @@ RobotV3: The Automated Testing Tool
 
 ## A version of the automated testing tool based on the Playwright library (backend)
 
+### Pre-requisites
+
+Prior to the installation of the tool, you need to install:
+\> node.js
+\> MYSQL
+\> apache
+\> PHP
+\> PhpMyAdmin
+
 ### How to install it, 
 
 In the Terminal of Visual Code:
