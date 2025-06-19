@@ -6,7 +6,7 @@ RobotV3: The Automated Testing Tool
 
 ### Pre-requisites
 
-Prior to the installation of the tool, you need to install:
+**Prior to the installation of the tool, you need to install:**
 
 \* node.js\
 \* MYSQL\
@@ -16,7 +16,7 @@ Prior to the installation of the tool, you need to install:
 
 ### How to install it, 
 
-In the Terminal of Visual Code:
+**In the Terminal of Visual Code:**
 
 \> echo \"# RobotV3\" \>\> README.md\
 \> git init\ 
@@ -36,11 +36,16 @@ In the Terminal of Visual Code:
 
 ### How to start the servers: 
 
-\- open the folder\"robot3\" with visual code\
+**open the folder\"robot3\" with visual code**
+
 \> npm start
 
-\- open the folder \"robotv3/frontend\" with visual code\
+**open the folder \"robotv3/frontend\" with visual code**
+
 \> npm start
 
 ### Run the web user interface:
-- open the browser with the link: localhost:8080
+
+**open the browser with the link:**
+
+\>localhost:8080
