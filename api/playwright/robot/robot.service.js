@@ -9,7 +9,7 @@ module.exports = {
   * @Email: artcomputer123@gmail.com
   * @Date: 2025-05-08
   * @Last Modified by: Someone
-  * @Last Modified time: 2025-06-05 15:33:02
+  * @Last Modified time: 2025-07-04 14:54:44
   * @Description: All the Playwright services available for robot
   */
 
@@ -77,6 +77,8 @@ module.exports = {
       let page = browserMiddelware.getPage()
       let browser = browserMiddelware.getBrowser()
 
+      // Store the browser middelware in the robot library
+      robot.setBrowserMiddelware(page, browserMiddelware)      
 
       // Get the timeout (if any)
       const dataAPI4 = { projectID: data.projectID, userID: data.userID, code: 'TimeOut' }
@@ -206,7 +208,7 @@ module.exports = {
         await page.locator(GUI).last().waitFor()
         let locators = await page.locator(GUI)
         const count = await locators.count()
-        console.log ('Count: ' + count)
+        console.log('Count: ' + count)
         if (count > 0) {
           for (i = 0; i < count; i++) {
             value = locators.nth(i).textContent()
@@ -1431,6 +1433,9 @@ module.exports = {
       let page = browserMiddelware.getPage()
       let browser = browserMiddelware.getBrowser()
 
+      // Store the browser middelware in the robot library
+      robot.setBrowserMiddelware(page, browserMiddelware)
+
 
       // Get the timeout (if any)
       const dataAPI4 = { projectID: data.projectID, userID: data.userID, code: 'TimeOut' }
@@ -1571,6 +1576,9 @@ module.exports = {
       let device = browserMiddelware.getDevice()
       let page = browserMiddelware.getPage()
       let browser = browserMiddelware.getBrowser()
+
+      // Store the browser middelware in the robot library
+      robot.setBrowserMiddelware(page, browserMiddelware)
 
 
       // Get the timeout (if any)
@@ -1792,6 +1800,9 @@ module.exports = {
       let device = browserMiddelware.getDevice()
       let page = browserMiddelware.getPage()
       let browser = browserMiddelware.getBrowser()
+
+      // Store the browser middelware in the robot library
+      robot.setBrowserMiddelware(page, browserMiddelware)
 
 
       // Get the timeout (if any)
@@ -2080,6 +2091,8 @@ module.exports = {
       let page = browserMiddelware.getPage()
       let browser = browserMiddelware.getBrowser()
 
+      // Store the browser middelware in the robot library
+      robot.setBrowserMiddelware(page, browserMiddelware)
 
       // Get the timeout (if any)
       const dataAPI4 = { projectID: data.projectID, userID: data.userID, code: 'TimeOut' }

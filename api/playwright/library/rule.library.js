@@ -33,8 +33,8 @@ const express = require("express")
 async function specialFunction(page, variables, data, rulePosition, functionName, param1, param2, param3, param4) {
     const { logfile, speaking, dictionary, setReference, getReference, loginUser, loginPassword, dummyExtraInfo, dummyLogin, pause, getData, setData, debug, email,
         pressEnter, pressEscape, pressTab, click, doubleClick, setValue, getValue, select, selectCount, getElementDummy, setValueDummy, ask, waitInvisible,
-        JSclick, JSinput, isExist, isCheck, isVisible, url, waitFor, waitForNot, setVariable, setFocus, refreshURL, printScreen, executeRules, newTab, newWindow,
-        enable, removeAttribute, setAttribute, readAttribute, acceptPopup, cancelPopup, switchToFrame, switchToBrowserTab, uploadFile, callScenario, callSuite,
+        JSclick, JSinput, isExist, isCheck, isVisible, url, waitFor, waitForNot, setVariable, setFocus, refreshURL, printScreen, executeRules, openNewTab, switchTab, closeTab,
+        enable, removeAttribute, setAttribute, readAttribute, acceptPopup, cancelPopup, switchToFrame, uploadFile, callScenario, callSuite,
         epoch, epochDate, epochAddHour, epochAddMinute, epochAddSecond, skipIt, skipDescribe, detectGUI, keyboard, startTimer, stopTimer,
         getTableData, getTableHeader, setTableData, clickCell, countTableRow, searchTableData } = require("./robot.library")
 
@@ -88,12 +88,15 @@ async function specialFunction(page, variables, data, rulePosition, functionName
             page.manage().window().maximize();
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1)
             return ret
-        case '#newTab':
-            ret = await newTab(page)
+        case '#openNewTab':
+            ret = await openNewTab(variables, data, param1)
             return ret
-        case '#newWindow':
-            ret = await newWindow(page)
+        case '#switchTab':
+            ret = await switchTab()
             return ret
+        case '#closeTab':
+            ret = await closeTab()
+            return ret            
         case '#loginUser':
             ret = await loginUser(page, variables, data, param1, param2, param3)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
@@ -172,12 +175,9 @@ async function specialFunction(page, variables, data, rulePosition, functionName
         case '#switchToFrame':
             ret = await switchToFrame(page, variables, data, param1)
             return ret
-        case '#switchToBrowserTab':
-            ret = await switchToBrowserTab(page, param1)
-            return ret
-        case 'closeBrowserTab':
-            ret = await closeBrowserTab(page)
-            return ret
+        // case 'closeBrowserTab':
+        //     ret = await closeBrowserTab(page)
+        //     return ret
         case '#waitFor':
             ret = await waitFor(page, data, variables, param1, param2, param3)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)

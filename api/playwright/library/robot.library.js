@@ -1,6 +1,28 @@
 const { By, Key, Keys, until } = require("selenium-webdriver")
 let frameID = 0;
 let frameLocator = null;
+const BrowserMiddelware = require("../library/browser.library.js")
+let browserMiddelware = new BrowserMiddelware
+let tabPage = []
+let tabPageID = 0
+let tabPageCurrent = 0
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function <OK>
+*   setBrowserMiddelware: store the browser middelware (it includes, the browser name, the device, the context...) in the global variable
+*
+* @param {object} browserMiddelwareOrigin: object
+*
+*/
+async function setBrowserMiddelware(page, browserMiddelwareOrigin) {
+    browserMiddelware = browserMiddelwareOrigin
+    tabPage[0] = page
+    tabPageID = 0
+    tabPageCurrent = 0
+    //console.log ('The browser name is', browserMiddelware.getBrowserName())
+}
 
 
 /**
@@ -362,65 +384,27 @@ async function stopTest(variables, condition, message) {
 /**
  * ---------------------------------------------------------------------------- 
  * @function <OK>
- *  SwitchToBrowserTab:  Switch to the last tab of the browser
- *
- * @param {object} page:        playwright page
- * @param {number} tabID:       browser tab id (0 for the last one)
- *   
- */
-async function switchToBrowserTab(page, tabID) {
-
-    if (tabID != undefined) tabID--
-    else tabID = -1
-
-    try {
-
-        const pages = await page.context().pages();
-        let nbHandle = pages.length - 1; // Playwright uses pages, not window handles
-
-        if (nbHandle > 0) {
-            let newPage = pages[nbHandle];
-            if (tabID >= 0 && tabID < pages.length) { // Check if tabID is valid
-                newPage = pages[tabID];
-            }
-
-            await newPage.bringToFront(); // Bring the page to the front.  No need for switchTo().window()
-            return { success: 1, message: 'Switch to the browser tab', stop: 0 };
-        } else {
-            return { success: 0, message: 'No extra tab open in the browser!', stop: 0 };
-        }
-
-    } catch (error) {
-        console.error("Error switching tab:", error);
-        return { success: 0, message: `Error switching tab: ${error.message}`, stop: 1 };
-    }
-
-}
-
-/**
- * ---------------------------------------------------------------------------- 
- * @function <OK>
  *  CloseBrowserTab:  Close the last tab of the browser
  *  
  * @param {object} page:         playwright page
  * 
  */
-async function closeBrowserTab(page) {
+// async function closeBrowserTab(page) {
 
-    const pages = await page.context().pages(); // Get all pages (tabs/windows)
-    const pageCount = pages.length;
+//     const pages = await page.context().pages(); // Get all pages (tabs/windows)
+//     const pageCount = pages.length;
 
-    if (pageCount > 1) {
-        const lastPage = pages[pageCount - 1]; // Get the last page
-        await lastPage.close(); // Close the last page
-        const previousPage = pages[pageCount - 2] || pages[0]; // Switch to the previous page or the first if it was the second tab
-        await previousPage.bringToFront(); // Bring the previous page to the front
-        return { success: 1, message: 'Closed the browser tab and returned to the previous one', stop: 0 };
-    } else {
-        return { success: 0, message: 'No extra tab open in the browser!', stop: 0 };
-    }
+//     if (pageCount > 1) {
+//         const lastPage = pages[pageCount - 1]; // Get the last page
+//         await lastPage.close(); // Close the last page
+//         const previousPage = pages[pageCount - 2] || pages[0]; // Switch to the previous page or the first if it was the second tab
+//         await previousPage.bringToFront(); // Bring the previous page to the front
+//         return { success: 1, message: 'Closed the browser tab and returned to the previous one', stop: 0 };
+//     } else {
+//         return { success: 0, message: 'No extra tab open in the browser!', stop: 0 };
+//     }
 
-}
+// }
 
 
 /**
@@ -468,6 +452,7 @@ async function switchToFrame(page, variables, data, frameId) {
 * @param {object} variables:    array of all the variables
 * @param {object} data:         all the parameters
 * @param {string} tag:          tag of the element
+* @param {string} functionName: name of the function (for debugging purpose)
 *
 */
 async function getElement(page, variables, data, tag, functionName) {
@@ -475,6 +460,7 @@ async function getElement(page, variables, data, tag, functionName) {
     const { getReferenceByCode } = require("../../reference/reference.service.js");
     const { Left } = require("./string.library.js");
 
+    console.log('getElement', functionName)
 
     // Get the current timeout (default is 30 seconds)
     let dataAPI
@@ -532,7 +518,7 @@ async function getElement(page, variables, data, tag, functionName) {
     }
 
 
-    //console.log('******* ' + tag + '*********')
+    console.log('******* ' + tag + '*********')
 
     // Check if the element is found in the current page
     let locator = null
@@ -1133,7 +1119,7 @@ function startPromises() {
 * @function <OK>
 *   url: get a webpage
 *
-* @param {object} page:         playwright page
+* @param {object} page:         playwright page (overwritten by the array of tab page)
 * @param {object} variables:    array of all the variables
 * @param {number} projectID:    project ID
 * @param {string} link:         link to the wepage
@@ -1163,6 +1149,7 @@ async function url(page, variables, projectID, link) {
     }
 
     try {
+        //page = tabPage[tabPageCurrent]
         //variables.displayLog(1, 1, 'Driver: ', driver)
         await page.goto(link)
         return { success: 1, message: 'Url OK', stop: 0 }
@@ -1204,58 +1191,133 @@ async function getUrl(page, variables, myVariable) {
 
 }
 
+
 /**
 * ---------------------------------------------------------------------------- 
 * @function <TBR>
-*  newTab:  Open a new tab and switch to it 
+*  openNewTab:  Open a new tab and switch to it 
 * 
-* @param {object} page:       playwright page
+* @param {object} variables:   array of all the variables
+* @param {object} data:        all the parameters
+* @param {string} url:         link to the wepage
 *
 */
-async function newTab(page) {
+async function openNewTab(variables, data, url) {
+    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
-    // This function is not yet implemented due to the complexity
-    //
-    // To create a new tab, we need to code the following lines:
-    // const context = await browser.newContext(); // Create a new context to manage the new tab
-    // const page = await context.newPage();    // Create a new page (tab) within that context    
-    // 
-    // the implementation should be done in the browser.library.js
-    // However, for the time being the page is declared only in the robot.service.js
-    // so we need to find a way to replace the value of the page at this level... not so simple!!!!
+    // evaluate the url
+    url = variables.evaluateVariable(url)
+    if (url.length > 0) {
+        url = url.replace(/'/g, "");
+    }
 
 
-    return { success: 0, message: 'newTab Error: Function not yet implemented!', stop: 1 }
+    // Search the text in the dictionary 
+    if (url[0] == '@') {
+        const dataAPI = { projectID: data.projectID, code: url, language: '*', active: 1 }
+        const result = await getDictionaryByCode(dataAPI);
+        if (result.length) {
+            url = result[0].label
+            //console.log (url)
+        } else {
+            variables.displayLog(1, 1, 'Data not found in the dictionary!')
+            return { success: 0, message: "Cannot find the code: " + url + " in the dictionary!", stop: 1 }
+        }
+    }
 
-
+    try {
+        const context = browserMiddelware.getContext()
+        const newTab = await context.newPage(); // opens a new tab
+        await newTab.goto(url);
+        tabPage[++tabPageID] = newTab // tabPage and tabPageID are global
+        tabPageCurrent = tabPageID
+        return { success: 1, message: "openNewTab Ok!", stop: 0 }
+    } catch (err) {
+        return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
+    }
 }
 
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function <TBR>
-*  newWindow:  Open a new window and switch to it 
+* @function <OK>
+*  clickNewTab:  Open a new tab and switch to it 
 * 
-* @param {object} driver:       selenium driver
+* @param {object} page:         playwright page
+* @param {object} data:         all the parameters
+* @param {object} variables:    array of all the variables
+* @param {string} tag:          tag element
 *
 */
-async function newWindow(driver) {
+async function clickNewTab(page, data, variables, tag) {
 
+    let ret = 0
 
-    // This function is not yet implemented due to the complexity
-    //
-    // To create a new window, we need to code the following lines:
-    // const newPage = await context.newPage(); // Use context.newPage() to create a new page
-    // await newPage.bringToFront(); // Optional: Bring the new page to the front (similar to switching focus)
-    // 
-    // the implementation should be done in the browser.library.js
-    // However, for the time being the page is declared only in the robot.service.js
-    // so we need to find a way to replace the value of the page at this level... not so simple!!!!
+    // get the context
+    let context = browserMiddelware.getContext()
 
+    // Listen for the new page (tab) to open
+    const [newPage] = await Promise.all([
+        context.waitForEvent('page'), // Waits for a new tab/page to open
+        // Click on the button
+        click(page, data, variables, tag, 1, 0)
+    ]);
 
-    return { success: 0, message: 'newWindow Error: Function not yet implemented!', stop: 1 }
+    // Wait for the new page to load
+    await newPage.waitForLoadState();
+    //console.log('New tab opened with URL:', newPage.url());
+
+    // store the new page
+    tabPage[++tabPageID] = newPage
+    tabPageCurrent = tabPageID
 
 }
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function <OK>
+*  switchTab:  switch to a specific tab 
+* 
+*/
+async function switchTab(tabID) {
+    if (tabID == 0) {
+        // Switch to the last tab
+        tabID = tabPage.length
+    } 
+    tabID--
+    if (tabID > tabPageID || tabPage[tabID] == null) {
+        console.log('switchTab: closing original or already closed tab!')
+        return { success: 1, message: "switchTab Ok!", stop: 0 } // closing original or already closed tab
+    }
+    tabPageCurrent = tabID
+    let tab = tabPage[tabPageCurrent]
+    await tab.bringToFront(); // Bring the specific tab   
+    console.log('switchTab', tabID)
+    await tab.waitForTimeout(2 * 1000);
+    return { success: 1, message: "switchTab Ok!", stop: 0 }
+}
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function <OK>
+*  closeTab:  Close the current tab and back to the first one 
+* 
+*/
+async function closeTab() {
+    if (tabPageCurrent == 0 || tabPage[tabPageCurrent] == null) {
+        console.log('closeTab: closing original or already closed tab!')
+        return { success: 1, message: "closeTab Ok!", stop: 0 } // closing original or already closed tab
+    }
+    let tab = tabPage[tabPageCurrent]
+    tab.close()
+    tabPage[tabPageCurrent] = null
+    tabPageCurrent = 0
+    tab = tabPage[tabPageCurrent]
+    await tab.bringToFront(); // Bring the first tab
+
+    return { success: 1, message: "closeTab Ok!", stop: 0 }
+}
+
 
 
 /**
@@ -2266,6 +2328,7 @@ async function setFocus(page, data, variables, tag, delay) {
 async function click(page, data, variables, tag, delay, focus) {
     let ret
 
+    // Override the page with the current tab
     ret = await getElement(page, variables, data, tag, 'click')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
     //console.log('after call getElement ', ret.success)
@@ -4518,6 +4581,30 @@ async function stopTimer(data, dpageiver, variables, space, topic) {
  * 
  *
 * ---------------------------------------------------------------------------- 
+* Improvement: we could add a new parameter: context that could be used by the function
+* Ideally, the newTab should be stored in an array tabPage[], to allow the close of the tab
+* Note: tabPage[0] will always contains the original webpage
+*
+*
+* function clickNewTab (tag) {
+*    # get the context
+*    let context = browserMiddelware.getContext()
+*    # Start waiting for the new page before clicking
+*    with context.expect_page() as new_page_info:
+*        page.locator(tag).click()  # decode the tag
+*    new_page = new_page_info.value
+*
+*    # Now you can interact with the new page
+*    new_page.wait_for_load_state()
+*    print(f"Title of new page: {new_page.title()}")
+*
+*    # store the new page
+*    tabPage[tabPageID++] = new_page
+*    tabPageCurrent = tabPageID
+*
+* }
+
+*
  */
 async function evaluateFunction(page, variables, name, data, param1, param2, param3, param4) {
 
@@ -4530,6 +4617,9 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
 
     //variables.listVariable()
     //variables.setVariable('$Evaluate', 'OK')
+
+    // Restore the page to the current tab (by default the first one)
+    page = tabPage[tabPageCurrent]
 
     try {
 
@@ -4545,14 +4635,6 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
 
             case 'getUrl':
                 ret = await getUrl(page, variables, param1)
-                return ret
-
-            case 'newTab':
-                ret = await newTab(page)
-                return ret
-
-            case 'newWindow':
-                ret = await newWindow(page)
                 return ret
 
             case 'loginUser':
@@ -4582,13 +4664,25 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 ret = await switchToFrame(page, variables, data, param1)
                 return ret
 
-            case 'switchToBrowserTab':
-                ret = await switchToBrowserTab(page, param1)
+            case 'openNewTab':
+                ret = await openNewTab(variables, data, param1)
                 return ret
 
-            case 'closeBrowserTab':
-                ret = await closeBrowserTab(page)
+            case 'switchTab':
+                ret = await switchTab(param1)
                 return ret
+
+            case 'clickNewTab':
+                ret = await clickNewTab(page, data, variables, param1)
+                return ret
+
+            case 'closeTab':
+                ret = await closeTab(param1)
+                return ret
+
+            // case 'closeBrowserTab':
+            //     ret = await closeBrowserTab(page)
+            //     return ret
 
             case 'setFocus':
                 ret = await setFocus(page, data, variables, param1, param2)
@@ -5505,6 +5599,7 @@ async function executeScenario(data, page, tests) {
                             // Check if we can process the test (depending of the condition)
                             if (process == 1) {
                                 ret = await robot.evaluateFunction(page, variables, item.functionName, data, item.parameter1, item.parameter2, item.parameter3, item.parameter4)
+
                             } else if (process == 0) {
                                 variables.displayLog(1, 1, 'Skip the step due to the condition: ' + item.Condition + "' evaluated as  (" + item.testCondition + ')')
                                 ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Skip', "Skipped due to Condition: '" + item.Condition + "' evaluated as  (" + item.testCondition + ')')
@@ -5666,8 +5761,10 @@ async function executeScenario(data, page, tests) {
 
 module.exports = {
     url: url,
-    newTab: newTab,
-    newWindow: newWindow,
+    openNewTab: openNewTab,
+    switchTab: switchTab,
+    clickNewTab: clickNewTab,
+    closeTab: closeTab,
     executeScenario: executeScenario,
     evaluateFunction: evaluateFunction,
     logfile: logfile,
@@ -5726,8 +5823,6 @@ module.exports = {
     epochAddMinute: epochAddMinute,
     epochAddSecond: epochAddSecond,
     switchToFrame: switchToFrame,
-    switchToBrowserTab: switchToBrowserTab,
-    closeBrowserTab: closeBrowserTab,
     getTableData: getTableData,
     getTableHeader: getTableHeader,
     setTableData: setTableData,
@@ -5742,6 +5837,7 @@ module.exports = {
     callSuite: callSuite,
     startTimer: startTimer,
     stopTimer: stopTimer,
-    promptAI: promptAI
+    promptAI: promptAI,
+    setBrowserMiddelware: setBrowserMiddelware
 
 };
