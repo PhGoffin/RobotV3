@@ -1,19 +1,26 @@
 ---
 RobotV3: The Automated Testing Tool
 ---
-
+## &nbsp;
 ## A version of the automated testing tool based on the Playwright library (backend)
-
+&nbsp;
+&nbsp;
 ### Pre-requisites
 
 **Prior to the installation of the tool, you need to install:**
 
-\* node.js\
-\* MYSQL\
-\* apache\
-\* PHP\
-\* PhpMyAdmin
+\* **node.js**: see https://nodejs.org/en/download\
 
+\* **MYSQL**: see https://www.mysql.com/downloads/\
+
+\* **apache**: see https://httpd.apache.org/download.cgi\
+
+\* **PHP**: see https://www.php.net/downloads\
+
+\* **PhpMyAdmin**: see https://www.phpmyadmin.net/downloads/
+
+&nbsp;
+&nbsp;
 ### How to install it, 
 
 **In the Terminal of Visual Code:**
@@ -34,6 +41,8 @@ RobotV3: The Automated Testing Tool
 \> npm i \@zerostep/ai -D\
 \> npx playwright install webkit
 
+&nbsp;
+&nbsp;
 ### How to start the servers: 
 
 **open the folder\"robot3\" with visual code**
@@ -44,6 +53,8 @@ RobotV3: The Automated Testing Tool
 
 \> npm start
 
+&nbsp;
+&nbsp;
 ### Run the web user interface:
 
 **open the browser with the link:**
