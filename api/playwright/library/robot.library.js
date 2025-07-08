@@ -1,6 +1,28 @@
 const { By, Key, Keys, until } = require("selenium-webdriver")
 let frameID = 0;
 let frameLocator = null;
+const BrowserMiddelware = require("../library/browser.library.js")
+let browserMiddelware = new BrowserMiddelware
+let tabPage = []
+let tabPageID = 0
+let tabPageCurrent = 0
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function <OK>
+*   setBrowserMiddelware: store the browser middelware (it includes, the browser name, the device, the context...) in the global variable
+*
+* @param {object} browserMiddelwareOrigin: object
+*
+*/
+async function setBrowserMiddelware(page, browserMiddelwareOrigin) {
+    browserMiddelware = browserMiddelwareOrigin
+    tabPage[0] = page
+    tabPageID = 0
+    tabPageCurrent = 0
+    //console.log ('The browser name is', browserMiddelware.getBrowserName())
+}
 
 
 /**
@@ -362,65 +384,27 @@ async function stopTest(variables, condition, message) {
 /**
  * ---------------------------------------------------------------------------- 
  * @function <OK>
- *  SwitchToBrowserTab:  Switch to the last tab of the browser
- *
- * @param {object} page:        playwright page
- * @param {number} tabID:       browser tab id (0 for the last one)
- *   
- */
-async function switchToBrowserTab(page, tabID) {
-
-    if (tabID != undefined) tabID--
-    else tabID = -1
-
-    try {
-
-        const pages = await page.context().pages();
-        let nbHandle = pages.length - 1; // Playwright uses pages, not window handles
-
-        if (nbHandle > 0) {
-            let newPage = pages[nbHandle];
-            if (tabID >= 0 && tabID < pages.length) { // Check if tabID is valid
-                newPage = pages[tabID];
-            }
-
-            await newPage.bringToFront(); // Bring the page to the front.  No need for switchTo().window()
-            return { success: 1, message: 'Switch to the browser tab', stop: 0 };
-        } else {
-            return { success: 0, message: 'No extra tab open in the browser!', stop: 0 };
-        }
-
-    } catch (error) {
-        console.error("Error switching tab:", error);
-        return { success: 0, message: `Error switching tab: ${error.message}`, stop: 1 };
-    }
-
-}
-
-/**
- * ---------------------------------------------------------------------------- 
- * @function <OK>
  *  CloseBrowserTab:  Close the last tab of the browser
  *  
  * @param {object} page:         playwright page
  * 
  */
-async function closeBrowserTab(page) {
+// async function closeBrowserTab(page) {
 
-    const pages = await page.context().pages(); // Get all pages (tabs/windows)
-    const pageCount = pages.length;
+//     const pages = await page.context().pages(); // Get all pages (tabs/windows)
+//     const pageCount = pages.length;
 
-    if (pageCount > 1) {
-        const lastPage = pages[pageCount - 1]; // Get the last page
-        await lastPage.close(); // Close the last page
-        const previousPage = pages[pageCount - 2] || pages[0]; // Switch to the previous page or the first if it was the second tab
-        await previousPage.bringToFront(); // Bring the previous page to the front
-        return { success: 1, message: 'Closed the browser tab and returned to the previous one', stop: 0 };
-    } else {
-        return { success: 0, message: 'No extra tab open in the browser!', stop: 0 };
-    }
+//     if (pageCount > 1) {
+//         const lastPage = pages[pageCount - 1]; // Get the last page
+//         await lastPage.close(); // Close the last page
+//         const previousPage = pages[pageCount - 2] || pages[0]; // Switch to the previous page or the first if it was the second tab
+//         await previousPage.bringToFront(); // Bring the previous page to the front
+//         return { success: 1, message: 'Closed the browser tab and returned to the previous one', stop: 0 };
+//     } else {
+//         return { success: 0, message: 'No extra tab open in the browser!', stop: 0 };
+//     }
 
-}
+// }
 
 
 /**
@@ -468,12 +452,15 @@ async function switchToFrame(page, variables, data, frameId) {
 * @param {object} variables:    array of all the variables
 * @param {object} data:         all the parameters
 * @param {string} tag:          tag of the element
+* @param {string} functionName: name of the function (for debugging purpose)
 *
 */
 async function getElement(page, variables, data, tag, functionName) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     const { getReferenceByCode } = require("../../reference/reference.service.js");
+    const { Left } = require("./string.library.js");
 
+    console.log('getElement', functionName)
 
     // Get the current timeout (default is 30 seconds)
     let dataAPI
@@ -507,8 +494,22 @@ async function getElement(page, variables, data, tag, functionName) {
         }
     }
 
+    // detect the position (if any)
+    let myOccurence = 0;
+    if (tag[0] == "(" && tag[1] != '/') {
+        // tag contains the occurence (in the case of non unique identifier)
+        let j = tag.indexOf(')', 0);
+        myOccurence = tag.substring(1, j);
+        if (Left(myOccurence, 4) != 'LAST') {
+            if (Left(myOccurence, 1) == '$') {
+                myOccurence = variables.evaluateVariable(myOccurence);
+            }
+            myOccurence--;
+        }
+        tag = tag.substring(j + 1);
+    }
+    console.log('myOccurence', myOccurence)
     // remove the first and the last character if it's a quote
-
     if (tag[0] == "'") {
         tag = tag.substring(1, tag.length)
     }
@@ -517,22 +518,37 @@ async function getElement(page, variables, data, tag, functionName) {
     }
 
 
-    //console.log('******* ' + tag + '*********')
+    console.log('******* ' + tag + '*********')
 
     // Check if the element is found in the current page
+    let locator = null
     try {
         // If frame was previously detected, reuse it
         if (frameID == 0) {
             console.log('Try without frames')
-            await page.locator(tag).last().waitFor()
+            if (myOccurence == 'LAST') {
+                await page.locator(tag).last().waitFor()
+                locator = page.locator(tag).last()
+            }
+            else {
+                await page.locator(tag).nth(myOccurence).waitFor()
+                locator = page.locator(tag).nth(myOccurence)
+            }
             console.log('Element detected!')
-            return { success: 1, message: functionName + "::getElement: element detected on the page", page: page, tag: tag, frameID: 0, stop: 0 }
+            return { success: 1, message: functionName + "::getElement: element detected on the page", page: page, tag: tag, locator: locator, occurence: myOccurence, frameID: 0, stop: 0 }
         }
         else {
             console.log('try with the previous frame: ' + frameID)
-            await frameLocator.locator(tag).last().waitFor()
+            if (myOccurence == 'LAST') {
+                await frameLocator.locator(tag).last().waitFor()
+                locator = frameLocator.locator(tag).last()
+            }
+            else {
+                await frameLocator.locator(tag).nth(myOccurence).waitFor()
+                locator = frameLocator.locator(tag).nth(myOccurence)
+            }
             console.log('Element detected!')
-            return { success: 1, message: functionName + "::getElement: element detected on the page", page: frameLocator, tag: tag, frameID: (frameID + 1), stop: 0 }
+            return { success: 1, message: functionName + "::getElement: element detected on the page", page: frameLocator, tag: tag, locator: locator, occurence: myOccurence, frameID: (frameID + 1), stop: 0 }
         }
 
     } catch (err) {
@@ -543,11 +559,18 @@ async function getElement(page, variables, data, tag, functionName) {
         if (frameID > 0) {
             try {
                 // Retry without frame
-                await page.locator(tag).last().waitFor()
+                if (myOccurence == 'LAST') {
+                    await page.locator(tag).last().waitFor()
+                    locator = page.locator(tag).last()
+                }
+                else {
+                    await page.locator(tag).nth(myOccurence).waitFor()
+                    locator = page.locator(tag).nth(myOccurence)
+                }
                 frameID = 0
                 frameLocator = null
                 page.setDefaultTimeout(timeout * 1000)
-                return { success: 1, message: functionName + "::getElement: element detected without frame: ", page: page, tag: tag, frameID: 0, stop: 0 }
+                return { success: 1, message: functionName + "::getElement: element detected without frame: ", page: page, tag: tag, locator: locator, occurence: myOccurence, frameID: 0, stop: 0 }
 
             } catch (err) {
                 // nothing to do
@@ -566,12 +589,22 @@ async function getElement(page, variables, data, tag, functionName) {
                 frame = await page.frame({ url: url })
                 try {
                     await frame.locator(tag).last().waitFor()
+
+                    if (myOccurence == 'LAST') {
+                        await frame.locator(tag).last().waitFor()
+                        locator = frame.locator(tag).last()
+                    }
+                    else {
+                        await frame.locator(tag).nth(myOccurence).waitFor()
+                        locator = frame.locator(tag).nth(myOccurence)
+                    }
+
                     console.log('find in the frame: ' + i)
                     frameID = i
                     frameLocator = frame
                     // restore the original timeout
                     page.setDefaultTimeout(timeout * 1000)
-                    return { success: 1, message: functionName + "::getElement: element detected on the frame: " + i, page: frame, tag: tag, frameID: (frameID + 1), stop: 0 }
+                    return { success: 1, message: functionName + "::getElement: element detected on the frame: " + i, page: frame, tag: tag, locator: locator, occurence: myOccurence, frameID: (frameID + 1), stop: 0 }
 
                 } catch (err) {
                     //console.log('not found for the frame: ' + i)
@@ -581,7 +614,7 @@ async function getElement(page, variables, data, tag, functionName) {
         // restore the original timeout
         page.setDefaultTimeout(timeout * 1000)
         console.log(functionName + "::getElement: Cannot find element: " + tag + "!")
-        return { success: 0, message: functionName + "::getElement: Cannot find element: " + tag + "!", stop: 1 }
+        return { success: 0, message: functionName + "::getElement: Cannot find the element: " + (myOccurence + 1) + ", tag: " + tag + "!", stop: 1 }
 
     }
 
@@ -610,10 +643,11 @@ async function countElement(page, data, variables, tag, variable, action) {
     try {
         if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
         let page1 = ret.page
+        let locator = ret.locator
         tag = ret.tag
 
-        await page1.locator(tag).last().waitFor()
-        const count = await page.locator(tag).count()
+        //await locator.waitFor()
+        const count = await locator.count()
         // store the value into the variable
         variables.setVariable(variable, count)
         variables.displayLog(1, 2, 'countElement: ' + count)
@@ -1085,7 +1119,7 @@ function startPromises() {
 * @function <OK>
 *   url: get a webpage
 *
-* @param {object} page:         playwright page
+* @param {object} page:         playwright page (overwritten by the array of tab page)
 * @param {object} variables:    array of all the variables
 * @param {number} projectID:    project ID
 * @param {string} link:         link to the wepage
@@ -1115,6 +1149,7 @@ async function url(page, variables, projectID, link) {
     }
 
     try {
+        //page = tabPage[tabPageCurrent]
         //variables.displayLog(1, 1, 'Driver: ', driver)
         await page.goto(link)
         return { success: 1, message: 'Url OK', stop: 0 }
@@ -1156,58 +1191,133 @@ async function getUrl(page, variables, myVariable) {
 
 }
 
+
 /**
 * ---------------------------------------------------------------------------- 
 * @function <TBR>
-*  newTab:  Open a new tab and switch to it 
+*  openNewTab:  Open a new tab and switch to it 
 * 
-* @param {object} page:       playwright page
+* @param {object} variables:   array of all the variables
+* @param {object} data:        all the parameters
+* @param {string} url:         link to the wepage
 *
 */
-async function newTab(page) {
+async function openNewTab(variables, data, url) {
+    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
-    // This function is not yet implemented due to the complexity
-    //
-    // To create a new tab, we need to code the following lines:
-    // const context = await browser.newContext(); // Create a new context to manage the new tab
-    // const page = await context.newPage();    // Create a new page (tab) within that context    
-    // 
-    // the implementation should be done in the browser.library.js
-    // However, for the time being the page is declared only in the robot.service.js
-    // so we need to find a way to replace the value of the page at this level... not so simple!!!!
+    // evaluate the url
+    url = variables.evaluateVariable(url)
+    if (url.length > 0) {
+        url = url.replace(/'/g, "");
+    }
 
 
-    return { success: 0, message: 'newTab Error: Function not yet implemented!', stop: 1 }
+    // Search the text in the dictionary 
+    if (url[0] == '@') {
+        const dataAPI = { projectID: data.projectID, code: url, language: '*', active: 1 }
+        const result = await getDictionaryByCode(dataAPI);
+        if (result.length) {
+            url = result[0].label
+            //console.log (url)
+        } else {
+            variables.displayLog(1, 1, 'Data not found in the dictionary!')
+            return { success: 0, message: "Cannot find the code: " + url + " in the dictionary!", stop: 1 }
+        }
+    }
 
-
+    try {
+        const context = browserMiddelware.getContext()
+        const newTab = await context.newPage(); // opens a new tab
+        await newTab.goto(url);
+        tabPage[++tabPageID] = newTab // tabPage and tabPageID are global
+        tabPageCurrent = tabPageID
+        return { success: 1, message: "openNewTab Ok!", stop: 0 }
+    } catch (err) {
+        return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
+    }
 }
 
 
 /**
 * ---------------------------------------------------------------------------- 
-* @function <TBR>
-*  newWindow:  Open a new window and switch to it 
+* @function <OK>
+*  clickNewTab:  Open a new tab and switch to it 
 * 
-* @param {object} driver:       selenium driver
+* @param {object} page:         playwright page
+* @param {object} data:         all the parameters
+* @param {object} variables:    array of all the variables
+* @param {string} tag:          tag element
 *
 */
-async function newWindow(driver) {
+async function clickNewTab(page, data, variables, tag) {
 
+    let ret = 0
 
-    // This function is not yet implemented due to the complexity
-    //
-    // To create a new window, we need to code the following lines:
-    // const newPage = await context.newPage(); // Use context.newPage() to create a new page
-    // await newPage.bringToFront(); // Optional: Bring the new page to the front (similar to switching focus)
-    // 
-    // the implementation should be done in the browser.library.js
-    // However, for the time being the page is declared only in the robot.service.js
-    // so we need to find a way to replace the value of the page at this level... not so simple!!!!
+    // get the context
+    let context = browserMiddelware.getContext()
 
+    // Listen for the new page (tab) to open
+    const [newPage] = await Promise.all([
+        context.waitForEvent('page'), // Waits for a new tab/page to open
+        // Click on the button
+        click(page, data, variables, tag, 1, 0)
+    ]);
 
-    return { success: 0, message: 'newWindow Error: Function not yet implemented!', stop: 1 }
+    // Wait for the new page to load
+    await newPage.waitForLoadState();
+    //console.log('New tab opened with URL:', newPage.url());
+
+    // store the new page
+    tabPage[++tabPageID] = newPage
+    tabPageCurrent = tabPageID
 
 }
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function <OK>
+*  switchTab:  switch to a specific tab 
+* 
+*/
+async function switchTab(tabID) {
+    if (tabID == 0) {
+        // Switch to the last tab
+        tabID = tabPage.length
+    } 
+    tabID--
+    if (tabID > tabPageID || tabPage[tabID] == null) {
+        console.log('switchTab: closing original or already closed tab!')
+        return { success: 1, message: "switchTab Ok!", stop: 0 } // closing original or already closed tab
+    }
+    tabPageCurrent = tabID
+    let tab = tabPage[tabPageCurrent]
+    await tab.bringToFront(); // Bring the specific tab   
+    console.log('switchTab', tabID)
+    await tab.waitForTimeout(2 * 1000);
+    return { success: 1, message: "switchTab Ok!", stop: 0 }
+}
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function <OK>
+*  closeTab:  Close the current tab and back to the first one 
+* 
+*/
+async function closeTab() {
+    if (tabPageCurrent == 0 || tabPage[tabPageCurrent] == null) {
+        console.log('closeTab: closing original or already closed tab!')
+        return { success: 1, message: "closeTab Ok!", stop: 0 } // closing original or already closed tab
+    }
+    let tab = tabPage[tabPageCurrent]
+    tab.close()
+    tabPage[tabPageCurrent] = null
+    tabPageCurrent = 0
+    tab = tabPage[tabPageCurrent]
+    await tab.bringToFront(); // Bring the first tab
+
+    return { success: 1, message: "closeTab Ok!", stop: 0 }
+}
+
 
 
 /**
@@ -1863,6 +1973,7 @@ async function setValue(page, data, variables, tag, value, delay) {
         ret = await getElement(page, variables, data, tag, 'click')
         if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
         let page1 = ret.page
+        let locator = ret.locator
         tag = ret.tag
 
 
@@ -1878,18 +1989,18 @@ async function setValue(page, data, variables, tag, value, delay) {
         }
         if (value.indexOf('<ENTER>', 0) >= 0) {
             value = value.replace('<ENTER>', '')
-            await page1.locator(tag).fill(value)
+            await locator.fill(value)
             variables.displayLog(1, 1, '----' + value.trim() + '(' + value.trim().length + ')---- Press Enter')
             if (delay != undefined && delay > 0) await page1.waitForTimeout(delay * 1000);
             await page1.keyboard.sendCharacter('\r'); // ASCI 10
             await page1.keyboard.sendCharacter('\n'); // ASCI 13"
         } else if (value.indexOf('<TAB>', 0) >= 0) {
             value = value.replace('<TAB>', '')
-            await page1.locator(tag).fill(value)
+            await locator.fill(value)
             if (delay != undefined && delay > 0) await page1.waitForTimeout(delay * 1000);
             await page1.keyboard.sendCharacter('\t'); // ASCI 9
         } else {
-            await page1.locator(tag).fill(value)
+            await locator.fill(value)
             if (delay != undefined && delay > 0) await page1.waitForTimeout(delay * 1000);
         }
         ret = { success: 1, message: 'setValue OK', value: value, stop: 0 }
@@ -1928,8 +2039,9 @@ async function getValue(page, data, variables, tag, variableName) {
     // Get the element for the tag
     try {
         let page1 = ret.page
+        let locator = ret.locator
         tag = ret.tag
-        let text = await page1.locator(tag).textContent()
+        let text = await locator.textContent()
         variables.setVariable(variableName, text)
         variables.displayLog(1, 1, 'getValue: ' + text)
         return { success: 1, message: 'getValue OK', value: text, stop: 0 }
@@ -2000,8 +2112,9 @@ async function select(page, data, variables, tag, value, delay) {
     try {
         // tag = variables.evaluateVariable(tag)
         let page1 = ret.page
+        let locator = ret.locator
         tag = ret.tag
-        await page1.locator(tag).selectOption(value)
+        await locator.selectOption(value)
 
         if (delay != undefined && delay != 0) await page1.waitForTimeout(delay * 1000);
 
@@ -2039,8 +2152,9 @@ async function selectCount(page, data, variables, tag, variable) {
     try {
         //tag = variables.evaluateVariable(tag)
         let page1 = ret.page
+        let locator = ret.locator
         tag = ret.tag
-        await page1.locator(tag).last().waitFor()
+        //await page1.locator(tag).last().waitFor()
 
         let tagElement = tag + '/option'
         const count = await page1.locator(tagElement).count()
@@ -2181,7 +2295,7 @@ async function setFocus(page, data, variables, tag, delay) {
     try {
         let page1 = ret.page
         tag = ret
-        const locator = page1.locator(tag)
+        const locator = ret.locator
         const elementHandle = await locator.elementHandle()
         await page1.evaluate(element => { element.scrollIntoView(); }, elementHandle)
 
@@ -2214,24 +2328,26 @@ async function setFocus(page, data, variables, tag, delay) {
 async function click(page, data, variables, tag, delay, focus) {
     let ret
 
+    // Override the page with the current tab
     ret = await getElement(page, variables, data, tag, 'click')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
     //console.log('after call getElement ', ret.success)
 
     try {
         let page1 = ret.page
+        let locator = ret.locator
         tag = ret.tag
 
         if (focus == undefined) focus = 0
         if (focus == 1) {
             // Set the focus on the element
             console.log('Set the focus on the element')
-            const elementHandle = await page1.locator(tag).elementHandle()
+            const elementHandle = await locator.elementHandle()
             await page1.evaluate(element => { element.scrollIntoView() }, elementHandle)
         } else console.log('No focus on the element')
 
         // Click on the element
-        await page1.locator(tag).click()
+        await locator.click()
         if (delay != undefined) {
             delay = variables.evaluateVariable(delay)
             console.log('Delay:', delay)
@@ -2266,8 +2382,9 @@ async function doubleClick(page, data, variables, tag, delay) {
 
     try {
         let page1 = ret.page
+        let locator = ret.locator
         tag = ret.tag
-        await page1.locator(tag).doubleClick()
+        await locator.doubleClick()
         if (delay != undefined) {
             delay = variables.evaluateVariable(delay)
             console.log('Delay:', delay)
@@ -2303,10 +2420,10 @@ async function JSclick(page, data, variables, tag, delay) {
 
     try {
         let page1 = ret.page
+        let locator = ret.locator
         tag = ret.tag
-        const locator = page1.locator(tag)
         const elementHandle = await locator.elementHandle()
-        await page1.evaluate(element => { element.scrollIntoView(); }, elementHandle)        
+        await page1.evaluate(element => { element.scrollIntoView(); }, elementHandle)
         await page1.evaluate(element => { element.click(); }, elementHandle)
 
         if (delay != undefined) {
@@ -2373,10 +2490,11 @@ async function getTableData(page, data, variables, tagElement, row, column, vari
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tagElement = ret.tag
 
     try {
-        let myValue = await page1.locator(tagElement).textContent()
+        let myValue = await locator.textContent()
         variables.displayLog(1, 2, "getTableHeader - getText: " + myValue);
 
         if (myValue == '' || myValue == undefined) myValue = '<EMPTY>'
@@ -2443,10 +2561,11 @@ async function getTableHeader(page, data, variables, tagElement, row, column, va
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tagElement = ret.tag
 
     try {
-        let myValue = await page1.locator(tagElement).textContent()
+        let myValue = await locator.textContent()
         variables.displayLog(1, 2, "getTableHeader - getText: " + myValue);
 
         if (myValue == '' || myValue == undefined) myValue = '<EMPTY>'
@@ -2543,22 +2662,23 @@ async function setTableData(page, data, variables, tagElement, row, column, valu
     ret = await getElement(page, variables, data, tagElement2, 'setTableData')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
     let page1 = ret.page
+    let locator = ret.locator
     tagElement2 = ret.tag
 
     try {
-        await page1.locator(tagElement2).click()
+        await locator.click()
         if (value.indexOf('<ENTER>', 0) >= 0) {
             value = value.replace('<ENTER>', '')
-            await page1.locator(tagElement2).fill(value)
+            await locator.fill(value)
             variables.displayLog(1, 1, '     ----- Press Enter')
             await page1.keyboard.sendCharacter('\r'); // ASCI 10
             await page1.keyboard.sendCharacter('\n'); // ASCI 13"
         } else if (value.indexOf('<TAB>', 0) >= 0) {
             value = value.replace('<TAB>', '')
-            await page1.locator(tagElement2).fill(value)
+            await locator.fill(value)
             await page1.keyboard.sendCharacter('\t'); // ASCI 9"
         } else {
-            await page1.locator(tagElement2).fill(value)
+            await locator.fill(value)
         }
         variables.displayLog(1, 1, '---- setTableValue: OK!')
         ret = { success: 1, message: 'setTableValue OK', stop: 0 }
@@ -2611,11 +2731,11 @@ async function countTableRow(page, data, variables, tagElement, variable) {
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tagElement = ret.tag
 
     try {
-        //await page1.locator(tagElement).last().waitFor()
-        const count = await page1.locator(tagElement).count()
+        const count = await locator.count()
         // store the value into the variable
         variables.setVariable(variable, count)
         variables.displayLog(1, 2, 'countTableRow: ' + count)
@@ -2819,11 +2939,12 @@ async function clickCell(page, data, variables, tagElement, row, column, delay) 
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tagElement = tagElement.tag
 
 
     try {
-        await page1.locator(tagElement).click()
+        await locator.click()
         ret = { success: 1, message: 'clickCell OK', stop: 0 }
         variables.displayLog(1, 2, 'clickCell: wait ' + delay + ' second(s) after the click')
         if (delay != undefined) {
@@ -2860,10 +2981,10 @@ async function enable(page, data, variables, tag) {
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tag = ret.tag
 
     try {
-        const locator = page1.locator(tag)
         const elementHandle = await locator.elementHandle()
         await page1.evaluate(element => { element.removeAttribute('disabled'); }, elementHandle)
         return { success: 1, message: "enable OK!", stop: 0 }
@@ -2893,10 +3014,10 @@ async function removeAttribute(page, data, variables, tag, attribute) {
     ret = await getElement(page, variables, data, tag, 'removeAttribute')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
     let page1 = ret.page
+    let locator = ret.locator
     tag = ret.tag
 
     try {
-        const locator = page1.locator(tag)
         const elementHandle = await locator.elementHandle()
 
         await page1.evaluate(
@@ -2936,11 +3057,12 @@ async function setAttribute(page, data, variables, tag, attribute, value) {
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tag = ret.tag
 
     try {
         // Set the attribute
-        const locator = await page1.locator(tag).first()
+        //const locator = await page1.locator(tag).first()
 
         let myValue2 = await locator.getAttribute(attribute);
         if (myValue2 == undefined) myValue = '<EMPTY>'
@@ -2987,11 +3109,12 @@ async function readAttribute(page, data, variables, tag, attribute, variableName
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tag = ret.tag
 
     try {
         // Read the attribute
-        let myValue = await page1.locator(tag).first().getAttribute(attribute);
+        let myValue = await locator.getAttribute(attribute);
         if (myValue == undefined) myValue = '<EMPTY>'
         if (variableName != undefined && variableName != '') variables.setVariable(variableName, myValue)
         return { success: 1, message: 'readAttribute OK!', value: myValue, stop: 0 }
@@ -3027,6 +3150,7 @@ async function isExist(page, data, variables, tag, variableName, delay) {
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tag = ret.tag
 
     try {
@@ -3046,10 +3170,10 @@ async function isExist(page, data, variables, tag, variableName, delay) {
         console.log('Tag', tag)
 
         page.setDefaultTimeout(delay * 1000);
-        await page1.locator(tag).last().waitFor()
+        await locator.waitFor()
         page.setDefaultTimeout(timeout * 1000) // Back to the original timeout
 
-        let isExist = await page1.locator(tag).first().isVisible()
+        let isExist = await locator.isVisible()
         console.log('Visible:', isExist)
 
         if (variableName != undefined && variableName != '') variables.setVariable(variableName, isExist)
@@ -3090,6 +3214,7 @@ async function isCheck(page, data, variables, tag, variableName, delay) {
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tag = ret.tag
 
     try {
@@ -3109,10 +3234,10 @@ async function isCheck(page, data, variables, tag, variableName, delay) {
         console.log('Tag', tag)
 
         page.setDefaultTimeout(delay * 1000);
-        await page1.locator(tag).last().waitFor()
+        await locator.waitFor()
         page.setDefaultTimeout(timeout * 1000) // Back to the original timeout
 
-        let isChecked = await page.locator1(tag).first().isChecked()
+        let isChecked = await locator.isChecked()
 
         if (variableName != undefined && variableName != '') variables.setVariable(variableName, isChecked)
         return { success: 1, message: "isCheck Ok!", value: isChecked, stop: 0 }
@@ -3149,6 +3274,7 @@ async function isEnable(page, data, variables, tag, variableName, delay) {
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tag = ret.tag
 
     try {
@@ -3168,10 +3294,10 @@ async function isEnable(page, data, variables, tag, variableName, delay) {
         console.log('Tag', tag)
 
         page.setDefaultTimeout(delay * 1000);
-        await page1.locator(tag).last().waitFor()
+        await locator.waitFor()
         page.setDefaultTimeout(timeout * 1000) // Back to the original timeout
 
-        let isEnabled = await page1.locator(tag).nth(0).isEnabled()
+        let isEnabled = await locator.isEnabled()
 
         if (variableName != undefined && variableName != '') variables.setVariable(variableName, isEnabled)
         return { success: 1, message: "isEnabled Ok!", value: isEnabled, stop: 0 }
@@ -3207,6 +3333,7 @@ async function isVisible(page, data, variables, tag, variableName, delay) {
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tag = ret.tag
 
     try {
@@ -3226,10 +3353,10 @@ async function isVisible(page, data, variables, tag, variableName, delay) {
         console.log('Tag', tag)
 
         page.setDefaultTimeout(delay * 1000);
-        await page1.locator(tag).last().waitFor()
+        await locator.waitFor()
         page.setDefaultTimeout(timeout * 1000) // Back to the original timeout
 
-        let isVisible = await page1.locator(tag).nth(0).isVisible()
+        let isVisible = await locator.isVisible()
 
         if (variableName != undefined && variableName != '') variables.setVariable(variableName, isVisible)
         return { success: 1, message: "isVisible Ok!", value: isVisible, stop: 0 }
@@ -3265,6 +3392,7 @@ async function waitInvisible(page, data, variables, tagElement, delay, action) {
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tagElement = ret.tag
 
     try {
@@ -3283,7 +3411,6 @@ async function waitInvisible(page, data, variables, tagElement, delay, action) {
         delay = delay * 1000
         page.setDefaultTimeout(delay);
 
-        const locator = page1.locator(tagElement).first()
         await locator.waitFor({ state: 'hidden', delay });
 
         page.setDefaultTimeout(timeout * 1000) // Back to the original timeout
@@ -3330,18 +3457,19 @@ async function waitInvisible(page, data, variables, tagElement, delay, action) {
 *
 */
 
-async function check(driver, data, variables, tag, delay) {
+async function check(page, data, variables, tag, delay) {
     let ret
 
     ret = await getElement(page, variables, data, tag, 'check')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tag = ret.tag
 
     try {
         //tag = variables.evaluateVariable(tag)
-        await page1.locator(tag).check()
+        await locator.check()
         if (delay != undefined) {
             delay = variables.evaluateVariable(delay)
             console.log('Delay:', delay)
@@ -3374,11 +3502,12 @@ async function uncheck(page, data, variables, tag, delay) {
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tag = ret.tag
 
     try {
-        tag = variables.evaluateVariable(tag)
-        await page1.locator(tag).uncheck()
+        //tag = variables.evaluateVariable(tag)
+        await locator.uncheck()
         if (delay != undefined) {
             delay = variables.evaluateVariable(delay)
             console.log('Delay:', delay)
@@ -3999,16 +4128,17 @@ async function JSinput(page, data, variables, tag, value) {
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     let page1 = ret.page
+    let locator = ret.locator
     tag = ret.tag
 
     try {
-        tag = variables.evaluateVariable(tag)
+        //tag = variables.evaluateVariable(tag)
 
         // Set the attribute value
-        const locator = await page1.locator(tag).first()
+        //const locator = await page1.locator(tag).first()
 
         const elementHandle = await locator.elementHandle();
-        await page1.evaluate(element => { element.scrollIntoView(); }, elementHandle)        
+        await page1.evaluate(element => { element.scrollIntoView(); }, elementHandle)
         await page1.evaluate(
             (elementData) => {
                 elementData.element.setAttribute(elementData.attribute, elementData.value);
@@ -4451,6 +4581,30 @@ async function stopTimer(data, dpageiver, variables, space, topic) {
  * 
  *
 * ---------------------------------------------------------------------------- 
+* Improvement: we could add a new parameter: context that could be used by the function
+* Ideally, the newTab should be stored in an array tabPage[], to allow the close of the tab
+* Note: tabPage[0] will always contains the original webpage
+*
+*
+* function clickNewTab (tag) {
+*    # get the context
+*    let context = browserMiddelware.getContext()
+*    # Start waiting for the new page before clicking
+*    with context.expect_page() as new_page_info:
+*        page.locator(tag).click()  # decode the tag
+*    new_page = new_page_info.value
+*
+*    # Now you can interact with the new page
+*    new_page.wait_for_load_state()
+*    print(f"Title of new page: {new_page.title()}")
+*
+*    # store the new page
+*    tabPage[tabPageID++] = new_page
+*    tabPageCurrent = tabPageID
+*
+* }
+
+*
  */
 async function evaluateFunction(page, variables, name, data, param1, param2, param3, param4) {
 
@@ -4463,6 +4617,9 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
 
     //variables.listVariable()
     //variables.setVariable('$Evaluate', 'OK')
+
+    // Restore the page to the current tab (by default the first one)
+    page = tabPage[tabPageCurrent]
 
     try {
 
@@ -4478,14 +4635,6 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
 
             case 'getUrl':
                 ret = await getUrl(page, variables, param1)
-                return ret
-
-            case 'newTab':
-                ret = await newTab(page)
-                return ret
-
-            case 'newWindow':
-                ret = await newWindow(page)
                 return ret
 
             case 'loginUser':
@@ -4515,13 +4664,25 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 ret = await switchToFrame(page, variables, data, param1)
                 return ret
 
-            case 'switchToBrowserTab':
-                ret = await switchToBrowserTab(page, param1)
+            case 'openNewTab':
+                ret = await openNewTab(variables, data, param1)
                 return ret
 
-            case 'closeBrowserTab':
-                ret = await closeBrowserTab(page)
+            case 'switchTab':
+                ret = await switchTab(param1)
                 return ret
+
+            case 'clickNewTab':
+                ret = await clickNewTab(page, data, variables, param1)
+                return ret
+
+            case 'closeTab':
+                ret = await closeTab(param1)
+                return ret
+
+            // case 'closeBrowserTab':
+            //     ret = await closeBrowserTab(page)
+            //     return ret
 
             case 'setFocus':
                 ret = await setFocus(page, data, variables, param1, param2)
@@ -5438,6 +5599,7 @@ async function executeScenario(data, page, tests) {
                             // Check if we can process the test (depending of the condition)
                             if (process == 1) {
                                 ret = await robot.evaluateFunction(page, variables, item.functionName, data, item.parameter1, item.parameter2, item.parameter3, item.parameter4)
+
                             } else if (process == 0) {
                                 variables.displayLog(1, 1, 'Skip the step due to the condition: ' + item.Condition + "' evaluated as  (" + item.testCondition + ')')
                                 ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Skip', "Skipped due to Condition: '" + item.Condition + "' evaluated as  (" + item.testCondition + ')')
@@ -5599,8 +5761,10 @@ async function executeScenario(data, page, tests) {
 
 module.exports = {
     url: url,
-    newTab: newTab,
-    newWindow: newWindow,
+    openNewTab: openNewTab,
+    switchTab: switchTab,
+    clickNewTab: clickNewTab,
+    closeTab: closeTab,
     executeScenario: executeScenario,
     evaluateFunction: evaluateFunction,
     logfile: logfile,
@@ -5659,8 +5823,6 @@ module.exports = {
     epochAddMinute: epochAddMinute,
     epochAddSecond: epochAddSecond,
     switchToFrame: switchToFrame,
-    switchToBrowserTab: switchToBrowserTab,
-    closeBrowserTab: closeBrowserTab,
     getTableData: getTableData,
     getTableHeader: getTableHeader,
     setTableData: setTableData,
@@ -5675,6 +5837,7 @@ module.exports = {
     callSuite: callSuite,
     startTimer: startTimer,
     stopTimer: stopTimer,
-    promptAI: promptAI
+    promptAI: promptAI,
+    setBrowserMiddelware: setBrowserMiddelware
 
 };

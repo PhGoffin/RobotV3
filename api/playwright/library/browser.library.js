@@ -21,6 +21,7 @@ class BrowserUtility {
         this.headless = 0
         this.browserName = 'chromeXX'
         this.device = ''
+        this.context = 0
     }
 
 
@@ -73,6 +74,16 @@ getBrowserName() {
  */
 getDevice() {
     return this.device
+} 
+
+
+/**
+ * @function
+ *   getContext: get the context instance
+ *
+ */
+getContext() {
+    return this.context
 } 
 
 
@@ -176,9 +187,10 @@ async startBrowser(data) {
 
 
     let page = await browser.newPage();
+    let context = await browser.newContext();
 
     if (device != '<N/A>') {
-        const context = await browser.newContext({
+        context = await browser.newContext({
             ...devices[device], // Apply the device settings
         });
         page = await context.newPage();
@@ -186,11 +198,12 @@ async startBrowser(data) {
 
     this.page = page
     this.browser = browser
+    this.context = context
     this.headless = headless
     this.browserName = browserName
     this.device = device
 
-    ret = { success: 1, message: "Browser started!", page: page, browser: browser, headless: headless, browserName: browserName, device: device }
+    ret = { success: 1, message: "Browser started!", page: page, browser: browser, headless: headless, browserName: browserName, device: device, context: context }
 
     return (ret)
 
