@@ -155,7 +155,7 @@ async function askUserWithTimeout(page, message, defaultValue, timeout) {
 
     await popupPage.setContent(`
     <html>
-    <body>
+    <body style="background-color: #c6dfdaff;">
       <div id="popup" style="
         position: fixed;
         top: 30%;
@@ -169,15 +169,18 @@ async function askUserWithTimeout(page, message, defaultValue, timeout) {
         box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         text-align: center;
       ">
-        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;background-color: #1abc9c;border-radius: 3rem;">
           ${imageBase64 ? `<img src="${imageBase64}" alt="Robot" style="width: 40px; height: 40px; margin-right: 10px;">` : ''}
-          <h1 style="color: blue; margin: 0;">Robot</h1>
+          <h1 style="color: white; margin: 0;">Robot</h1>
         </div>
         <h2>${message}</h2>
         <input type="text" id="userInput" placeholder=${defaultValue} style="font-size: large;width: 300px; padding: 8px;"/>
         <br> <p style="margin-top: 10px; color: grey;">Enter a value and submit...</p>
         <br><br>
-        <button onclick="submitValue()">Submit</button>
+        <button onclick="submitValue()"
+        style="padding: 0.6rem 1.3rem;background-color: #1abc9c;border: 2px solid black;font-size: large;
+        color: white;line-height: 1;border-radius: 25px;outline: none;cursor: pointer;transition: 0.3s;
+        margin: 1.3rem 0.5rem 0.5rem 0;">Submit</button>
         <p id="timer" style="margin-top: 10px; color: grey;"></p>
       </div>
       <script>
