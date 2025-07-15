@@ -111,69 +111,134 @@ async function debug(variables, verbose) {
     variables.debug(verbose)
 }
 
+
+
 /**
  * ---------------------------------------------------------------------------- 
- * @function <TbR>
+ * @function <OK>
+ *  askUserWithTimeout: Display the user interface for the ask popup
+ * 
+ * @param {object} page:            playwright page
+ * @param {string} message:         message to prompt to the user
+ * @param {string} defaultValue:    default value
+ * @param {number} timeout:         timeout to close the popup automatically
+ */
+
+async function askUserWithTimeout(page, message, defaultValue, timeout) {
+
+    const fs = require('fs');
+    const path = require('path');
+
+    let context = browserMiddelware.getContext()
+    const popupPage = await context.newPage();
+    // let image = "file:///" + process.cwd() + "/frontend/src/assets/RobotV2.png"
+    //let image = "C:/Apache24/htdocs/robotv3/frontend/src/assets/RobotV2.png"
+    // console.log('Image:', image)
+
+
+    // Read and encode the image as base64
+    const imagePath = path.join(process.cwd(), 'frontend/src/assets/RobotV2.png');
+    let imageBase64 = '';
+
+    try {
+        const imageBuffer = fs.readFileSync(imagePath);
+        const imageExt = path.extname(imagePath).toLowerCase();
+        const mimeType = imageExt === '.png' ? 'image/png' : 'image/jpeg';
+        imageBase64 = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
+    } catch (error) {
+        console.log('Could not load image:', error.message);
+        // Fallback to a placeholder or continue without image
+    }
+
+
+    // C:/Apache24/htdocs/robotv3/frontend/src/assets/RobotV2.png
+
+    await popupPage.setContent(`
+    <html>
+    <body>
+      <div id="popup" style="
+        position: fixed;
+        top: 30%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        border: 2px solid #333;
+        padding: 20px;
+        font-family: Arial;
+        z-index: 9999;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        text-align: center;
+      ">
+        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+          ${imageBase64 ? `<img src="${imageBase64}" alt="Robot" style="width: 40px; height: 40px; margin-right: 10px;">` : ''}
+          <h1 style="color: blue; margin: 0;">Robot</h1>
+        </div>
+        <h2>${message}</h2>
+        <input type="text" id="userInput" placeholder=${defaultValue} style="font-size: large;width: 300px; padding: 8px;"/>
+        <br> <p style="margin-top: 10px; color: grey;">Enter a value and submit...</p>
+        <br><br>
+        <button onclick="submitValue()">Submit</button>
+        <p id="timer" style="margin-top: 10px; color: grey;"></p>
+      </div>
+      <script>
+        let timer = ${timeout};
+        const countdown = setInterval(() => {
+          document.getElementById('timer').innerText = 
+            timer > 0 ? 'Auto-submitting in ' + timer + 's...' : '';
+          timer--;
+          if (timer < 0) {
+            clearInterval(countdown);
+            submitValue(true);
+          }
+        }, 1000);
+
+        function submitValue(isTimeout = false) {
+          const input = document.getElementById('userInput').value;
+          const userValue = isTimeout || input === '' ? '${defaultValue}' : input;
+          window.userValue = userValue;
+          //document.body.innerHTML = '<h2>Thank you! the value is: ' + userValue + '</h2>';
+        }
+      </script>
+    </body>
+    </html>
+  `);
+
+    // Wait for the user to input a value
+    let userValue;
+    for (let i = 0; i < timeout; i++) { // Check every second
+        userValue = await popupPage.evaluate(() => window.userValue);
+        if (userValue) break;
+        await popupPage.waitForTimeout(1000);
+    }
+
+    await popupPage.close()
+    return userValue || defaultValue;
+}
+
+
+/**
+ * ---------------------------------------------------------------------------- 
+ * @function <OK>
  *  ask: Ask the user to key a value
  * 
- * @param {object} driver:     selenium driver
+ * @param {object} page:        playwright page
  * @param {object} variables:   array of all the variables
  * @param {string} myMessage:   message to prompt to the user
  * @param {string} myDefault:   default value
  * @param {string} myVariable:  name of the variable to store the value
  * @param {number} myTimeout:   timeout to close the popup automatically
  */
+async function ask(page, variables, message, defaultValue, myVariable, myTimeout) {
 
-async function ask(driver, variables, myMessage, myDefault, myVariable, myTimeout) {
+    let value = defaultValue
+    //console.log ('CWD',  process.cwd())
+    await askUserWithTimeout(page, message, defaultValue, myTimeout).then(userValue => {
+        console.log('User value is:', userValue);
+        value = userValue
+        variables.setVariable(myVariable, userValue);
+    });
 
-    if (myVariable == undefined || myVariable.length == 0) {
-        myVariable = '$Ask';
-    }
-
-    if (myTimeout == undefined) myTimeout = 30
-
-    variables.displayLog(1, 1, 'ask (' + myMessage + ', ' + myDefault + ', ' + myVariable + ', ' + myTimeout + ')')
-
-    try {
-        // Prompt a popup window
-        await driver.executeScript("window.promptPasscode=prompt(arguments[0],arguments[1])", myMessage, myDefault);
-        // Wait for the alert to be displayed
-        await driver.wait(until.alertIsPresent());
-    } catch (err) {
-        return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
-    }
-
-
-    try {
-        await driver.wait(async () => {
-            try {
-                //if alert is still present on page then return false so main browser.wait will check again.
-                await driver.wait(until.alertIsPresent(), 500);
-                return false;
-            } catch (err) {
-                return true;
-            }
-        }, myTimeout * 1000, 'Alert has not been closed'); // After 30 seconds, the popup is closed and the default value is used 
-    } catch (err) {
-        // Store the alert in a variable
-        variables.setVariable(myVariable, myDefault);
-        return { success: 1, message: 'Ask OK', stop: 0 }
-    }
-
-    try {
-        // get the value returned by the user (before 30 seconds)
-        let myInput = await driver.executeScript("return window.promptPasscode");
-        if (myInput == undefined) {
-            myInput = '';
-        }
-        // Store the alert in a variable
-        variables.setVariable(myVariable, myInput);
-        return { success: 1, message: 'Ask OK', stop: 0 }
-
-    } catch (err) {
-        return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
-    }
-
+    return { success: 1, message: 'Ask OK', value: value, stop: 0 }
 }
 
 
@@ -1283,7 +1348,7 @@ async function switchTab(tabID) {
     if (tabID == 0) {
         // Switch to the last tab
         tabID = tabPage.length
-    } 
+    }
     tabID--
     if (tabID > tabPageID || tabPage[tabID] == null) {
         console.log('switchTab: closing original or already closed tab!')
@@ -1390,7 +1455,6 @@ async function loginUser(page, variables, data, dummyUser, tagUser, tagSubmit) {
         return { success: 0, message: 'loginUser: Fatal error: Browser not responding!', stop: 1 }
     }
 
-
 }
 
 
@@ -1413,7 +1477,6 @@ async function loginPassword(page, variables, data, dummyUser, tagPassword, tagS
 
     // Enter the password in the field
     try {
-
         let ret
         let password = ''
         let delay = 0
@@ -4767,7 +4830,9 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 return ret
 
             case 'ask':
+                //console.log('ASK: ' + param1 + ', ' + param2 + ', ' + param3 + ', ' + param4)
                 ret = await ask(page, variables, param1, param2, param3, param4)
+                await logfile(data.userID, 'Info', '... value is: ' + ret.value)
                 return ret
 
             case 'email':
