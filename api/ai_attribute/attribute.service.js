@@ -6,8 +6,8 @@ module.exports = {
  * @Author: Philippe Goffin 
  * @Email: artcomputer123@gmail.com
  * @Date: 2024-04-15
- * @Last Modified by: Someone
- * @Last Modified time: 2025-05-27 07:27:19
+ * @Last Modified by: Philippe Goffin
+ * @Last Modified time: 2025-06-06 09:56:28
  * @Description: All the database services available for the API AI Attribute
  */
 
