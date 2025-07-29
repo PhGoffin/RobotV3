@@ -6,8 +6,8 @@ module.exports = {
    * @Author: Philippe Goffin 
    * @Email: artcomputer123@gmail.com
    * @Date: 2024-02-07
- * @Last Modified by: 
-   * @Last Modified time: 2024-11-27 08:02:19
+ * @Last Modified by: Someone
+   * @Last Modified time: 2025-07-29 11:16:07
    * @Description: All the database services available for the API dummy users
    */
 
@@ -82,8 +82,8 @@ module.exports = {
           (data.active ? data.active : 1)
         ],
         (error, results, fields) => {
-          // console.log ('Error:', error)
-          // console.log ('results:', results)
+          //  console.log ('Error:', error)
+          //  console.log ('results:', results)
           if (error) {
             return reject(error);
           }

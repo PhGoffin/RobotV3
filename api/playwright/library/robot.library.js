@@ -1,11 +1,12 @@
 const { By, Key, Keys, until } = require("selenium-webdriver")
-let frameID = 0;
-let frameLocator = null;
+let frameID = 0
+let frameLocator = null
 const BrowserMiddelware = require("../library/browser.library.js")
 let browserMiddelware = new BrowserMiddelware
 let tabPage = []
 let tabPageID = 0
 let tabPageCurrent = 0
+let httpResult = null
 
 
 /**
@@ -4623,53 +4624,227 @@ async function stopTimer(data, dpageiver, variables, space, topic) {
 }
 
 
+
 /**
 * ---------------------------------------------------------------------------- 
- * @function <OK>
- *   evaluateFunction: convert a function name into a selenium function
- *
- * @param {object} driver:      selenium driver
- * @param {object} variables:   array of all the variables
- * @param {string} name:        name of the function
- * @param {object} data:        all the parameters
- * @param {string} param1:      parameter 1 of the function
- * @param {string} param2:      parameter 2 of the function
- * @param {string} param3:      parameter 3 of the function
- * @param {string} param4:      parameter 4 of the function
- * 
- * 
- *  Return value:   success       stop    skipIt  skipDescribe StopAll
- *                      1           0
- *                      1           1        Yes (no error)
- *                      1           2                Yes
- *                      0           0        Yes (with error)  
- *                      0           1                           Yes
- * 
- *
-* ---------------------------------------------------------------------------- 
-* Improvement: we could add a new parameter: context that could be used by the function
-* Ideally, the newTab should be stored in an array tabPage[], to allow the close of the tab
-* Note: tabPage[0] will always contains the original webpage
-*
-*
-* function clickNewTab (tag) {
-*    # get the context
-*    let context = browserMiddelware.getContext()
-*    # Start waiting for the new page before clicking
-*    with context.expect_page() as new_page_info:
-*        page.locator(tag).click()  # decode the tag
-*    new_page = new_page_info.value
-*
-*    # Now you can interact with the new page
-*    new_page.wait_for_load_state()
-*    print(f"Title of new page: {new_page.title()}")
-*
-*    # store the new page
-*    tabPage[tabPageID++] = new_page
-*    tabPageCurrent = tabPageID
-*
-* }
+* @function
+*  postData:  Fetches data from a REST API using the POST method. 
+* 
+* @param {string} url           The URL of the REST API endpoint.
+* @param {string} parameters    A string containing the parameters to be sent in the request body.
+*                               The string should contain a valid JSON object as it will be parsed.
+* @returns {Promise<any>}       A Promise that resolves with the response data (parsed as JSON) if successful,
+*                               or rejects with an error if the request fails.
+* @throws {Error}               If the parameters string is not a valid JSON object.
+* 
+*/
+async function postData(variable, url, parameters) {
 
+    console.log('postData', url)
+    console.log('postData', parameters)
+    try {
+        // Attempt to parse the parameters string into a JSON object.
+        let parsedParameters;
+        try {
+            parsedParameters = JSON.parse(parameters);
+        } catch (parseError) {
+            throw new Error("Invalid parameters format.  Must be a valid JSON string."); // Throw error if parsing fails
+        }
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json' // Specify that we're sending JSON
+            },
+            body: JSON.stringify(parsedParameters) // Convert the parameters to a JSON string
+        });
+
+        if (!response.ok) {
+            // Handle HTTP errors (e.g., 404, 500)
+            throw new Error(`HTTP httpPost error! Status: ${response.status}`);
+        }
+
+        const data = await response.json(); // Parse the response body as JSON
+        return data;
+
+    } catch (error) {
+        // Handle any errors that occurred during the fetch or parsing process
+        console.error("Error during POST request:", error);
+        throw error; // Re-throw the error to allow the caller to handle it
+    }
+}
+
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  httpPost:  Fetches data from a REST API using the POST method
+* 
+* @param {string} apiUrl        The URL of the REST API endpoint.
+* @param {string} paramsString  A string containing the parameters to be sent in the request body.
+*                               The string should contain a valid JSON object as it will be parsed.
+* @returns {object} httpResult  A global variable to store the http result
+*
+*/
+async function httpPost(data, variables, apiUrl, paramsString) {
+    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+
+    // Reset httpResult
+    httpResult = null
+
+    // Check if the code is expressed in a valid dictionary format
+    if (apiUrl[0] == '@') {
+        const dataAPI = { projectID: data.projectID, code: apiUrl, language: '*', active: 1 }
+        const result = await getDictionaryByCode(dataAPI);
+        if (result.length) {
+            apiUrl = result[0].label
+        } else {
+            return { success: 0, message: "Cannot find the url: " + url + " in the dictionary", stop: 1 }
+        }
+    }
+
+    apiUrl = variables.evaluateVariable(apiUrl)
+    paramsString = variables.evaluateVariable(paramsString)
+    // remove the first and the last character if it's a quote
+    if (paramsString[0] == "'") {
+        paramsString = paramsString.substring(1, paramsString.length)
+    }
+    if (paramsString.substring(paramsString.length, paramsString.length - 1) == "'") {
+        paramsString = paramsString.substring(0, paramsString.length - 1)
+    }
+
+
+    try {
+        httpResult = await postData(variables, apiUrl, paramsString);
+        console.log("Success:", httpResult);
+    } catch (error) {
+        console.error("Error in httpPost:", error);
+        return { success: 0, message: "Error in httpPost", stop: 1 }
+    }
+
+    return { success: 1, message: "httpPost: OK", stop: 0 }
+}
+
+/**
+ * fetchData: Fetches data from a REST API using the GET method.
+ *
+ * @param {string} url The URL of the REST API endpoint.
+ * @returns {Promise<any>} A promise that resolves with the fetched data (parsed as JSON) or rejects with an error.
+ *
+ */
+async function fetchData(variables, url) {
+    try {
+        const response = await fetch(url);
+
+        // Check if the response was successful (status code in the 200-299 range)
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json(); // Parse the response body as JSON
+        return data;
+
+    } catch (error) {
+        // Handle any errors that occurred during the fetch operation or JSON parsing
+        console.error("An error occurred during the fetch operation:", error);
+        throw error; // Re-throw the error to allow the caller to handle it.
+    }
+}
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  httpGet:  Fetches data from a REST API using the GET method. 
+* 
+* @param {string} url           The URL of the REST API endpoint.
+* 
+*/
+async function httpGet(data, variables, url) {
+    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+
+    // Reset httpResult
+    httpResult = null
+
+    // Check if the code is expressed in a valid dictionary format
+    if (url[0] == '@') {
+        const dataAPI = { projectID: data.projectID, code: url, language: '*', active: 1 }
+        const result = await getDictionaryByCode(dataAPI);
+        if (result.length) {
+            url = result[0].label
+        } else {
+            return { success: 0, message: "Cannot find the url: " + url + " in the dictionary", stop: 1 }
+        }
+    }
+
+    url = variables.evaluateVariable(url)
+
+    console.log('httpGet', url)
+    try {
+        httpResult = await fetchData(variables, url);
+        console.log("Fetched data:", httpResult);
+        return { success: 1, message: "httpGet: OK", stop: 0 }
+    } catch (error) {
+        console.error("Error:", error);
+        return { success: 0, message: "Error in httpGet", stop: 1 }
+    }
+}
+
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  httpData:  Get data from a http request (get or post)
+* 
+* @param {string} expression    Expression to access the structure of the data stored in httpResult 
+* @param {string} variable      Name of the variable to store the result of the expression
+*
+*/
+async function httpData(variables, expression, variable) {
+
+    expression = variables.evaluateVariable(expression)
+
+    try {
+
+        // let result = await eval("httpResult.data[0].naturalID")
+        // console.log("result", result)
+        let result = await eval(expression)
+        console.log("result", result)
+        variables.setVariable(variable, result)
+        return { success: 1, message: "httpData: OK", value: result, stop: 0 }
+    } catch (error) {
+        console.error("Error:", error);
+        return { success: 0, message: "Error in httpData", stop: 1 }
+    }
+}
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function <OK>
+*   evaluateFunction: convert a function name into a selenium function
+*
+* @param {object} driver:      selenium driver
+* @param {object} variables:   array of all the variables
+* @param {string} name:        name of the function
+* @param {object} data:        all the parameters
+* @param {string} param1:      parameter 1 of the function
+* @param {string} param2:      parameter 2 of the function
+* @param {string} param3:      parameter 3 of the function
+* @param {string} param4:      parameter 4 of the function
+* 
+* 
+*  Return value:   success       stop    skipIt  skipDescribe StopAll
+*                      1           0
+*                      1           1        Yes (no error)
+*                      1           2                Yes
+*                      0           0        Yes (with error)  
+*                      0           1                           Yes
+* 
+*
+* ---------------------------------------------------------------------------- 
 *
  */
 async function evaluateFunction(page, variables, name, data, param1, param2, param3, param4) {
@@ -5093,6 +5268,21 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 }
                 return ret
 
+            case 'httpPost':
+                ret = await httpPost(data, variables, param1, param2)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... httpPost OK')
+                return ret
+
+            case 'httpGet':
+                ret = await httpGet(data, variables, param1)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... httpGet OK')
+                return ret
+
+            case 'httpData':
+                ret = await httpData(variables, param1, param2)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
+                return ret
+
 
             default:
                 variables.displayLog(1, 1, 'No function with the name: ' + name)
@@ -5482,7 +5672,7 @@ async function executeScenario(data, page, tests) {
                                     identification = identification + sep + loopInfo[j].loop
                                     sep = '.'
                                 }
-                                ret = await robot.evaluateFunction(page, variables, 'logfile', data, item.action, '[' + item.position + '] Loop: ' + identification + ' - ' + item.comment)
+                                ret = await robot.evaluateFunction(page, variables, 'logfile', data, item.action, '[' + item.position + '] Loop (' + identification + ') ' + item.comment)
 
                                 // for the first loop, we can use $Loop or $Loop1
                                 if (loopID == 0) {
@@ -5529,7 +5719,7 @@ async function executeScenario(data, page, tests) {
                                         identification = identification + sep + loopInfo[j].loop
                                         sep = '.'
                                     }
-                                    ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Loop', '[' + item.position + '] ' + identification + ') ' + loopInfo[loopID].comment)
+                                    ret = await robot.evaluateFunction(page, variables, 'logfile', data, 'Loop', '[' + item.position + '] Loop (' + identification + ') ' + loopInfo[loopID].comment)
                                     break // exit the End loop
                                 }
                             }
@@ -5906,6 +6096,8 @@ module.exports = {
     startTimer: startTimer,
     stopTimer: stopTimer,
     promptAI: promptAI,
-    setBrowserMiddelware: setBrowserMiddelware
+    setBrowserMiddelware: setBrowserMiddelware,
+    httpGet: httpGet,
+    httpPost: httpPost
 
 };
