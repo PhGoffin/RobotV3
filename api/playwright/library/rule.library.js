@@ -36,7 +36,8 @@ async function specialFunction(page, variables, data, rulePosition, functionName
         JSclick, JSinput, isExist, isCheck, isVisible, url, waitFor, waitForNot, setVariable, setFocus, refreshURL, printScreen, executeRules, openNewTab, switchTab, closeTab,
         enable, removeAttribute, setAttribute, readAttribute, acceptPopup, cancelPopup, switchToFrame, uploadFile, callScenario, callSuite,
         epoch, epochDate, epochAddHour, epochAddMinute, epochAddSecond, skipIt, skipDescribe, detectGUI, keyboard, startTimer, stopTimer,
-        getTableData, getTableHeader, setTableData, clickCell, countTableRow, searchTableData } = require("./robot.library")
+        getTableData, getTableHeader, setTableData, clickCell, countTableRow, searchTableData,
+        httpGet, httpPost, httpData } = require("./robot.library")
 
 
     if (param1 == undefined) param1 = ''
@@ -355,7 +356,18 @@ async function specialFunction(page, variables, data, rulePosition, functionName
             ret = await stopTimer(data, page, variables, param1, param2)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2)
             return ret
-
+        case '#httpGet':
+            ret = await httpGet(data, variables, param1)
+            await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2)
+            return ret            
+        case '#httpPost':
+            ret = await httpPost(data, variables, param1, param2)
+            await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2)
+            return ret 
+        case '#httpData':
+            ret = await httpData(variables, param1, param2)
+            await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2)
+            return ret 
 
         default:
             variables.displayLog(1, 1, 'No special function with the name: ' + functionName)

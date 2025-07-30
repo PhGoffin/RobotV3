@@ -16,7 +16,6 @@
         v-if="test.action == 'Step'">
         {{ test.position }} > {{ test.action }}: {{ test.comment }} <span style="font-size: 15px;"> ( {{
           test.functionName }} )</span>
-
       </h3>
       <h3 @click="showDetails = !showDetails" title="Click to show details" class="data" ref="single" v-else>
         {{ test.position }} > {{ test.action }}: {{ test.comment }}

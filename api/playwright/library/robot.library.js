@@ -4810,6 +4810,7 @@ async function httpData(variables, expression, variable) {
 
         // let result = await eval("httpResult.data[0].naturalID")
         // console.log("result", result)
+        expression = 'httpResult.' + expression
         let result = await eval(expression)
         console.log("result", result)
         variables.setVariable(variable, result)
@@ -6098,6 +6099,7 @@ module.exports = {
     promptAI: promptAI,
     setBrowserMiddelware: setBrowserMiddelware,
     httpGet: httpGet,
-    httpPost: httpPost
+    httpPost: httpPost,
+    httpData: httpData
 
 };

@@ -66,7 +66,7 @@ import { displayMsg, consoleLog } from '../../util/debug';
 
 
 export default {
-    name: 'Logdile',
+    name: 'Logfile',
     props: ['trace', 'userrole', 'role', 'currentuser', 'userID', 'superUser', 'connected', 'workspaceID', 'workspace', 'projectID', 'projectName', 'location'],
     components: { Spinner },
 
