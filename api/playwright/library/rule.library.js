@@ -37,7 +37,7 @@ async function specialFunction(page, variables, data, rulePosition, functionName
         enable, removeAttribute, setAttribute, readAttribute, acceptPopup, cancelPopup, switchToFrame, uploadFile, callScenario, callSuite,
         epoch, epochDate, epochAddHour, epochAddMinute, epochAddSecond, skipIt, skipDescribe, detectGUI, keyboard, startTimer, stopTimer,
         getTableData, getTableHeader, setTableData, clickCell, countTableRow, searchTableData,
-        httpGet, httpPost, httpData } = require("./robot.library")
+        httpGet, httpPost, httpData, imageDifference, imageBaseline, imageDifferenceData } = require("./robot.library")
 
 
     if (param1 == undefined) param1 = ''
@@ -76,6 +76,18 @@ async function specialFunction(page, variables, data, rulePosition, functionName
         case '#printScreen':
             ret = await printScreen(page, data, param1)
             break
+        case '#imageDifference':
+            ret = await imageDifference(page, data, param1, param2, param3)
+            await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
+            return ret
+        case '#imageBaseline':
+            ret = await imageBaseline(page, data, param1, param2) 
+            await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2)
+            return ret
+        case '#imageDifferenceData':
+            ret = await imageDifferenceData(variables, param1, param2)
+            await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2)
+            return ret            
         case '#ask':
             ret = await ask(page, variables, param1, param2, param3, param4)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3 + ' : ' + param4)

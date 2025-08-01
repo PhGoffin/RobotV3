@@ -7,6 +7,7 @@ let tabPage = []
 let tabPageID = 0
 let tabPageCurrent = 0
 let httpResult = null
+let imageResult = null
 
 
 /**
@@ -4505,6 +4506,7 @@ async function executeRules(page, variables, data, ruleName, param1, param2, par
 * @function <OK>
 *  startTimer:  Store a user time to measure performance
 * 
+* @param {object} data:       all the parameters
 * @param {object} page:       playwright page
 *
 */
@@ -4529,7 +4531,7 @@ async function startTimer(data, page, variables, topic) {
 * @param {object} page:       playwright page
 *
 */
-async function stopTimer(data, dpageiver, variables, space, topic) {
+async function stopTimer(data, page, variables, space, topic) {
     const { getPerformanceByCode, updatePerformance, updatePerformanceById, createPerformance } = require("../../performance/performance.service.js");
 
 
@@ -4630,6 +4632,7 @@ async function stopTimer(data, dpageiver, variables, space, topic) {
 * @function
 *  postData:  Fetches data from a REST API using the POST method. 
 * 
+* @param {object} variables:    array of all the variables
 * @param {string} url           The URL of the REST API endpoint.
 * @param {string} parameters    A string containing the parameters to be sent in the request body.
 *                               The string should contain a valid JSON object as it will be parsed.
@@ -4638,7 +4641,7 @@ async function stopTimer(data, dpageiver, variables, space, topic) {
 * @throws {Error}               If the parameters string is not a valid JSON object.
 * 
 */
-async function postData(variable, url, parameters) {
+async function postData(variables, url, parameters) {
 
     console.log('postData', url)
     console.log('postData', parameters)
@@ -4681,6 +4684,8 @@ async function postData(variable, url, parameters) {
 * @function
 *  httpPost:  Fetches data from a REST API using the POST method
 * 
+* @param {object} data:         all the parameters
+* @param {object} variables:    array of all the variables
 * @param {string} apiUrl        The URL of the REST API endpoint.
 * @param {string} paramsString  A string containing the parameters to be sent in the request body.
 *                               The string should contain a valid JSON object as it will be parsed.
@@ -4729,7 +4734,8 @@ async function httpPost(data, variables, apiUrl, paramsString) {
 /**
  * fetchData: Fetches data from a REST API using the GET method.
  *
- * @param {string} url The URL of the REST API endpoint.
+ * @param {object} variables:    array of all the variables
+ * @param {string} url:          The URL of the REST API endpoint.
  * @returns {Promise<any>} A promise that resolves with the fetched data (parsed as JSON) or rejects with an error.
  *
  */
@@ -4758,6 +4764,8 @@ async function fetchData(variables, url) {
 * @function
 *  httpGet:  Fetches data from a REST API using the GET method. 
 * 
+* @param {object} data:         all the parameters
+* @param {object} variables:    array of all the variables
 * @param {string} url           The URL of the REST API endpoint.
 * 
 */
@@ -4798,6 +4806,7 @@ async function httpGet(data, variables, url) {
 * @function
 *  httpData:  Get data from a http request (get or post)
 * 
+* @param {object} variables:    array of all the variables
 * @param {string} expression    Expression to access the structure of the data stored in httpResult 
 * @param {string} variable      Name of the variable to store the result of the expression
 *
@@ -4820,6 +4829,279 @@ async function httpData(variables, expression, variable) {
         return { success: 0, message: "Error in httpData", stop: 1 }
     }
 }
+
+
+
+/**
+ * compareImages: Compares two images and returns similarity percentage and creates a diff image
+ * 
+ * @param {string|Buffer} baselineImagePath - Path to baseline image or Buffer
+ * @param {string|Buffer} compareImagePath - Path to comparison image or Buffer
+ * @param {Object} options - Configuration options
+ * @param {number} options.threshold - Matching threshold (0 to 1). Smaller values make comparison more sensitive
+ * @param {boolean} options.includeAA - Whether to include anti-aliasing in comparison
+ * @param {number} options.alpha - Blending factor of original image in diff (0 to 1)
+ * *
+ * @returns {Promise<Object>} Object containing similarity percentage and diff stats
+ */
+async function compareImages(baselineImagePath, compareImagePath, options = {}) {
+    const sharp = require('sharp');
+    const pixelmatch = require('pixelmatch');
+    const fs = require('fs').promises;
+
+    const {
+        threshold = 0.1,
+        includeAA = false,
+        alpha = 0.1
+    } = options;
+
+    try {
+        // Load and process baseline image
+        let baselineBuffer;
+        if (Buffer.isBuffer(baselineImagePath)) {
+            baselineBuffer = baselineImagePath;
+        } else {
+            baselineBuffer = await fs.readFile(baselineImagePath);
+        }
+
+        // Load and process comparison image
+        let compareBuffer;
+        if (Buffer.isBuffer(compareImagePath)) {
+            compareBuffer = compareImagePath;
+        } else {
+            compareBuffer = await fs.readFile(compareImagePath);
+        }
+
+        // Get metadata from both images
+        const baselineMetadata = await sharp(baselineBuffer).metadata();
+        const compareMetadata = await sharp(compareBuffer).metadata();
+
+        // Determine the dimensions to use (use the larger dimensions)
+        const width = Math.max(baselineMetadata.width, compareMetadata.width);
+        const height = Math.max(baselineMetadata.height, compareMetadata.height);
+
+        console.log(`Processing images at ${width}x${height} pixels`);
+
+        // Resize both images to the same dimensions and convert to RGBA
+        const baselineRGBA = await sharp(baselineBuffer)
+            .resize(width, height, {
+                fit: 'contain',
+                background: { r: 255, g: 255, b: 255, alpha: 1 }
+            })
+            .ensureAlpha()
+            .raw()
+            .toBuffer();
+
+        const compareRGBA = await sharp(compareBuffer)
+            .resize(width, height, {
+                fit: 'contain',
+                background: { r: 255, g: 255, b: 255, alpha: 1 }
+            })
+            .ensureAlpha()
+            .raw()
+            .toBuffer();
+
+        // Create buffer for diff image
+        const diffBuffer = Buffer.alloc(width * height * 4);
+
+        // Perform pixel comparison
+        const numDiffPixels = pixelmatch(
+            baselineRGBA,
+            compareRGBA,
+            diffBuffer,
+            width,
+            height,
+            {
+                threshold,
+                includeAA,
+                alpha,
+                diffColor: [255, 0, 0],          // Red for differences
+                diffColorAlt: [255, 100, 100],   // Light red for anti-aliasing differences
+                aaColor: [255, 255, 0],          // Yellow for anti-aliasing
+                diffMask: false                   // Don't create a mask, blend with original
+            }
+        );
+
+        // Calculate similarity percentage
+        const totalPixels = width * height;
+        const similarityPercentage = ((totalPixels - numDiffPixels) / totalPixels) * 100;
+
+        // Return results
+        return {
+            similarityPercentage: parseFloat(similarityPercentage.toFixed(2)),
+            differencePercentage: parseFloat((100 - similarityPercentage).toFixed(2)),
+            totalPixels,
+            differentPixels: numDiffPixels,
+            dimensions: { width, height }
+        };
+
+    } catch (error) {
+        throw new Error(`Image comparison failed: ${error.message}`);
+    }
+}
+
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  imageDifference:  take a printscreen and compare the image with a baseline.
+*                    use the function imageDifferenceData() to get all the info.
+*                    if a slot is defined for the baseline, the picture will be store on it    
+* 
+* @param {object} page:             playwright page
+* @param {object} data:             all the parameters
+* @param {string} baselineName      name of the baseline image
+* @param {number} printscreenSlot   number of the slot to store the printscreen
+* @param {number} baselineSlot      <optional> number of the slot to store the baseline
+*
+*/
+async function imageDifference(page, data, baselineName, printscreenSlot, baselineSlot) {
+    const { fileExist } = require("./file.library")
+
+    // take a printscreen
+    let fs = require("fs")
+
+    try {
+
+        let baselinePath = './Image/Baseline/' + baselineName + "_" + data.userID + '_image.png'
+        // check if the baseline exists
+        ret = await fileExist(baselinePath)
+        if (ret == false) {
+            // file not found, take a printscreen and store the result as the baseline
+            await page.screenshot({ path: baselinePath })
+            let basePath = './printscreen/' + data.userID + '_image' + printscreenSlot + '.png'
+            fs.copyFile(baselinePath, basePath, (err) => {
+                if (err) console.log("Error Found:", err);
+                else console.log("file: " + baselinePath + " copy to: " + basePath)
+            });
+            return { success: 1, message: "Baseline picture created visible in the slot: " + printscreenSlot, stop: 0 }
+        } else if (baselineSlot != undefined && baselineSlot > 0) {
+            // copy the baseline in the slot
+            let basePath = './printscreen/' + data.userID + '_image' + baselineSlot + '.png'
+            fs.copyFile(baselinePath, basePath, (err) => {
+                if (err) console.log("Error Found:", err);
+                else console.log("file: " + baselinePath + " copy to: " + basePath)
+            });
+
+        }
+
+        // Take a fresh printscreen
+        let picture = './printscreen/' + data.userID + '_image' + printscreenSlot + '.png'
+        console.log('printScreen', picture)
+        await page.screenshot({ path: picture })
+
+        // Compare images
+        try {
+            imageResult = await compareImages(
+                baselinePath,           // Path to baseline image
+                picture,                // Path to comparison image  
+                {
+                    threshold: 0.1,     // Sensitivity (lower = more sensitive)
+                    includeAA: false,   // Include anti-aliasing in comparison
+                    alpha: 0.2          // Blend factor for diff overlay
+                }
+            );
+
+            console.log('Comparison Results:');
+            console.log(`Similarity: ${imageResult.similarityPercentage}%`);
+            console.log(`Difference: ${imageResult.differencePercentage}%`);
+            console.log(`Different pixels: ${imageResult.differentPixels} out of ${imageResult.totalPixels}`);
+            console.log(`Image dimensions: ${imageResult.dimensions.width}x${imageResult.dimensions.height}`);
+
+            return { success: 1, message: `Similarity: ${imageResult.similarityPercentage}%`, stop: 0 }
+
+        } catch (error) {
+            console.error('Error comparing images:', error.message);
+        }
+
+    } catch (err) {
+        return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
+    }
+
+}
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  imageDifferenceData:  return info on the difference (use only after the call of the function imageDifference)
+* 
+* @param {object} variables:    array of all the variables
+* @param {string} parameter:    name of the parameter
+* @param {string} variable:     name of the variable to store the parameter
+*
+*/
+async function imageDifferenceData(variables, parameter, variable) {
+
+
+    switch (parameter) {
+
+        case 'Similarity':
+            variables.setVariable(variable, imageResult.similarityPercentage)
+            ret = { success: 1, message: 'imageDifferenceData OK', value: `Similarity: ${imageResult.similarityPercentage}%`, stop: 0 }
+            return ret
+
+        case 'Difference':
+            variables.setVariable(variable, imageResult.differencePercentage)
+            ret = { success: 1, message: 'imageDifferenceData OK', value: `Difference: ${imageResult.differencePercentage}%`, stop: 0 }
+            return ret
+
+        case 'Different pixels':
+            variables.setVariable(variable, `${imageResult.differentPixels} out of ${imageResult.totalPixels}`)
+            ret = { success: 1, message: 'imageDifferenceData OK', value: `Different pixels: ${imageResult.differentPixels} out of ${imageResult.totalPixels}`, stop: 0 }
+            return ret
+
+        case 'Image dimensions':
+            variables.setVariable(variable, `${imageResult.dimensions.width}x${imageResult.dimensions.height}`)
+            ret = { success: 1, message: 'imageDifferenceData OK', value: `Image dimensions: ${imageResult.dimensions.width}x${imageResult.dimensions.height}`, stop: 0 }
+            return ret
+
+        default:
+            variables.displayLog(1, 1, 'No parameter with the name: ' + parameter)
+            ret = { success: 0, message: 'parameter: ' + parameter + ' unknown!', stop: 1 }
+            return ret
+    }
+
+
+}
+
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  imageBaseline:  take a printscreen and store the image as a baseline.
+* 
+* @param {object} page:             playwright page
+* @param {object} data:             all the parameters
+* @param {string} baselineName      name of the baseline image
+* @param {number} printscreenSlot   number of the slot to store the printscreen
+*
+*/
+async function imageBaseline(page, data, baselineName, printscreenSlot) {
+
+    let fs = require("fs")
+
+    try {
+
+        let baselinePath = './Image/Baseline/' + baselineName + "_" + data.userID + '_image.png'
+        await page.screenshot({ path: baselinePath })
+        let basePath = './printscreen/' + data.userID + '_image' + printscreenSlot + '.png'
+        fs.copyFile(baselinePath, basePath, (err) => {
+            if (err) console.log("Error Found:", err);
+            else console.log("file: " + baselinePath + " copy to: " + basePath)
+        });
+        return { success: 1, message: "Baseline picture created visible in the slot: " + printscreenSlot, stop: 0 }
+
+    } catch (err) {
+        return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
+    }
+
+}
+
+
+
 
 
 /**
@@ -5283,6 +5565,24 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 ret = await httpData(variables, param1, param2)
                 if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
+
+            case 'imageDifference':
+                ret = await imageDifference(page, data, param1, param2, param3)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.message)
+                return ret
+
+            case 'imageBaseline':
+                ret = await imageBaseline(page, data, param1, param2)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.message)
+                return ret
+
+            case 'imageDifferenceData':
+                ret = await imageDifferenceData(variables, param1, param2)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
+                return ret
+
+
+
 
 
             default:
@@ -6100,6 +6400,9 @@ module.exports = {
     setBrowserMiddelware: setBrowserMiddelware,
     httpGet: httpGet,
     httpPost: httpPost,
-    httpData: httpData
+    httpData: httpData,
+    imageDifference: imageDifference,
+    imageBaseline: imageBaseline,
+    imageDifferenceData: imageDifferenceData
 
 };
