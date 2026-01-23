@@ -965,7 +965,7 @@ async function detectGUI(page, variables, data, selectorID, myCriteria, myPositi
                 myPosition = myPosition.replace('$$', 'last()');
             }
             mySearchXpath = myXpath.substring(0, myXpath.length - 3) + '[' + myPosition + ']';
-            //console.log ('process position 1a: myXpath= ' + myXpath);
+            console.log ('process position 1a: myXpath= ' + myXpath);
             variables.displayLog(1, 3, 'process position 1b: mySearchXpath ' + mySearchXpath);
         } else if (myPosition != undefined && myPosition != '') {
             if (myPosition.indexOf('$$') < 0) {
@@ -976,12 +976,13 @@ async function detectGUI(page, variables, data, selectorID, myCriteria, myPositi
                 myPosition = myPosition.replace('$$', 'last()');
             }
             mySearchXpath = '(' + myXpath + ')[' + myPosition + ']';
-            //console.log ('process position 2a: myXpath= ' + myXpath);
+            console.log ('process position 2a: myXpath= ' + myXpath);
             variables.displayLog(1, 3, 'process position 2b: mySearchXpath ' + mySearchXpath);
         }
 
         let mycustomXpath = mySearchXpath.replace(/&sol;/g, '/');
         //variables.displayLog(1, 3, 'detectGUI: xpath:' + mycustomXpath);
+        console.log ('detectGUI: xpath:' + mycustomXpath)
 
         try {
             locators = page.locator(mycustomXpath)
@@ -993,10 +994,12 @@ async function detectGUI(page, variables, data, selectorID, myCriteria, myPositi
 
         if (!count) {
             // Pattern not found, reset the score to 0
+            console.log ("No element detected for the pattern: " + myId)
             variables.displayLog(1, 3, "No element detected for the pattern: " + myId);
             variables.displayLog(1, 3, 'xpath:' + mycustomXpath);
             PatternCandidate.push({ xPath: mySearchXpath, id: myId, score: 0 });
         } else {
+            console.log("One Element detected for the pattern: " + myId)
             variables.displayLog(1, 3, "One Element detected for the pattern: " + myId);
             found = 1;
             // Compute the distance, the deepest, the farthest
@@ -4546,6 +4549,7 @@ async function stopTimer(data, page, variables, space, topic) {
     if (startTime == "<N/A>") return { success: 0, message: "stopTimer - Topic: " + topic + " not defined!", value: startTime, stop: 1 }
     let elapsedTime = (endTime - startTime) / 1000;
     variables.displayLog(1, 1, 'stopTimer for ' + topic + ' / ' + space + ' = ' + elapsedTime)
+    variables.setVariable('$Timer' + topic.charAt(0).toUpperCase()  + topic.slice(1), Math.round(elapsedTime))
 
     const currentDate = new Date();
     const day = currentDate.getDate();
@@ -5063,9 +5067,7 @@ async function imageDifferenceData(variables, parameter, variable) {
             return ret
     }
 
-
 }
-
 
 
 /**
@@ -5100,6 +5102,37 @@ async function imageBaseline(page, data, baselineName, printscreenSlot) {
 
 }
 
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  clickXY:  perform a Click at a specific X, Y coordinates
+* 
+* @param {object} variables:    array of all the variables
+* @param {string} parameter:    name of the parameter
+* @param {string} variable:     name of the variable to store the parameter
+*
+*/
+async function clickXY(variables, xPosition, yPosition) {
+    const Python = require("../python/click.js")
+    console.log ('____ step 1')
+    const python = new Python
+    console.log ('____ step 2')
+    const automator = python.DesktopAutomator();
+    console.log ('____ step 3')
+
+    try {
+        // Simple usage
+        await automator.click(xPosition, yPosition);
+        console.log('Click with python completed');
+        ret = { success: 1, message: 'clickXY OK!', value: "click on X:" + xPosition + ", Y:" + yPosition, stop: 0 }
+        return ret
+    } catch (error) {
+        console.error('Python Automation failed:', error);
+        ret = { success: 0, message: 'clickXY KO!', stop: 1 }
+        return ret
+    }
+}
 
 
 
@@ -5581,7 +5614,10 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
-
+            case 'clickXY':
+                ret = await clickXY(variables, param1, param2)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
+                return ret
 
 
 
