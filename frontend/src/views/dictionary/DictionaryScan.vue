@@ -110,6 +110,25 @@
                                     </div>
                                 </td>
                             </tr>
+
+                            <tr>
+                                <td class="menu">
+                                    <div class="icons" v-if="tagType != 'N/A'  && tagName == 'input'">
+                                        <input type="checkbox" name="selTagType" class="input checkbox"
+                                            v-model="selTagType"
+                                            title="Check to include this attribute in the dictionary">&nbsp;&nbsp;</input>
+                                    </div>
+                                </td>
+                                <td class="menu">
+                                    <div class="input-container focus" v-if="tagType != 'N/A' && tagName == 'input'">
+                                        <input type="text" name="placeholder" class="input" style="width: 250%;"
+                                            v-model="tagType" />
+                                        <label>type</label>
+                                        <span>type</span>
+                                    </div>
+                                </td>
+                            </tr>  
+
                             <tr>
                                 <td class="menu">
                                     <div class="icons" v-if="className != 'N/A'">
@@ -135,16 +154,16 @@
                             </tr>
                             <tr>
                                 <td class="menu">
-                                    <div class="icons" v-if="innerText != 'N/A'">
+                                    <div class="icons" v-if="innerText != 'N/A' && !excludeTag.includes(tagName)">
                                         <input type="checkbox" name="selInnerText" class="input checkbox"
                                             v-model="selInnerText"
                                             title="Check to include this attribute in the dictionary">&nbsp;&nbsp;</input>
                                     </div>
                                 </td>
                                 <td class="menu">
-                                    <div class="input-container focus" v-if="innerText != 'N/A'">
+                                    <div class="input-container focus" v-if="innerText != 'N/A' && !excludeTag.includes(tagName)">
                                         <input type="text" name="innerText" class="input" style="width: 250%;"
-                                            v-model="innerText" />
+                                            v-model="innerText" title="Use this attribute with caution as it is not always very reliable!" />
                                         <label>innerText</label>
                                         <span>innerText</span>
                                     </div>
@@ -304,6 +323,9 @@ export default {
         const selSource = ref(false)
         const source = ref('N/A')
         const selXpath = ref(false)
+        const excludeTag = ref('*select*')
+        const selTagType = ref(false)
+        const tagType = ref('N/A')
 
         const comment = ref('')
         const code = ref('')
@@ -441,6 +463,7 @@ export default {
                         innerText.value = dictionary.value.attributes.innerText
                         placeholder.value = dictionary.value.attributes.placeholder
                         source.value = dictionary.value.attributes.source
+                        tagType.value = dictionary.value.attributes.type
                         if (dictionary.value.attributes.xpath != 'N/A') {
                             xPath.value = '/' + dictionary.value.attributes.xpath
                             selXpath.value = true
@@ -486,6 +509,7 @@ export default {
             if (selInnerText.value) myXpath = myXpath +"[contains(text(),'"+innerText.value+"')]"
             if (selPlaceholder.value) myXpath = myXpath +"[contains(@placeholder,'"+placeholder.value+"')]"
             if (selSource.value) myXpath = myXpath +"[@src='"+source.value+"']"
+            if (selTagType.value) myXpath = myXpath +"[@type='"+tagType.value+"']"
 
 
             label.value = myXpath
@@ -510,7 +534,7 @@ export default {
 
 
         return {
-            errorMessage, styleMessage, dictionary, projectName, projectID, subprojectName, subprojectID, userID, selSource, source,
+            errorMessage, styleMessage, dictionary, projectName, projectID, subprojectName, subprojectID, userID, selSource, source, excludeTag, selTagType, tagType,
             myURL, tagName, selTagName, id, selId, name, selName, className, selClassName, innerText, selInnerText, placeholder, selPlaceholder, xPath, selXpath, scanning,
             code, codeHeader, label, language, comment, actives, selectedActive, createdBy, updatedBy,
             handleCancel, handleSubmit, handleFocus, handleBlur, handleScan

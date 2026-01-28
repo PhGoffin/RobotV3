@@ -8,7 +8,7 @@ module.exports = {
    * @Email: artcomputer123@gmail.com
    * @Date: 2024-02-01
  * @Last Modified by: Someone
-   * @Last Modified time: 2026-01-28 15:16:37
+   * @Last Modified time: 2026-01-28 16:44:29
    * @Description: All the database services available for the API dictionary
    */
 
@@ -434,6 +434,7 @@ module.exports = {
               innerText: el.innerText?.substring(0, 50).trim() || 'N/A',
               placeholder: el.getAttribute('placeholder') || 'N/A',
               source: el.getAttribute('src') || 'N/A',
+              type: el.getAttribute('type') || 'N/A',
               xpath: getXPath(el)
             };
 
