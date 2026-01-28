@@ -19,7 +19,7 @@
                         <tbody>
                             <tr>
                                 <td class="menu">
-                                    <div class="input-container focus">
+                                    <div class="input-container focus" v-if="myURL!=''">
                                         <button v-if="!scanning">
                                             <i class="fa-solid fa-circle-plus"></i>
                                             Scan</button>
@@ -28,12 +28,18 @@
                                 <td class="menu">
                                     <div class="input-container focus">
                                         <input type="text" name="url" class="input url" @focus="handleFocus($event)"
-                                            @blur="handleBlur($event)" v-model="myURL" />
+                                            @blur="handleBlur($event)" v-model="myURL"  
+                                            title="Please enter the URL of the web page to scan" />
                                         <label>URL</label>
                                         <span>URL</span>
                                     </div>
                                 </td>
-
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>
+                                    <span v-if="myURL==''">Please enter the URL in order to scan!</span>
+                                </td>
                             </tr>
 
 
@@ -50,11 +56,6 @@
                         <tbody>
                             <tr>
                                 <td class="menu">
-                                    <!-- <div class="icons">
-                                        <input type="checkbox" name="seltagName" class="input checkbox"
-                                            v-model="selTagName"
-                                            title="Check to include this attribute in the dictionary">&nbsp;&nbsp;</input>
-                                    </div> -->
                                 </td>
                                 <td class="menu">
                                     <div class="input-container focus">
@@ -285,7 +286,7 @@ export default {
         const subprojectID = ref(props.subprojectID)
         const userID = ref(props.userID)
 
-        const myURL = ref('https://anupdamoda.github.io/AceOnlineShoePortal/FormalShoeslist.html')
+        const myURL = ref('')
         const scanning = ref(false)
         const tagName = ref('N/A')
         const selTagName = ref(false)

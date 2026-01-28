@@ -4,7 +4,7 @@
  * @Email: artcomputer123@gmail.com
  * @Date: 2024-01-02
  * @Last Modified by: Someone
- * @Last Modified time: 2026-01-28 13:50:34
+ * @Last Modified time: 2026-01-28 16:22:13
  * @Description: All the controllers (call operations) for the API dictionary
  */
 
@@ -15,12 +15,12 @@ const {
   getDictionaryByCode,
   getDictionaryByProject,
   getDictionaryByHeader,
-  getUnusedDictionary,  
+  getUnusedDictionary,
   updateDictionary,
-  updateDictionaryPosition, 
-  reorderDictionary, 
-  copyDictionary, 
-  copyAllDictionary, 
+  updateDictionaryPosition,
+  reorderDictionary,
+  copyDictionary,
+  copyAllDictionary,
   deleteDictionary,
   deleteAllDictionary,
   scanDictionary
@@ -37,7 +37,7 @@ module.exports = {
   // Insert a new dictionary record 
   // -----------------------------------------------------------
   createDictionary: catchAsync(async (req, res, next) => {
-    res.set('Access-Control-Allow-Origin', '*');    
+    res.set('Access-Control-Allow-Origin', '*');
     const body = req.body;
     // Call the database services to insert a faker
     const result = await createDictionary(body);
@@ -56,7 +56,7 @@ module.exports = {
   // get dictionary info
   // ---------------------------------------------------------------------------
   getDictionary: catchAsync(async (req, res, next) => {
-    res.set('Access-Control-Allow-Origin', '*');    
+    res.set('Access-Control-Allow-Origin', '*');
     const id = req.params.id;
     // Call the database services to get a specific code for a dictionary
     const result = await getDictionary(id);
@@ -73,7 +73,7 @@ module.exports = {
   // get dictionary info by the code (and translation)
   // ---------------------------------------------------------------------------
   getDictionaryByCode: catchAsync(async (req, res, next) => {
-    res.set('Access-Control-Allow-Origin', '*');    
+    res.set('Access-Control-Allow-Origin', '*');
     const body = req.body;
     // Call the database services to get a specific code for a dictionary
     const result = await getDictionaryByCode(body);
@@ -91,7 +91,7 @@ module.exports = {
   // get all records from dictionary by a project
   // ---------------------------------------------------------------------------
   getDictionaryByProject: catchAsync(async (req, res, next) => {
-    res.set('Access-Control-Allow-Origin', '*');    
+    res.set('Access-Control-Allow-Origin', '*');
     // Call the database services to get all dictionary
     const id = req.params.id;
     const result = await getDictionaryByProject(id);
@@ -106,7 +106,7 @@ module.exports = {
   // get all unused records from dictionary by a project
   // ---------------------------------------------------------------------------
   getUnusedDictionary: catchAsync(async (req, res, next) => {
-    res.set('Access-Control-Allow-Origin', '*');    
+    res.set('Access-Control-Allow-Origin', '*');
     // Call the database services to get all dictionary
     const id = req.params.id;
     const result = await getUnusedDictionary(id);
@@ -121,7 +121,7 @@ module.exports = {
   // get all records from dictionary by a header
   // ---------------------------------------------------------------------------
   getDictionaryByHeader: catchAsync(async (req, res, next) => {
-    res.set('Access-Control-Allow-Origin', '*');    
+    res.set('Access-Control-Allow-Origin', '*');
     // Call the database services to get all dictionary records by a dataset
     const body = req.body;
     const result = await getDictionaryByHeader(body);
@@ -137,7 +137,7 @@ module.exports = {
   // update a dictionary
   // ---------------------------------------------------------------------------
   updateDictionary: catchAsync(async (req, res, next) => {
-    res.set('Access-Control-Allow-Origin', '*');    
+    res.set('Access-Control-Allow-Origin', '*');
     const body = req.body;
     // Call the database services to update a dictionary
     const result = await updateDictionary(body);
@@ -224,7 +224,7 @@ module.exports = {
   // Delete a record in the dictionary
   // ---------------------------------------------------------------------------
   deleteDictionary: catchAsync(async (req, res, next) => {
-    res.set('Access-Control-Allow-Origin', '*');    
+    res.set('Access-Control-Allow-Origin', '*');
     const body = req.body;
     // Call the database services to delete a faker
     const result = await deleteDictionary(body);
@@ -241,7 +241,7 @@ module.exports = {
   // Delete all dictionary record linked to a dictionaryheader
   // ---------------------------------------------------------------------------
   deleteAllDictionary: catchAsync(async (req, res, next) => {
-    res.set('Access-Control-Allow-Origin', '*');    
+    res.set('Access-Control-Allow-Origin', '*');
     const body = req.body;
     // Call the database services to delete a faker
     const result = await deleteAllDictionary(body);
@@ -260,22 +260,32 @@ module.exports = {
   // Scan a web browser to facilitate the creation of a dictionary record
   // ---------------------------------------------------------------------------
   scanDictionary: catchAsync(async (req, res, next) => {
-    res.set('Access-Control-Allow-Origin', '*');    
+    res.set('Access-Control-Allow-Origin', '*');
     const body = req.body;
-    console.log ('--------------')
-    console.log (body)
-    console.log ('--------------')
+    console.log('--------------')
+    console.log(body)
+    console.log('--------------')
     // Call the scan services to inspect a web page
     const result = await scanDictionary(body);
     // if (!result.affectedRows) {
     //   throw new AppError('Failed to scan web page!', 200);
     // }
     console.log(result)
-    return res.json({
-      success: 1,
-      message: "Scan successful!",
-      attributes: result.attributes
-    });
+    if (result.attributes == undefined) {
+      return res.json({
+        success: 0,
+        message: "Scan aborted!",
+        attributes: result.attributes
+      });
+
+    } else {
+      return res.json({
+        success: 1,
+        message: "Scan successful!",
+        attributes: result.attributes
+      });
+
+    }
   })
 
 
