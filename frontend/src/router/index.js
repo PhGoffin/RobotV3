@@ -39,6 +39,7 @@ import RuleWizard from '../views/rule/RuleWizard.vue'
 import Dictionary from '../views/dictionary/Dictionary.vue'
 import DictionaryEdit from '../views/dictionary/DictionaryEdit.vue'
 import DictionaryRename from '../views/dictionary/DictionaryRename.vue'
+import DictionaryScan from '../views/dictionary/DictionaryScan.vue'
 import Dictionaryheader from '../views/dictionaryheader/Dictionaryheader.vue'
 import DictionaryheaderEdit from '../views/dictionaryheader/DictionaryheaderEdit.vue'
 import NaturalProto from '../views/ai_natural/NaturalProto.vue'
@@ -349,6 +350,12 @@ const routes = [
     path: '/dictionary/Rename/:id',
     name: 'DictionaryRename',
     component: DictionaryRename,
+    props: true
+  },
+    {
+    path: '/dictionary/Scan/:id',
+    name: 'DictionaryScan',
+    component: DictionaryScan,
     props: true
   },
   {

@@ -28,6 +28,14 @@
                         </div>
                     </div>
 
+
+
+                    <div class="input-container">
+                        <button @click="handleScan">
+                            <i class="fa-solid fa-circle-check"></i>
+                            Scanning</button>
+                    </div>
+
                     <div class="input-container focus">
                         <input type="text" name="subproject" class="input disabled" v-model="projectName" disabled />
                         <label>Project</label>
@@ -205,7 +213,7 @@ export default {
                     codeHeader.value = dictionary.value[0].headercode
                     language.value = dictionary.value[0].language
                     label.value = dictionary.value[0].label
-                    comment.value = dictionary.value[0].comment
+                    comment.value = dictionary.value[0].comment 
                     createdBy.value = dictionary.value[0].createdby + ' on: ' + dictionary.value[0].created
                     updatedBy.value = dictionary.value[0].updatedby + ' on: ' + dictionary.value[0].updated
                     selectedActive.value = ({ id: dictionary.value[0].active })
@@ -234,11 +242,20 @@ export default {
 
 
         // --------------------------------------------------------------------------
-        // User cancel the action, leave the screen and returns to the list
+        // User cancels the action, leave the screen and returns to the list
         // --------------------------------------------------------------------------
         const handleCancel = () => {
             consoleLog('DictionaryEdit.vue/handleCancel', 2, 'User Cancel the action', trace.value)
             router.push({ name: 'Dictionary', params: { id: dictionaryheaderID.value } })
+        }
+
+
+        // --------------------------------------------------------------------------
+        // User wants to scan the application to detect web element
+        // --------------------------------------------------------------------------
+        const handleScan = () => {
+            consoleLog('DictionaryEdit.vue/handleScan', 2, 'User moves to the scan screen', trace.value)
+            router.push({ name: 'DictionaryScan', params: { id: dictionaryID.value } })
         }
 
         // -----------------------------------------------------------------------------------
@@ -276,7 +293,7 @@ export default {
         return {
             errorMessage, styleMessage, dictionary, projectName, projectID, subprojectName, subprojectID, userID, 
             code, codeHeader, label, language, comment, actives, selectedActive, createdBy, updatedBy,
-            handleCancel, handleSubmit, handleFocus, handleBlur
+            handleCancel, handleSubmit, handleFocus, handleBlur, handleScan
         }
 
     }

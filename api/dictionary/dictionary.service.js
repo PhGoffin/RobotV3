@@ -1,4 +1,5 @@
 const mysql = require("../../config/database");
+const { chromium } = require('playwright');
 
 module.exports = {
 
@@ -7,7 +8,7 @@ module.exports = {
    * @Email: artcomputer123@gmail.com
    * @Date: 2024-02-01
  * @Last Modified by: Someone
-   * @Last Modified time: 2025-05-09 14:01:23
+   * @Last Modified time: 2026-01-28 15:16:37
    * @Description: All the database services available for the API dictionary
    */
 
@@ -64,7 +65,7 @@ module.exports = {
         }
       );
     });
-  },  
+  },
   // ---------------------------------------------------------------------
   // Get dictionary by full code and language (optional) and active (optional)
   // ---------------------------------------------------------------------
@@ -81,7 +82,7 @@ module.exports = {
         [
           data.projectID,
           data.code,
-          (data.language ? data.language : '*'),          
+          (data.language ? data.language : '*'),
           (data.active ? data.active : 1)
         ],
         (error, results, fields) => {
@@ -167,7 +168,7 @@ module.exports = {
         }
       );
     });
-  },  
+  },
 
   // ---------------------------------------------------------------------------
   // Update a dictionary record 
@@ -181,7 +182,7 @@ module.exports = {
           data.code,
           data.label,
           data.comment,
-          (data.language ? data.language : '*'),          
+          (data.language ? data.language : '*'),
           (data.active != undefined ? data.active : 1),
           data.user,
           data.today,
@@ -217,7 +218,7 @@ module.exports = {
         }
       );
     });
-  },  
+  },
 
   // -----------------------------------------------------------
   // reorder all Dictionarys
@@ -245,7 +246,7 @@ module.exports = {
         }
       );
     });
-  },  
+  },
 
   // -----------------------------------------------------------
   // Copy a Dictionary record
@@ -300,14 +301,14 @@ module.exports = {
         }
       );
     });
-  },  
+  },
 
   // ---------------------------------------------------------------------------
   // Delete a record in the dictionary
   // ---------------------------------------------------------------------------
   deleteDictionary: (data) => {
     return new Promise((resolve, reject) => {
-      mysql.query(       
+      mysql.query(
         `DELETE FROM dictionary WHERE dictionaryheaderID = ? AND dictionaryID = ?`,
         [
           data.dictionaryheaderID,
@@ -341,7 +342,120 @@ module.exports = {
         }
       );
     });
+  },
+
+
+  // ---------------------------------------------------------------------------
+  // Scan a web browser to facilitate the creation of a dictionary record
+  // ---------------------------------------------------------------------------
+
+  scanDictionary: (data) => {
+    return new Promise(async (resolve, reject) => {
+      console.log('Url: ' + data.myUrl)
+
+      // 1. Launch the browser (headless: false is required so the user can interact)
+      const browser = await chromium.launch({ headless: false });
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      let theAttributes
+
+      // The URL you want to inspect
+      const targetUrl = data.myUrl
+      await page.goto(targetUrl);
+
+
+      // 2. Expose a Node.js function to the browser
+      await page.exposeFunction('onElementClicked', (attributes) => {
+        console.log('\n[Element Selected]:');
+        //console.table(attributes);
+        theAttributes = attributes
+        console.table(theAttributes);
+        browser.close();
+      });
+
+      // 3. Inject the Inspector logic
+      await page.addInitScript(() => {
+
+        // Helper function to generate XPath
+        const getXPath = (element) => {
+
+          if (element === document.body) {
+            return '/html/body';
+          }
+
+          let ix = 0;
+          const siblings = element.parentNode.childNodes;
+          for (let i = 0; i < siblings.length; i++) {
+            const sibling = siblings[i];
+            if (sibling === element) {
+              return getXPath(element.parentNode) + '/' + element.tagName.toLowerCase() + '[' + (ix + 1) + ']';
+            }
+            if (sibling.nodeType === 1 && sibling.tagName === element.tagName) {
+              ix++;
+            }
+          }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+          // Create a style element for the hover effect
+          const style = document.createElement('style');
+          style.innerHTML = `
+        .playwright-hover-outline {
+          outline: 2px dashed #ff0000 !important;
+          outline-offset: -2px !important;
+          cursor: crosshair !important;
+        }
+      `;
+          document.head.appendChild(style);
+
+          let lastElement = null;
+
+          // Mouseover: Highlight the element
+          document.addEventListener('mouseover', (e) => {
+            if (lastElement) lastElement.classList.remove('playwright-hover-outline');
+            e.target.classList.add('playwright-hover-outline');
+            lastElement = e.target;
+          }, true);
+
+          // Click: Capture attributes and send to Node.js
+          document.addEventListener('click', (e) => {
+            // Prevent links from opening or buttons from submitting
+            e.preventDefault();
+            e.stopPropagation();
+
+            const el = e.target;
+
+            // Gather attributes
+            const attributes = {
+              tagName: el.tagName.toLowerCase(),
+              id: el.id || 'N/A',
+              name: el.getAttribute('name') || 'N/A',
+              class: el.className || 'N/A',
+              innerText: el.innerText?.substring(0, 50).trim() || 'N/A',
+              placeholder: el.getAttribute('placeholder') || 'N/A',
+              source: el.getAttribute('src') || 'N/A',
+              xpath: getXPath(el)
+            };
+
+            // Call the Node.js function
+            window.onElementClicked(attributes);
+          }, true);
+        });
+      });
+
+      // Reload the page once to ensure the script is injected correctly if navigating manually
+      await page.reload();
+
+      // Keep the script running
+      page.on('close', () => {
+        console.log('Browser is closed!')
+        return resolve({ success: 1, attributes: theAttributes, message: 'Scan Ok' })
+      });
+
+
+    });
   }
+
 
 
 };

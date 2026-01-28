@@ -23,7 +23,8 @@ const {
   copyDictionary, 
   copyAllDictionary, 
   deleteDictionary,
-  deleteAllDictionary
+  deleteAllDictionary,
+  scanDictionary
 } = require("./dictionary.controller");
 
 // -------------------------------------------------------------
@@ -42,6 +43,7 @@ router.post("/fullcopy", copyAllDictionary);
 router.post("/delete", deleteDictionary);
 router.post("/fulldelete", deleteAllDictionary);
 router.post("/create", createDictionary); 
+router.post("/scan", scanDictionary); 
 
 
 module.exports = router;

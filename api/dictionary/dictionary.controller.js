@@ -3,8 +3,8 @@
  * @Author: Philippe Goffin 
  * @Email: artcomputer123@gmail.com
  * @Date: 2024-01-02
- * @Last Modified by: Philippe Goffin
- * @Last Modified time: 2024-04-02 16:49:50
+ * @Last Modified by: Someone
+ * @Last Modified time: 2026-01-28 13:50:34
  * @Description: All the controllers (call operations) for the API dictionary
  */
 
@@ -22,7 +22,8 @@ const {
   copyDictionary, 
   copyAllDictionary, 
   deleteDictionary,
-  deleteAllDictionary
+  deleteAllDictionary,
+  scanDictionary
 } = require("./dictionary.service");
 
 const AppError = require("../../utils/appError");
@@ -251,7 +252,32 @@ module.exports = {
       success: 1,
       message: "Full dictionary deleted successfully",
     });
+  }),
+
+
+
+  // ---------------------------------------------------------------------------
+  // Scan a web browser to facilitate the creation of a dictionary record
+  // ---------------------------------------------------------------------------
+  scanDictionary: catchAsync(async (req, res, next) => {
+    res.set('Access-Control-Allow-Origin', '*');    
+    const body = req.body;
+    console.log ('--------------')
+    console.log (body)
+    console.log ('--------------')
+    // Call the scan services to inspect a web page
+    const result = await scanDictionary(body);
+    // if (!result.affectedRows) {
+    //   throw new AppError('Failed to scan web page!', 200);
+    // }
+    console.log(result)
+    return res.json({
+      success: 1,
+      message: "Scan successful!",
+      attributes: result.attributes
+    });
   })
+
 
 
 };
