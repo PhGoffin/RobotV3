@@ -19,7 +19,7 @@
                         <tbody>
                             <tr>
                                 <td class="menu">
-                                    <div class="input-container focus" v-if="myURL!=''">
+                                    <div class="input-container focus" v-if="myURL != ''">
                                         <button v-if="!scanning">
                                             <i class="fa-solid fa-circle-plus"></i>
                                             Scan</button>
@@ -28,7 +28,7 @@
                                 <td class="menu">
                                     <div class="input-container focus">
                                         <input type="text" name="url" class="input url" @focus="handleFocus($event)"
-                                            @blur="handleBlur($event)" v-model="myURL"  
+                                            @blur="handleBlur($event)" v-model="myURL"
                                             title="Please enter the URL of the web page to scan" />
                                         <label>URL</label>
                                         <span>URL</span>
@@ -38,7 +38,7 @@
                             <tr>
                                 <td></td>
                                 <td>
-                                    <span v-if="myURL==''">Please enter the URL in order to scan!</span>
+                                    <span v-if="myURL == ''">Please enter the URL in order to scan!</span>
                                 </td>
                             </tr>
 
@@ -113,7 +113,7 @@
 
                             <tr>
                                 <td class="menu">
-                                    <div class="icons" v-if="tagType != 'N/A'  && tagName == 'input'">
+                                    <div class="icons" v-if="tagType != 'N/A' && tagName == 'input'">
                                         <input type="checkbox" name="selTagType" class="input checkbox"
                                             v-model="selTagType"
                                             title="Check to include this attribute in the dictionary">&nbsp;&nbsp;</input>
@@ -127,7 +127,7 @@
                                         <span>type</span>
                                     </div>
                                 </td>
-                            </tr>  
+                            </tr>
 
                             <tr>
                                 <td class="menu">
@@ -161,9 +161,11 @@
                                     </div>
                                 </td>
                                 <td class="menu">
-                                    <div class="input-container focus" v-if="innerText != 'N/A' && !excludeTag.includes(tagName)">
+                                    <div class="input-container focus"
+                                        v-if="innerText != 'N/A' && !excludeTag.includes(tagName)">
                                         <input type="text" name="innerText" class="input" style="width: 250%;"
-                                            v-model="innerText" title="Use this attribute with caution as it is not always very reliable!" />
+                                            v-model="innerText"
+                                            title="Use this attribute with caution as it is not always very reliable!" />
                                         <label>innerText</label>
                                         <span>innerText</span>
                                     </div>
@@ -215,7 +217,7 @@
                                         <span>source</span>
                                     </div>
                                 </td>
-                            </tr>                            
+                            </tr>
 
                             <tr>
                                 <td class="menu">
@@ -271,7 +273,8 @@ import Spinner from '../../components/Spinner.vue'
 import updateDictionary from '../../composables/dictionary/updateDictionary'
 import scanDictionary from '../../composables/dictionary/scanDictionary'
 import getDictionary from '../../composables/dictionary/getDictionary'
-
+import getReferenceByCode from '../../composables/reference/getReferenceByCode'
+import storeReference from '../../composables/reference/storeReference'
 import { displayMsg, consoleLog } from '../../util/debug';
 
 
@@ -304,8 +307,10 @@ export default {
         const subprojectName = ref(props.subprojectName)
         const subprojectID = ref(props.subprojectID)
         const userID = ref(props.userID)
+        const reference = ref([])
 
         const myURL = ref('')
+        const paramURL = ref('scanURL')
         const scanning = ref(false)
         const tagName = ref('N/A')
         const selTagName = ref(false)
@@ -406,6 +411,38 @@ export default {
                 }
             })
 
+        // ------------------------------------------------------------
+        // Read the latest url for the scan
+        // ------------------------------------------------------------
+        const { error1, loadReference } = getReferenceByCode(projectID.value, userID.value, paramURL.value)
+        loadReference(reference, trace.value)
+            .then(function () {
+                consoleLog('DictionaryScan.vue/loadReference', 2, 'Code: ' + paramURL.value, trace.value)
+                if (reference.value.success && reference.value.data.length) {
+                    reference.value = reference.value.data
+                    myURL.value = reference.value[0].label;
+                    consoleLog('DictionaryScan.vue/loadReference', 2, 'URL: ' + myURL.value, trace.value)
+                } else {
+                    consoleLog('DictionaryScan.vue/loadReference', 2, 'No reference found!', trace.value)
+                    myURL.value = ''
+                }
+            })
+
+
+        // ------------------------------------------------------------
+        // Store the scan URL into a parameter
+        // ------------------------------------------------------------
+        const storeParameter = async () => {
+            consoleLog('DictionaryScan.vue/storeParameter', 2, 'Store the scan URL into a parameter', trace.value)
+            let success = storeReference(paramURL.value, myURL.value, '', projectID.value, userID.value, trace.value)
+            if (success) {
+                consoleLog('DictionaryScan/storeParameter', 2, 'Parameter is stored: ' + myURL.value, trace.value)
+            } else {
+                consoleLog('DictionaryScan/storeParameter', 2, 'No reference found!', trace.value)
+            }
+        }
+
+
         // --------------------------------------------------------------------------
         // User set the focus on a field
         // --------------------------------------------------------------------------
@@ -496,22 +533,28 @@ export default {
         const handleSubmit = () => {
             consoleLog('DictionaryScan.vue/handleSubmit', 2, 'User Submit the action - projectID: ' + projectID.value, trace.value)
 
+            // store the scan URL    
+            storeParameter()
+
             let myXpath = ''
 
             // Build the logic to detect a webElement by xpath
             if (selXpath.value == false) {
-                myXpath= '//'+tagName.value
+                myXpath = '//' + tagName.value
             } else myXpath = xPath.value
             // include the id
-            if (selId.value) myXpath = myXpath +"[@id='"+id.value+"']"
-            if (selName.value) myXpath = myXpath +"[@name='"+name.value+"']"
-            if (selClassName.value) myXpath = myXpath +"[contains(@class,'"+className.value+"')]"
-            if (selInnerText.value) myXpath = myXpath +"[contains(text(),'"+innerText.value+"')]"
-            if (selPlaceholder.value) myXpath = myXpath +"[contains(@placeholder,'"+placeholder.value+"')]"
-            if (selSource.value) myXpath = myXpath +"[@src='"+source.value+"']"
-            if (selTagType.value) myXpath = myXpath +"[@type='"+tagType.value+"']"
+            if (selId.value) myXpath = myXpath + "[@id='" + id.value + "']"
+            if (selName.value) myXpath = myXpath + "[@name='" + name.value + "']"
+            if (selClassName.value) myXpath = myXpath + "[contains(@class,'" + className.value + "')]"
+            if (selInnerText.value) myXpath = myXpath + "[contains(text(),'" + innerText.value + "')]"
+            if (selPlaceholder.value) myXpath = myXpath + "[contains(@placeholder,'" + placeholder.value + "')]"
+            if (selSource.value) myXpath = myXpath + "[@src='" + source.value + "']"
+            if (selTagType.value) myXpath = myXpath + "[@type='" + tagType.value + "']"
 
-
+            if ("*//N/A*".includes(myXpath)) {
+                DisplayError("No change made!", 'Info', gotoDictionary)
+                return
+            }
             label.value = myXpath
 
             // code, label, comment, language, active, projectID, dictionaryID
