@@ -6,7 +6,8 @@ let browserMiddelware = new BrowserMiddelware
 let tabPage = []
 let tabPageID = 0
 let tabPageCurrent = 0
-let httpResult = null
+//let httpResult = null
+let httpResultUser = []
 let imageResult = null
 
 
@@ -587,7 +588,6 @@ async function getElement(page, variables, data, tag, functionName) {
         tag = tag.substring(0, tag.length - 1)
     }
 
-
     console.log('******* ' + tag + '*********')
 
     // Check if the element is found in the current page
@@ -965,7 +965,7 @@ async function detectGUI(page, variables, data, selectorID, myCriteria, myPositi
                 myPosition = myPosition.replace('$$', 'last()');
             }
             mySearchXpath = myXpath.substring(0, myXpath.length - 3) + '[' + myPosition + ']';
-            console.log ('process position 1a: myXpath= ' + myXpath);
+            console.log('process position 1a: myXpath= ' + myXpath);
             variables.displayLog(1, 3, 'process position 1b: mySearchXpath ' + mySearchXpath);
         } else if (myPosition != undefined && myPosition != '') {
             if (myPosition.indexOf('$$') < 0) {
@@ -976,13 +976,13 @@ async function detectGUI(page, variables, data, selectorID, myCriteria, myPositi
                 myPosition = myPosition.replace('$$', 'last()');
             }
             mySearchXpath = '(' + myXpath + ')[' + myPosition + ']';
-            console.log ('process position 2a: myXpath= ' + myXpath);
+            console.log('process position 2a: myXpath= ' + myXpath);
             variables.displayLog(1, 3, 'process position 2b: mySearchXpath ' + mySearchXpath);
         }
 
         let mycustomXpath = mySearchXpath.replace(/&sol;/g, '/');
         //variables.displayLog(1, 3, 'detectGUI: xpath:' + mycustomXpath);
-        console.log ('detectGUI: xpath:' + mycustomXpath)
+        console.log('detectGUI: xpath:' + mycustomXpath)
 
         try {
             locators = page.locator(mycustomXpath)
@@ -994,7 +994,7 @@ async function detectGUI(page, variables, data, selectorID, myCriteria, myPositi
 
         if (!count) {
             // Pattern not found, reset the score to 0
-            console.log ("No element detected for the pattern: " + myId)
+            console.log("No element detected for the pattern: " + myId)
             variables.displayLog(1, 3, "No element detected for the pattern: " + myId);
             variables.displayLog(1, 3, 'xpath:' + mycustomXpath);
             PatternCandidate.push({ xPath: mySearchXpath, id: myId, score: 0 });
@@ -1225,11 +1225,23 @@ async function url(page, variables, projectID, link) {
         //page = tabPage[tabPageCurrent]
         //variables.displayLog(1, 1, 'Driver: ', driver)
         await page.goto(link)
+        variables.setVariable("$URLError", "0");
         return { success: 1, message: 'Url OK', stop: 0 }
     } catch (err) {
-        variables.displayLog(1, 1, "----- **** URL = Error: ", err.message)
-        variables.displayLog(1, 1, err.message)
-        return { success: 0, message: err.message, stop: 1 }
+        //console.log (err)
+        if (err.message.includes('ERR_CERT_AUTHORITY_INVALID')) {
+            console.error("Invalid certificate: ERR_CERT_AUTHORITY_INVALID");
+            await page.waitForTimeout(2000);
+            variables.displayLog(1, 1, "----- **** URL = Error: ERR_CERT_AUTHORITY_INVALID")
+            variables.displayLog(1, 1, err.message)
+            variables.setVariable("$URLError", "1");
+            return { success: 1, message: "ERR_CERT_AUTHORITY_INVALID", stop: 0 }
+        } else {
+            variables.displayLog(1, 1, "----- **** URL = Error: ", err.message)
+            variables.displayLog(1, 1, err.message)
+            variables.setVariable("$URLError", "1");
+            return { success: 0, message: err.message, stop: 1 }
+        }
     }
 }
 
@@ -2426,7 +2438,7 @@ async function click(page, data, variables, tag, delay, focus) {
         }
         return { success: 1, message: "click ok!", frameID: ret.frameID, stop: 0 }
     } catch (err) {
-        return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
+        return { success: 1, message: 'Fatal Error: ' + err.message, stop: 0 }
     }
 
 }
@@ -3200,6 +3212,107 @@ async function readAttribute(page, data, variables, tag, attribute, variableName
 /**
 * ---------------------------------------------------------------------------- 
 * @function <OK>
+*   popupKeys: Execute a powershell process to sent keys to a windows popup
+*
+* @param {object} page:           playwright page
+* @param {object} data:           all the parameters
+* @param {object} variables:      array of all the variables
+* @param {string} windowTitle:    title of the windows popup
+* @param {string} sendkeys:       keys to send to the popup (E.g: "{TAB}{TAB}{TAB}{TAB}{TAB}{ENTER}")
+*
+*/
+async function popupKeys(page, data, variables, windowTitle, sendkeys) {
+
+    console.log('**** popupKeys *****')
+
+    try {
+        const { execSync } = require("child_process");
+
+        console.log('popupKeys on the popup ' + windowTitle)
+
+
+        const psScript = `
+    $wshell = New-Object -ComObject WScript.Shell;
+    if ($wshell.AppActivate("${windowTitle}")) {
+        Sleep 1;
+        $wshell.SendKeys('${sendkeys}');
+    }
+  `;
+
+        console.log(psScript)
+        execSync(`powershell -Command "${psScript}"`);
+        console.log('popupKeys OK!')
+
+        return { success: 1, message: 'popupKeys OK!', stop: 0 }
+    } catch (err) {
+        console.log('popupKeys Error', err)
+        return { success: 0, message: 'popupKeys Error: ' + err.message, stop: 1 }
+    }
+
+}
+
+
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function <OK>
+*   showAllPopups: Execute a powershell process to display all the popup titles
+*
+* @param {object} page:           playwright page
+* @param {object} data:           all the parameters
+* @param {object} variables:      array of all the variables
+*
+*/
+async function showAllPopups(page, data, variables) {
+
+    const { execSync } = require("child_process");
+    const command = `powershell "Get-Process | Where-Object { $_.MainWindowTitle } | Select-Object MainWindowTitle | Format-Table -HideTableHeaders"`;
+    //const command = `powershell "Get-Process | Where-Object {$_.MainWindowHandle -ne 0} | Select-Object MainWindowTitle"`;
+
+    try {
+        //const output = execSync(command).toString();
+        const output = execSync(command, { encoding: 'utf-8' })
+        console.log("--- Popup Windows ---");
+        console.log(output.trim());
+        console.log("---------------------------------");
+        console.log('showAllPopups OK!')
+
+        if (!output.trim()) {
+            console.log('No popup windows detected')
+            return { success: 1, message: 'showAllPopups is empty!', stop: 0 }
+        }
+
+        const titles = output
+            .split(/\r?\n/)          // Split by line (Windows or Unix)
+            .map(t => t.trim())      // remove spaces
+            .filter(t => t.length > 0); // Remove empty lines
+
+        // Use Set to remove duplicates 
+        // const allWindows = [...new Set(titles)];
+
+        const allWindows = titles
+
+        allWindows.forEach((title, index) => {
+            logfile(data.userID, 'Info', `${index + 1}: ${title}`);
+        });
+
+        return { success: 1, message: 'showAllPopups OK!', stop: 0 }
+        
+    } catch (error) {
+        console.error("showAllPopups Error:", error);
+        return { success: 0, message: 'showAllPopups Error: ' + error.message, stop: 1 }
+    }
+
+}
+
+
+
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function <OK>
 *   isExist: detect if an element exist on the page
 *
 * @param {object} page:           playwright page
@@ -3218,8 +3331,10 @@ async function isExist(page, data, variables, tag, variableName, delay) {
 
 
     ret = await getElement(page, variables, data, tag, 'isExist')
-    if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
-
+    if (!ret.success) {
+        if (variableName != undefined && variableName != '') variables.setVariable(variableName, isExist)
+        return { success: 1, message: "isExist KO!", value: 0, stop: 0 }
+    }
     let page1 = ret.page
     let locator = ret.locator
     tag = ret.tag
@@ -3246,6 +3361,7 @@ async function isExist(page, data, variables, tag, variableName, delay) {
 
         let isExist = await locator.isVisible()
         console.log('Visible:', isExist)
+        console.log('isExist Variable name: ' + variableName)
 
         if (variableName != undefined && variableName != '') variables.setVariable(variableName, isExist)
         return { success: 1, message: "isExist Ok!", value: isExist, stop: 0 }
@@ -3759,10 +3875,11 @@ async function keyboard(page, data, variables, text) {
 */
 async function speaking(myText) {
 
-    //variables.displayLog(1, 1, '----- say')
     myText = myText.replace(/'/g, "");
     const say = require('say');
     let ret
+
+    //console.log ('Speaking: ', myText)
 
     return say.speak(myText, '', 1.0, async () => {
         ret = { success: 1, message: 'Speaking OK', stop: 0 }
@@ -4498,6 +4615,7 @@ async function executeRules(page, variables, data, ruleName, param1, param2, par
         return await rule.execRules(page, variables, data, ruleName);
     }
     catch (err) {
+        console.log('Error in the rule', err)
         variables.displayLog(1, 1, 'executeRules: Fatal error: Browser not responding!')
         return { success: 0, message: ret.message, stop: 1 }
     }
@@ -4549,7 +4667,7 @@ async function stopTimer(data, page, variables, space, topic) {
     if (startTime == "<N/A>") return { success: 0, message: "stopTimer - Topic: " + topic + " not defined!", value: startTime, stop: 1 }
     let elapsedTime = (endTime - startTime) / 1000;
     variables.displayLog(1, 1, 'stopTimer for ' + topic + ' / ' + space + ' = ' + elapsedTime)
-    variables.setVariable('$Timer' + topic.charAt(0).toUpperCase()  + topic.slice(1), Math.round(elapsedTime))
+    variables.setVariable('$Timer' + topic.charAt(0).toUpperCase() + topic.slice(1), Math.round(elapsedTime))
 
     const currentDate = new Date();
     const day = currentDate.getDate();
@@ -4645,10 +4763,12 @@ async function stopTimer(data, page, variables, space, topic) {
 * @throws {Error}               If the parameters string is not a valid JSON object.
 * 
 */
-async function postData(variables, url, parameters) {
+async function postData(data, variables, url, parameters, token) {
 
     console.log('postData', url)
     console.log('postData', parameters)
+    console.log('token', token)
+
     try {
         // Attempt to parse the parameters string into a JSON object.
         let parsedParameters;
@@ -4661,7 +4781,8 @@ async function postData(variables, url, parameters) {
         const response = await fetch(url, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json' // Specify that we're sending JSON
+                'Content-Type': 'application/json', // Specify that we're sending JSON
+                ...(token && { 'Authorization': `Bearer ${token}` })
             },
             body: JSON.stringify(parsedParameters) // Convert the parameters to a JSON string
         });
@@ -4671,8 +4792,13 @@ async function postData(variables, url, parameters) {
             throw new Error(`HTTP httpPost error! Status: ${response.status}`);
         }
 
-        const data = await response.json(); // Parse the response body as JSON
-        return data;
+        console.log('status', response.status)
+        await logfile(data.userID, 'Info', 'status: ' + response.status)
+        variables.setVariable('$HttpStatus', response.status)
+
+
+        const httpData = await response.json(); // Parse the response body as JSON
+        return httpData;
 
     } catch (error) {
         // Handle any errors that occurred during the fetch or parsing process
@@ -4696,11 +4822,12 @@ async function postData(variables, url, parameters) {
 * @returns {object} httpResult  A global variable to store the http result
 *
 */
-async function httpPost(data, variables, apiUrl, paramsString) {
+async function httpPost(data, variables, apiUrl, paramsString, token) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
     // Reset httpResult
     httpResult = null
+
 
     // Check if the code is expressed in a valid dictionary format
     if (apiUrl[0] == '@') {
@@ -4709,11 +4836,23 @@ async function httpPost(data, variables, apiUrl, paramsString) {
         if (result.length) {
             apiUrl = result[0].label
         } else {
-            return { success: 0, message: "Cannot find the url: " + url + " in the dictionary", stop: 1 }
+            return { success: 0, message: "Cannot find the url: " + url + " in the dictiona ry", stop: 1 }
         }
     }
 
     apiUrl = variables.evaluateVariable(apiUrl)
+    apiUrl = apiUrl.replace(/'/g, "");
+
+
+
+    console.log('Token: ' + token)
+    if (token != undefined && token != 'N/A') {
+        token = variables.evaluateVariable(token)
+        token = token.replace(/'/g, "");
+    } else token = null
+    console.log('Token: ' + token)
+
+
     paramsString = variables.evaluateVariable(paramsString)
     // remove the first and the last character if it's a quote
     if (paramsString[0] == "'") {
@@ -4725,8 +4864,12 @@ async function httpPost(data, variables, apiUrl, paramsString) {
 
 
     try {
-        httpResult = await postData(variables, apiUrl, paramsString);
+        httpResult = await postData(data, variables, apiUrl, paramsString, token);
+        //httpResultUser[data.userID] = httpResult
         console.log("Success:", httpResult);
+        // httpResultUser.push ({"id": data.userID})
+        // console.log ('************************************************************=======')
+        // console.log("Success User:", httpResultUser);
     } catch (error) {
         console.error("Error in httpPost:", error);
         return { success: 0, message: "Error in httpPost", stop: 1 }
@@ -4735,25 +4878,171 @@ async function httpPost(data, variables, apiUrl, paramsString) {
     return { success: 1, message: "httpPost: OK", stop: 0 }
 }
 
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  puttData:  Fetches data from a REST API using the PUT method. 
+* 
+* @param {object} variables:    array of all the variables
+* @param {string} url           The URL of the REST API endpoint.
+* @param {string} parameters    A string containing the parameters to be sent in the request body.
+*                               The string should contain a valid JSON object as it will be parsed.
+* @returns {Promise<any>}       A Promise that resolves with the response data (parsed as JSON) if successful,
+*                               or rejects with an error if the request fails.
+* @throws {Error}               If the parameters string is not a valid JSON object.
+* 
+*/
+async function putData(data, variables, url, parameters, token) {
+
+    console.log('puttData', url)
+    console.log('putData', parameters)
+    console.log('token', token)
+
+    try {
+        // Attempt to parse the parameters string into a JSON object.
+        let parsedParameters;
+        try {
+            parsedParameters = JSON.parse(parameters);
+        } catch (parseError) {
+            throw new Error("Invalid parameters format.  Must be a valid JSON string."); // Throw error if parsing fails
+        }
+
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json', // Specify that we're sending JSON
+                ...(token && { 'Authorization': `Bearer ${token}` })
+            },
+            body: JSON.stringify(parsedParameters) // Convert the parameters to a JSON string
+        });
+
+        if (!response.ok) {
+            // Handle HTTP errors (e.g., 404, 500)
+            throw new Error(`HTTP httpPut error! Status: ${response.status}`);
+        }
+
+        console.log('status', response.status)
+        await logfile(data.userID, 'Info', 'status: ' + response.status)
+        variables.setVariable('$HttpStatus', response.status)
+
+
+        const httpData = await response.json(); // Parse the response body as JSON
+        return httpData;
+
+    } catch (error) {
+        // Handle any errors that occurred during the fetch or parsing process
+        console.error("Error during PUT request:", error);
+        throw error; // Re-throw the error to allow the caller to handle it
+    }
+}
+
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  httpPut:  Fetches data from a REST API using the PUT method
+* 
+* @param {object} data:         all the parameters
+* @param {object} variables:    array of all the variables
+* @param {string} apiUrl        The URL of the REST API endpoint.
+* @param {string} paramsString  A string containing the parameters to be sent in the request body.
+*                               The string should contain a valid JSON object as it will be parsed.
+* @returns {object} httpResult  A global variable to store the http result
+*
+*/
+async function httpPost(data, variables, apiUrl, paramsString, token) {
+    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+
+    // Reset httpResult
+    httpResult = null
+
+
+    // Check if the code is expressed in a valid dictionary format
+    if (apiUrl[0] == '@') {
+        const dataAPI = { projectID: data.projectID, code: apiUrl, language: '*', active: 1 }
+        const result = await getDictionaryByCode(dataAPI);
+        if (result.length) {
+            apiUrl = result[0].label
+        } else {
+            return { success: 0, message: "Cannot find the url: " + url + " in the dictiona ry", stop: 1 }
+        }
+    }
+
+    apiUrl = variables.evaluateVariable(apiUrl)
+    apiUrl = apiUrl.replace(/'/g, "");
+
+
+
+    console.log('Token: ' + token)
+    if (token != undefined && token != 'N/A') {
+        token = variables.evaluateVariable(token)
+        token = token.replace(/'/g, "");
+    } else token = null
+    console.log('Token: ' + token)
+
+
+    paramsString = variables.evaluateVariable(paramsString)
+    // remove the first and the last character if it's a quote
+    if (paramsString[0] == "'") {
+        paramsString = paramsString.substring(1, paramsString.length)
+    }
+    if (paramsString.substring(paramsString.length, paramsString.length - 1) == "'") {
+        paramsString = paramsString.substring(0, paramsString.length - 1)
+    }
+
+
+    try {
+        httpResult = await putData(data, variables, apiUrl, paramsString, token);
+        //httpResultUser[data.userID] = httpResult
+        console.log("Success:", httpResult);
+        // httpResultUser.push ({"id": data.userID})
+        // console.log ('************************************************************=======')
+        // console.log("Success User:", httpResultUser);
+    } catch (error) {
+        console.error("Error in httpPut:", error);
+        return { success: 0, message: "Error in httpPut", stop: 1 }
+    }
+
+    return { success: 1, message: "httpPut: OK", stop: 0 }
+}
+
+
+
+
 /**
  * fetchData: Fetches data from a REST API using the GET method.
  *
+ * @param {object} data:         all the parameters
  * @param {object} variables:    array of all the variables
  * @param {string} url:          The URL of the REST API endpoint.
  * @returns {Promise<any>} A promise that resolves with the fetched data (parsed as JSON) or rejects with an error.
  *
  */
-async function fetchData(variables, url) {
+async function fetchData(data, variables, url, token) {
     try {
-        const response = await fetch(url);
+        //const response = await fetch(url);
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json', // Specify that we're sending JSON
+                ...(token && { 'Authorization': `Bearer ${token}` })
+            }
+        });
+
+        console.log('status', response.status)
+        await logfile(data.userID, 'Info', 'status: ' + response.status)
+        variables.setVariable('$HttpStatus', response.status)
 
         // Check if the response was successful (status code in the 200-299 range)
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
-        const data = await response.json(); // Parse the response body as JSON
-        return data;
+        const responseData = await response.json(); // Parse the response body as JSON
+        return responseData;
 
     } catch (error) {
         // Handle any errors that occurred during the fetch operation or JSON parsing
@@ -4773,7 +5062,7 @@ async function fetchData(variables, url) {
 * @param {string} url           The URL of the REST API endpoint.
 * 
 */
-async function httpGet(data, variables, url) {
+async function httpGet(data, variables, url, token) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
     // Reset httpResult
@@ -4791,11 +5080,18 @@ async function httpGet(data, variables, url) {
     }
 
     url = variables.evaluateVariable(url)
+    url = url.replace(/'/g, "");
+
+    if (token != undefined && token != 'N/A') {
+        token = variables.evaluateVariable(token)
+        token = token.replace(/'/g, "");
+    } else token = null
 
     console.log('httpGet', url)
     try {
-        httpResult = await fetchData(variables, url);
-        console.log("Fetched data:", httpResult);
+        httpResult = await fetchData(data, variables, url, token);
+        httpResultUser.push({ "id": data.userID, "result": httpResult })
+        //console.log("Success User:", httpResultUser);
         return { success: 1, message: "httpGet: OK", stop: 0 }
     } catch (error) {
         console.error("Error:", error);
@@ -4806,27 +5102,130 @@ async function httpGet(data, variables, url) {
 
 
 /**
+ * deleteData: Fetches data from a REST API using the DELETE method.
+ *
+ * @param {object} data:         all the parameters
+ * @param {object} variables:    array of all the variables
+ * @param {string} url:          The URL of the REST API endpoint.
+ * @returns {Promise<any>} A promise that resolves with the fetched data (parsed as JSON) or rejects with an error.
+ *
+ */
+async function fetchData(data, variables, url, token) {
+    try {
+        //const response = await fetch(url);
+        const response = await fetch(url, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json', // Specify that we're sending JSON
+                ...(token && { 'Authorization': `Bearer ${token}` })
+            }
+        });
+
+        console.log('status', response.status)
+        await logfile(data.userID, 'Info', 'status: ' + response.status)
+        variables.setVariable('$HttpStatus', response.status)
+
+        // Check if the response was successful (status code in the 200-299 range)
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const responseData = await response.json(); // Parse the response body as JSON
+        return responseData;
+
+    } catch (error) {
+        // Handle any errors that occurred during the fetch operation or JSON parsing
+        console.error("An error occurred during the fetch delete operation:", error);
+        throw error; // Re-throw the error to allow the caller to handle it.
+    }
+}
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  httpDelete:  Fetches data from a REST API using the DELETE method. 
+* 
+* @param {object} data:         all the parameters
+* @param {object} variables:    array of all the variables
+* @param {string} url           The URL of the REST API endpoint.
+* 
+*/
+async function httpDelete(data, variables, url, token) {
+    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+
+    // Reset httpResult
+    httpResult = null
+
+    // Check if the code is expressed in a valid dictionary format
+    if (url[0] == '@') {
+        const dataAPI = { projectID: data.projectID, code: url, language: '*', active: 1 }
+        const result = await getDictionaryByCode(dataAPI);
+        if (result.length) {
+            url = result[0].label
+        } else {
+            return { success: 0, message: "Cannot find the url: " + url + " in the dictionary", stop: 1 }
+        }
+    }
+
+    url = variables.evaluateVariable(url)
+    url = url.replace(/'/g, "");
+
+    if (token != undefined && token != 'N/A') {
+        token = variables.evaluateVariable(token)
+        token = token.replace(/'/g, "");
+    } else token = null
+
+    console.log('httpGet', url)
+    try {
+        httpResult = await deleteData(data, variables, url, token);
+        httpResultUser.push({ "id": data.userID, "result": httpResult })
+        //console.log("Success User:", httpResultUser);
+        return { success: 1, message: "httpDelete: OK", stop: 0 }
+    } catch (error) {
+        console.error("Error:", error);
+        return { success: 0, message: "Error in httpDelete", stop: 1 }
+    }
+}
+
+
+
+/**
 * ---------------------------------------------------------------------------- 
 * @function
 *  httpData:  Get data from a http request (get or post)
 * 
+* @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
 * @param {string} expression    Expression to access the structure of the data stored in httpResult 
 * @param {string} variable      Name of the variable to store the result of the expression
 *
 */
-async function httpData(variables, expression, variable) {
+async function httpData(data, variables, expression, variable) {
 
+    console.log('Expression', expression)
     expression = variables.evaluateVariable(expression)
+    //let expression2 = expression
 
     try {
-
-        // let result = await eval("httpResult.data[0].naturalID")
+        // expression = 'httpResult' + expression
+        // let result = await eval(expression)
         // console.log("result", result)
-        expression = 'httpResult.' + expression
+        // variables.setVariable(variable, result)
+        //console.log('record size:', httpResultUser.length)
+
+        // retrieve the record of the user id
+        const record = httpResultUser.findLast(item => item.id === data.userID)
+        //console.log(record)
+        expression = 'record.result' + expression
+
+        // process the expression
+        //console.log('Expression', expression)
         let result = await eval(expression)
         console.log("result", result)
         variables.setVariable(variable, result)
+
+
         return { success: 1, message: "httpData: OK", value: result, stop: 0 }
     } catch (error) {
         console.error("Error:", error);
@@ -4834,6 +5233,61 @@ async function httpData(variables, expression, variable) {
     }
 }
 
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  httpSearchData:  Get the row of a searched data from a http request (get or post)
+* 
+* @param {object} data:         all the parameters
+* @param {object} variables:    array of all the variables
+* @param {string} expression    Expression to access the structure of the data stored in httpResult 
+* @param {string} variable      Name of the variable to store the result of the expression
+*
+*/
+async function httpSearchData(data, variables, element, operator, expected, variable) {
+
+    let expression = ''
+
+    try {
+        element = variables.evaluateVariable(element)
+        element = element.replace(/'/g, "");
+        expected = variables.evaluateVariable(expected)
+        expected = expected.replace(/'/g, "");
+
+        // Find the record of the last hhtp of the user
+        const record = httpResultUser.findLast(item => item.id === data.userID)
+        //console.log(record)
+
+        // Loop on all the items
+        for (i = 0; i < record.result.length; i++) {
+            // Extract the element
+            expression = 'record.result[' + i + '].' + element
+            let text = await eval(expression)
+            // Compare with the expected value (find the first excpected value )
+            if (operator == 'Contains') {
+                if (text.includes(expected)) {
+                    variables.setVariable(variable, i)
+                    return { success: 1, message: "httpSearchData: OK", value: i, stop: 0 }
+                }
+
+            } else {
+                if (text == expected) {
+                    variables.setVariable(variable, i)
+                    return { success: 1, message: "httpSearchData: OK", value: i, stop: 0 }
+                }
+            }
+        }
+
+
+        variables.setVariable(variable, -1)
+        return { success: 1, message: "httpSearchData: OK", value: -1, stop: 0 }
+    } catch (error) {
+        console.error("Error:", error);
+        return { success: 0, message: "Error in httpSearchData", stop: 1 }
+    }
+}
 
 
 /**
@@ -5115,11 +5569,11 @@ async function imageBaseline(page, data, baselineName, printscreenSlot) {
 */
 async function clickXY(variables, xPosition, yPosition) {
     const Python = require("../python/click.js")
-    console.log ('____ step 1')
+    console.log('____ step 1')
     const python = new Python
-    console.log ('____ step 2')
+    console.log('____ step 2')
     const automator = python.DesktopAutomator();
-    console.log ('____ step 3')
+    console.log('____ step 3')
 
     try {
         // Simple usage
@@ -5397,6 +5851,14 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 ret = await keyboard(page, data, variables, param1)
                 return ret
 
+            case 'popupKeys':
+                ret = popupKeys(page, data, variables, param1, param2)
+                return ret
+
+            case 'showAllPopups':
+                ret = showAllPopups(page, data, variables)
+                return ret
+
             case 'waitFor':
                 ret = await waitFor(page, data, variables, param1, param2, param3)
                 if (ret.success == 1 && ret.frameID > 0) await logfile(data.userID, 'Info', '... Detected in the frame: ' + ret.frameID)
@@ -5585,18 +6047,34 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 return ret
 
             case 'httpPost':
-                ret = await httpPost(data, variables, param1, param2)
-                if (ret.success == 1) await logfile(data.userID, 'Info', '... httpPost OK')
+                ret = await httpPost(data, variables, param1, param2, param3)
+                //if (ret.success == 1) await logfile(data.userID, 'Info', '... httpPost OK')
+                return ret
+
+            case 'httpPut':
+                ret = await httpPut(data, variables, param1, param2, param3)
+                //if (ret.success == 1) await logfile(data.userID, 'Info', '... httpPut OK')
                 return ret
 
             case 'httpGet':
-                ret = await httpGet(data, variables, param1)
-                if (ret.success == 1) await logfile(data.userID, 'Info', '... httpGet OK')
+                ret = await httpGet(data, variables, param1, param2)
+                //if (ret.success == 1) await logfile(data.userID, 'Info', '... httpGet OK')
                 return ret
 
+            case 'httpDelete':
+                ret = await httpDelete(data, variables, param1, param2)
+                //if (ret.success == 1) await logfile(data.userID, 'Info', '... httpDelete OK')
+                return ret
+
+
             case 'httpData':
-                ret = await httpData(variables, param1, param2)
+                ret = await httpData(data, variables, param1, param2)
                 if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
+                return ret
+
+            case 'httpSearchData':
+                ret = await httpSearchData(data, variables, param1, param2, param3, param4)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + param4 + ' = ' + ret.value)
                 return ret
 
             case 'imageDifference':
@@ -6439,6 +6917,8 @@ module.exports = {
     httpData: httpData,
     imageDifference: imageDifference,
     imageBaseline: imageBaseline,
-    imageDifferenceData: imageDifferenceData
+    imageDifferenceData: imageDifferenceData,
+    popupKeys: popupKeys,
+    showAllPopups: showAllPopups
 
 };

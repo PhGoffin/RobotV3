@@ -39,6 +39,8 @@ async function specialFunction(page, variables, data, rulePosition, functionName
         getTableData, getTableHeader, setTableData, clickCell, countTableRow, searchTableData,
         httpGet, httpPost, httpData, imageDifference, imageBaseline, imageDifferenceData } = require("./robot.library")
 
+    const defaultRet = { success: 1, message: 'Rule OK', stop: 0 }
+
 
     if (param1 == undefined) param1 = ''
     if (param2 == undefined) param2 = ''
@@ -65,11 +67,14 @@ async function specialFunction(page, variables, data, rulePosition, functionName
     switch (functionName) {
 
         case '#Describe':
+            console.log ('Describe detected in rules')
             //await logfile(data.userID, 'Describe', '--> (R' + rulePosition + ') Describe : ' + param1)
             break
+
         case '#It':
             //await logfile(data.userID, 'It', '--> (R' + rulePosition + ') It : ' + param1)
             break
+
         case '#debug':
             ret = await debug(variables, param1)
             break
@@ -81,13 +86,13 @@ async function specialFunction(page, variables, data, rulePosition, functionName
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
             return ret
         case '#imageBaseline':
-            ret = await imageBaseline(page, data, param1, param2) 
+            ret = await imageBaseline(page, data, param1, param2)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2)
             return ret
         case '#imageDifferenceData':
             ret = await imageDifferenceData(variables, param1, param2)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2)
-            return ret            
+            return ret
         case '#ask':
             ret = await ask(page, variables, param1, param2, param3, param4)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3 + ' : ' + param4)
@@ -98,7 +103,7 @@ async function specialFunction(page, variables, data, rulePosition, functionName
             return ret
         case '#url':
             ret = await url(page, variables, data.projectID, param1)
-            page.manage().window().maximize();
+            //page.manage().window().maximize();
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1)
             return ret
         case '#openNewTab':
@@ -109,7 +114,7 @@ async function specialFunction(page, variables, data, rulePosition, functionName
             return ret
         case '#closeTab':
             ret = await closeTab()
-            return ret            
+            return ret
         case '#loginUser':
             ret = await loginUser(page, variables, data, param1, param2, param3)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2 + ' : ' + param3)
@@ -245,7 +250,8 @@ async function specialFunction(page, variables, data, rulePosition, functionName
         case '#speak':
             speaking(param1)
             //await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1)
-            break
+            return defaultRet
+        //break
         case '#logfile':
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1)
             break
@@ -362,7 +368,7 @@ async function specialFunction(page, variables, data, rulePosition, functionName
             return ret
         case '#startTimer':
             ret = await startTimer(data, page, variables, param1)
-            await logfile(data.userID, 'Info', '... ' + functionName  + ' : ' + param1 )
+            await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1)
             return ret
         case '#stopTimer':
             ret = await stopTimer(data, page, variables, param1, param2)
@@ -371,15 +377,15 @@ async function specialFunction(page, variables, data, rulePosition, functionName
         case '#httpGet':
             ret = await httpGet(data, variables, param1)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2)
-            return ret            
+            return ret
         case '#httpPost':
             ret = await httpPost(data, variables, param1, param2)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2)
-            return ret 
+            return ret
         case '#httpData':
             ret = await httpData(variables, param1, param2)
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1 + ' : ' + param2)
-            return ret 
+            return ret
 
         default:
             variables.displayLog(1, 1, 'No special function with the name: ' + functionName)

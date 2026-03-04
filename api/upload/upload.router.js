@@ -3,8 +3,8 @@
  * @Author: Philippe Goffin 
  * @Email: artcomputer123@gmail.com
  * @Date: 2024-03-16
- * @Last Modified by: Philippe Goffin
- * @Last Modified time: 2024-03-17 11:39:16
+ * @Last Modified by: Someone
+ * @Last Modified time: 2026-03-04 11:50:14
  * @Description: All the routes available for the upload function
  */
 
@@ -12,16 +12,36 @@ const router = require("express").Router();
 const multer = require('multer');
 var fs = require('fs');
 
+
+
+
 const fileFilter = function (req, file, callback) {
+  // const allowedTypes = ["image/jpeg", "image/png", "image/gif",
+  //   "application/pdf",
+  //   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  //   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"]
+  // if (!allowedTypes.includes(file.mimetype)) {
+  //   const error = new Error("wrong file type")
+  //   error.code = "LIMIT_FILE_TYPES"
+  //   return callback(error, true)
+  // }
+
+  // 1. Check the MIME types (client check)
   const allowedTypes = ["image/jpeg", "image/png", "image/gif",
     "application/pdf",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"]
+    "application/x-pkcs12",         // .p12 / .pfx
+    "application/x-x509-ca-cert",   // .crt
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation", // .pptx
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",         // .xlsx
+    "application/octet-stream",    // Often used for .key files
+    "text/plain"                   // Sometimes .key files are treated as plain text           
+  ]
   if (!allowedTypes.includes(file.mimetype)) {
-    const error = new Error("wrong file type")
+    const error = new Error("wrong file type v2")
     error.code = "LIMIT_FILE_TYPES"
     return callback(error, true)
   }
+
   callback(null, true)
 }
 

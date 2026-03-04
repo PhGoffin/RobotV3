@@ -64,7 +64,8 @@
 
                             <div class="entity">
                                 <div class="actions">
-                                    <a :href="URL+ projectID + '_' + projectName + '@' + file.name">{{ index + 1 }}: {{ file.name }}</a>
+                                    <a :href="URL + projectID + '_' + projectName + '@' + file.name">{{ index + 1 }}: {{
+                                        file.name }}</a>
                                     <div class="icons">
                                         <i class="fa-solid fa-trash-can" @click="handleConfirmation(file.name)"
                                             title="Delete the file"></i>
@@ -203,21 +204,39 @@ export default {
 
 
         const validate = (file) => {
-            // check the size (client check)
-            const MAX_SIZE = 5 * 1024 * 1024 // 5 MB
-            // Check the extension (client check)
+
+            // 1. Check the MIME types (client check)
             const allowedTypes = ["image/jpeg", "image/png", "image/gif",
                 "application/pdf",
-                "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"]
+                "application/x-pkcs12",         // .p12 / .pfx
+                "application/x-x509-ca-cert",   // .crt
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation", // .pptx
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",         // .xlsx
+                "application/octet-stream",    // Often used for .key files
+                "text/plain"                   // Sometimes .key files are treated as plain text           
+            ]
+
+            // 2. Define allowed extensions (as a fallback)
+            const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'pptx', 'xlsx', 'crt', 'p12', 'key'];
+
+            // Get the file extension
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+
+            // check the size (client check)
+            const MAX_SIZE = 5 * 1024 * 1024 // 5 MB            
             if (file.size > MAX_SIZE) {
                 return 'Max size is 5 Mo!'
             }
-            if (!allowedTypes.includes(file.type)) {
-                return 'Only pdf, PowerPoint, Excel and images are allowed!'
+            // Check Type OR Extension
+            // We check both because .key files often have no MIME type in browsers
+            const isAllowedType = allowedTypes.includes(file.type);
+            const isAllowedExtension = allowedExtensions.includes(fileExtension);
+
+            if (!isAllowedType && !isAllowedExtension) {
+                return 'Only pdf, PowerPoint, Excel, Images, .p12, .pfx, .crt and .key files are allowed!';
             }
 
-            return ""
+            return ""; // File is valid
         }
 
         // --------------------------------------------------------------------------
@@ -253,7 +272,7 @@ export default {
                     if (uploadFile.value.success) {
                         consoleLog('Upload.vue/deleteUpload', 2, uploadFile.value, trace.value)
                         DisplayError('File deleted!', 'Info')
-                        loadAllFiles()                        
+                        loadAllFiles()
                         return (1)
                     } else {
                         consoleLog('Upload.vue/deleteUpload', 2, 'No Upload file found!', trace.value)
@@ -341,7 +360,7 @@ export default {
         return {
             errorMessage, styleMessage, trace, projectName, projectID, userID, showPopup, URL,
             fileInputKey, submitFlag, selectedFiles, uploadFiles, progress, uploading, filesUploaded,
-            handleCancel, handleFileSelected, handleSubmit, handleConfirmation, 
+            handleCancel, handleFileSelected, handleSubmit, handleConfirmation,
             handelDelete, handleCancelDelete, handleConfirmDelete
         }
 
