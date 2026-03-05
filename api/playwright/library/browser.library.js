@@ -113,6 +113,8 @@ class BrowserUtility {
         let certificate = '<N/A>'
         let certificateCode = '<N/A>'
         let certificateUrl = '<N/A>'
+        let certificateRole = '<N/A>'
+        let certificateValue = '<N/A>'
 
         // Get the headless (if any)
         const dataAPI1 = { projectID: data.projectID, userID: data.userID, code: 'Headless' }
@@ -198,6 +200,28 @@ class BrowserUtility {
         console.log('CertificateUrl: ' + certificateUrl)
 
 
+        // Get the certificate Role (if any)
+        const dataAPI7 = { projectID: data.projectID, userID: data.userID, code: 'CertificateRole' }
+        const reference7 = await getReferenceByCode(dataAPI7);
+        if (reference7.length) {
+            if (reference7[0].label != '<N/A>') {
+                certificateRole = reference7[0].label
+                certificateRole = certificateRole.toUpperCase()
+            }
+        }
+
+        // Get the certificate Value (if any)
+        const dataAPI8 = { projectID: data.projectID, userID: data.userID, code: 'CertificateValue' }
+        const reference8 = await getReferenceByCode(dataAPI8);
+        if (reference8.length) {
+            if (reference8[0].label != '<N/A>') {
+                certificateValue = reference8[0].label
+            }
+        }
+
+        console.log('certificateRole: ' + certificateRole)
+        console.log('certificateValue: ' + certificateValue)
+
 
         /* 
          ============================================================
@@ -214,6 +238,16 @@ class BrowserUtility {
              }
          ]);
          
+
+        // "pattern" is the URL, and "filter" helps pick the right cert if you have many.
+        const autoSelectCert = JSON.stringify([
+            {
+            "pattern": "*", 
+            "filter": {
+                "ISSUER": { "CN": "Citizen CA" } 
+            }
+            }
+        ]);         
  
          // Take the first certificate in the list
          const autoSelectCert = JSON.stringify([
@@ -250,10 +284,25 @@ class BrowserUtility {
 
         let browser
 
+        const autoSelectCert = JSON.stringify([
+            {
+                "pattern": "*",
+                "filter": {
+                    certificateRole: { "CN": certificateValue }
+                }
+            }
+        ]);
+
+
         switch (browserName) {
             case 'chrome':
+                if (certificateRole != '<N/A>' && certificateValue != '<N/A>') {
+                    console.log ('Auto selection of the certificate')
+                    browser = await chromium.launch({ channel: 'chrome', headless: headless, args: ['--start-maximized', `--auto-select-certificate-for-urls=${autoSelectCert}`] });
+                } else {
+                    browser = await chromium.launch({ headless: headless, args: ['--start-maximized'] });
+                }
                 //browser = await chromium.launch({ headless: headless, args: ['--start-maximized', `--auto-select-certificate-for-urls=${autoSelectCert}`, '--ignore-certificate-errors'] });
-                browser = await chromium.launch({ headless: headless, args: ['--start-maximized'] });
                 break
             case 'firefox':
                 browser = await firefox.launch({ headless: headless, args: ['--start-maximized'] });
@@ -274,7 +323,7 @@ class BrowserUtility {
             // ======        No Certificate         ======
             // ============================================
 
-            console.log('No certificate used!')
+            console.log('No certificate file used!')
 
             // Get the Device (if any) iPhone 6, Pixel 5
             /*
