@@ -6,8 +6,8 @@ module.exports = {
    * @Author: Philippe Goffin 
    * @Email: artcomputer123@gmail.com
    * @Date: 2024-02-21
- * @Last Modified by: Philippe Goffin
-   * @Last Modified time: 2024-03-09 10:25:57
+ * @Last Modified by: Someone
+   * @Last Modified time: 2026-03-05 11:01:59
    * @Description: All the database services available for the API Suite
    */
 
@@ -112,6 +112,33 @@ module.exports = {
   },
 
 
+  // ---------------------------------------------------------------------------
+  // Get all Suites info from the table Suiteheader (only active ones)
+  // ---------------------------------------------------------------------------
+  getActiveSuiteByHeader: (data) => {
+    //console.log ('Data: ', data)
+    return new Promise((resolve, reject) => {
+      mysql.query(
+        `SELECT H.subprojectID, D.suiteID, D.suiteheaderID, D.scenarioID, D.comment, H.label as headerlabel, D.position, D.active 
+         FROM suite D, suiteheader H 
+         WHERE D.suiteheaderID=? 
+         AND D.suiteheaderID = H.suiteheaderID
+         AND D.active = 1
+         ORDER BY LPAD(LOWER(D.position), 10, 0) asc`,
+        [
+          data.suiteheaderID
+        ],
+        (error, results, fields) => {
+          if (error) {
+            return reject(error);
+          }
+          //console.log ('Result: ', results)
+          return resolve(results);
+        }
+      );
+    });
+  },
+
 
   // ---------------------------------------------------------------------------
   // Update a Suite record 
@@ -136,6 +163,29 @@ module.exports = {
       );
     });
   },
+
+
+  // -----------------------------------------------------------
+  // Update suite active status
+  // -----------------------------------------------------------
+  updateActive: (data) => {
+    return new Promise((resolve, reject) => {
+      mysql.query(
+        `UPDATE suite SET active = ? WHERE suiteID = ?`,
+        [
+          data.active,
+          data.suiteID
+        ],
+        (error, results) => {
+          if (error) {
+            return reject(error);
+          }
+          return resolve(results);
+        }
+      );
+    });
+  },
+
 
   // -----------------------------------------------------------
   // Update Suite position

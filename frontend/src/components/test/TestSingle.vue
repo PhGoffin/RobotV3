@@ -32,10 +32,10 @@
             <i class="fa-solid fa-gear" @click="handleCommentType" title="Set to Business Comment"></i>
           </div>
           <div class="icons" v-if="actionAllowed && !importTest && test.active">
-            <i class="fa-solid fa-toggle-on" @click="handleActive" title="Disabled the test"></i>
+            <i class="fa-solid fa-toggle-on" @click="handleActive" title="Disable the test"></i>
           </div>
           <div class="icons" v-if="actionAllowed && !importTest && !test.active">
-            <i class="fa-solid fa-toggle-off" @click="handleActive" title="Enabled the test"></i>
+            <i class="fa-solid fa-toggle-off" @click="handleActive" title="Enable the test"></i>
           </div>
 
           <div class="icons" v-if="actionAllowed && !importTest">

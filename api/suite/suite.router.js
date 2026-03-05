@@ -14,7 +14,9 @@ const {
   getSuite,
   getSuiteBySubProject,
   getSuiteByHeader,
+  getActiveSuiteByHeader,
   updateSuite,
+  updateActive,
   updateSuitePosition, 
   reorderSuite,
   copySuite,
@@ -29,7 +31,9 @@ const {
 router.get("/:id", getSuite); 
 router.post("/subproject", getSuiteBySubProject); 
 router.post("/header", getSuiteByHeader); 
+router.post("/activeheader", getActiveSuiteByHeader); 
 router.post("/update", updateSuite); 
+router.post("/active", updateActive); 
 router.post("/position", updateSuitePosition); 
 router.post("/reorder", reorderSuite); 
 router.post("/copy", copySuite);

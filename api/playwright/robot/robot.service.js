@@ -9,7 +9,7 @@ module.exports = {
   * @Email: artcomputer123@gmail.com
   * @Date: 2025-05-08
   * @Last Modified by: Someone
-  * @Last Modified time: 2026-02-05 12:15:11
+  * @Last Modified time: 2026-03-05 09:16:36
   * @Description: All the Playwright services available for robot
   */
 
@@ -1508,7 +1508,7 @@ module.exports = {
       const robot = require("../library/robot.library.js")
       const { getScenarioById } = require("../../scenario/scenario.service.js");
       const { getTestByScenario } = require("../../test/test.service.js");
-      const { getSuiteByHeader } = require("../../suite/suite.service.js");
+      const { getActiveSuiteByHeader } = require("../../suite/suite.service.js");
       const { deleteLogfile } = require("../../logfile/logfile.service.js");
       const { getReferenceByCode } = require("../../reference/reference.service.js");
 
@@ -1547,7 +1547,7 @@ module.exports = {
       // Read all the scenarios of the suite
       // ----------------------------------
       const dataAPI = { suiteheaderID: data.suiteID }
-      const suites = await getSuiteByHeader(dataAPI);
+      const suites = await getActiveSuiteByHeader(dataAPI);
       if (!suites.length) {
         ret = { success: 0, message: "No suite found for the Id: " + data.suiteID }
         return resolve(ret);

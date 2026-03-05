@@ -15,7 +15,13 @@
 
       <div class="actions">
 
-        <div class="actions" >
+        <div class="icons" v-if="actionAllowed && suite.active">
+          <i class="fa-solid fa-toggle-on" @click="handleActive" title="Disable the suite"></i>
+        </div>
+        <div class="icons" v-if="actionAllowed && !suite.active">
+          <i class="fa-solid fa-toggle-off" @click="handleActive" title="Enable the suite"></i>
+        </div>
+        <div class="actions">
           <div class="icons" v-if="actionAllowed">
             <i class="fa-regular fa-trash-can" @click="handleConfirmation" title="Delete the suite"></i>
           </div>
@@ -55,10 +61,11 @@
 
   </div>
 </template>
-          
+
 <script>
 import { ref } from 'vue'
 import { displayMsg, consoleLog } from '../../util/debug';
+import updateActive from '../../composables/suite/updateActive'
 import PopupConfirm from '../PopupConfirm.vue'
 
 
@@ -146,16 +153,41 @@ export default {
     }
 
 
+    // --------------------------------------------------------------------------
+    // User want to enabled/disable a suite
+    // --------------------------------------------------------------------------
+    const handleActive = async () => {
+      consoleLog('SuiteSingle.vue/handleActive', 2, 'Change the active mode', trace.value)
+      suite.value.active = !suite.value.active
+
+      const myTest = ref([])
+      const { error, updateTheActive } = updateActive(suite.value.suiteID, suite.value.active)
+      return await updateTheActive(myTest, trace.value)
+        .then(function () {
+          // check the status of the update
+          consoleLog('SuiteSingle.vue/updateTheActive', 2, 'Suite active status: ' + myTest.value.success, trace.value)
+          if (myTest.value.success) {
+            consoleLog('SuiteSingle.vue/updateTheActive', 2, myTest, trace.value)
+            return (1)
+          } else {
+            consoleLog('SuiteSingle.vue/updateTheActive', 2, 'Error during the update of the suite active', trace.value)
+            return (0)
+          }
+        })
+
+    }
+
+
 
     return {
-      showDetails, projectID, userID, suite, suiteID, actionAllowed, showPopup, recordSelected, 
-      handleConfirmation, handelDelete, handleCancelDelete, handleConfirmDelete,
+      showDetails, projectID, userID, suite, suiteID, actionAllowed, showPopup, recordSelected,
+      handleConfirmation, handelDelete, handleCancelDelete, handleConfirmDelete, handleActive,
       handleSelect, handleInsert, handleMove
     }
   }
 }
 </script>
-          
+
 <style scoped>
 .entity {
   position: relative;

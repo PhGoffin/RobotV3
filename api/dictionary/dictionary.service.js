@@ -8,7 +8,7 @@ module.exports = {
    * @Email: artcomputer123@gmail.com
    * @Date: 2024-02-01
  * @Last Modified by: Someone
-   * @Last Modified time: 2026-01-28 16:44:29
+   * @Last Modified time: 2026-03-05 08:08:24
    * @Description: All the database services available for the API dictionary
    */
 
@@ -352,17 +352,40 @@ module.exports = {
   scanDictionary: (data) => {
     return new Promise(async (resolve, reject) => {
       console.log('Url: ' + data.myUrl)
+      console.log('Delay: ' + data.myDelay)
 
       // 1. Launch the browser (headless: false is required so the user can interact)
       const browser = await chromium.launch({ headless: false });
-      const context = await browser.newContext();
+      //const context = await browser.newContext();
+      // Create a context that ignores SSL errors
+      const context = await browser.newContext({
+        ignoreHTTPSErrors: true
+      });
       const page = await context.newPage();
       let theAttributes
 
-      // The URL you want to inspect
-      const targetUrl = data.myUrl
-      await page.goto(targetUrl);
+      try {
+        // The URL you want to inspect
+        const targetUrl = data.myUrl
+        await page.goto(targetUrl);
+      } catch (err) {
+        //console.log (err)
+        // if (err.message.includes('ERR_CERT_AUTHORITY_INVALID')) {
+        //   console.log("Warning: Invalid certificate: ERR_CERT_AUTHORITY_INVALID");
+        //   //await page.waitForTimeout(2000);
+        // } else {
+          console.log('Scan Url error', err.message)
+        //   return resolve({ success: 0, message: 'Scan: URL error!' })
+        // }
+      }
 
+      // Wait before starting the scan
+      await page.waitForTimeout(data.myDelay * 1000);
+
+      const say = require('say');
+      say.speak("Scanning in progress...", '', 1.0, async () => {
+        console.log('speaking...')
+      });
 
       // 2. Expose a Node.js function to the browser
       await page.exposeFunction('onElementClicked', (attributes) => {

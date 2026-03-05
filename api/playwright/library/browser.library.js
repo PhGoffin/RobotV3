@@ -308,17 +308,15 @@ class BrowserUtility {
             console.log('Device: ' + device)
 
 
-            context = await browser.newContext();
-            page = await context.newPage();
+            //context = await browser.newContext();
 
-            /*
-                context = await browser.newContext({
-                viewport: null, // Utile avec --start-maximized
-                ignoreHTTPSErrors: true // INDISPENSABLE ici
+            // Create a context that ignores SSL errors
+            context = await browser.newContext({
+                viewport: null, // Useful when --start-maximized
+                ignoreHTTPSErrors: true // Avoid https error
             });
-            page = await context.newPage();
-            */
 
+            page = await context.newPage();
 
             if (device != '<N/A>') {
                 context = await browser.newContext({
@@ -365,7 +363,7 @@ class BrowserUtility {
                 ret = { success: 0, message: "startBrowser: Cannot find the certificate: " + certificatePath + "!" }
                 return (ret)
             }
-            console.log ("the certificate: " + certificatePath + " exists!")
+            console.log("the certificate: " + certificatePath + " exists!")
 
             const isCertificatePfxP12 = /\.(p12|pfx)$/i.test(certificate);
             const isCertificateCrt = /\.crt$/i.test(certificate);
@@ -392,7 +390,7 @@ class BrowserUtility {
                     ret = { success: 0, message: "startBrowser: Cannot find the certificate key: " + certificateKey + "!" }
                     return (ret)
                 }
-                console.log ("the certificate key: " + certificateKey + " exists!")
+                console.log("the certificate key: " + certificateKey + " exists!")
 
                 clientCert = {
                     origin: certificateUrl,

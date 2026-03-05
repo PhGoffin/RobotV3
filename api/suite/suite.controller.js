@@ -3,8 +3,8 @@
  * @Author: Philippe Goffin 
  * @Email: artcomputer123@gmail.com
  * @Date: 2024-02-21
- * @Last Modified by: Philippe Goffin
- * @Last Modified time: 2024-03-14 15:38:03
+ * @Last Modified by: Someone
+ * @Last Modified time: 2026-03-05 09:14:15
  * @Description: All the controllers (call operations) for the API Suite
  */
 
@@ -14,7 +14,9 @@ const {
   getSuite,
   getSuiteBySubProject,
   getSuiteByHeader,
+  getActiveSuiteByHeader,  
   updateSuite,
+  updateActive,
   updateSuitePosition, 
   reorderSuite,
   copySuite,
@@ -95,6 +97,21 @@ module.exports = {
   }),
 
 
+  // ---------------------------------------------------------------------------
+  // get all active Suites info for a Suiteheader
+  // ---------------------------------------------------------------------------
+  getActiveSuiteByHeader: catchAsync(async (req, res, next) => {
+    res.set('Access-Control-Allow-Origin', '*');    
+    // Call the database services to get all Suites per suiteheader
+    const body = req.body;
+    //console.log ('Body: ', body)
+    const result = await getActiveSuiteByHeader(body);
+    return res.json({
+      success: 1,
+      data: result
+    });
+  }),
+
 
 
   // ---------------------------------------------------------------------------
@@ -113,6 +130,26 @@ module.exports = {
       message: "Suite updated successfully",
     });
   }),
+
+  // ---------------------------------------------------------------------------
+  // update active status
+  // ---------------------------------------------------------------------------
+  updateActive: catchAsync(async (req, res, next) => {
+    res.set('Access-Control-Allow-Origin', '*');    
+    const body = req.body;
+    // Call the database services to update test active status
+    const result = await updateActive(body);
+    if (!result.affectedRows) {
+      //console.log (result)
+      throw new AppError('Failed to update suite active!', 200);
+    }
+    return res.json({
+      success: 1,
+      message: "Suite active updated successfully",
+    });
+  }),
+
+
 
   // -----------------------------------------------------------
   // Update a Suite position

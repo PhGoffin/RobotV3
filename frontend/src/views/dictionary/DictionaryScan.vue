@@ -39,6 +39,13 @@
                                 <td></td>
                                 <td>
                                     <span v-if="myURL == ''">Please enter the URL in order to scan!</span>
+                                    <div class="input-container focus" v-else>
+                                        <input type="text" name="delay" class="input" @focus="handleFocus($event)"
+                                            @blur="handleBlur($event)" v-model="myDelay"
+                                            title="Delay (in seconds) before the beginning of the scan" />
+                                        <label>Delay</label>
+                                        <span>Delay</span>
+                                    </div>                                      
                                 </td>
                             </tr>
 
@@ -310,6 +317,7 @@ export default {
         const reference = ref([])
 
         const myURL = ref('')
+        const myDelay = ref(2)
         const paramURL = ref('scanURL')
         const scanning = ref(false)
         const tagName = ref('N/A')
@@ -483,7 +491,7 @@ export default {
             consoleLog('DictionaryScan.vue/handleScan', 2, 'User scan a website: ' + myURL.value, trace.value)
 
             // code, label, comment, language, active, projectID, dictionaryID
-            const { error, scanForTheDictionary } = scanDictionary(projectID.value, dictionaryID.value, myURL.value)
+            const { error, scanForTheDictionary } = scanDictionary(projectID.value, dictionaryID.value, myURL.value, myDelay.value)
             scanForTheDictionary(dictionary, trace.value)
                 .then(function () {
                     consoleLog('DictionaryScan.vue/handleScan', 2, '------ Scan the dictionary - projectID: ' + projectID.value + ', dictionaryID: ' + dictionaryID.value + ', myURL: ' + myURL.value, trace.value)
@@ -579,7 +587,7 @@ export default {
         return {
             errorMessage, styleMessage, dictionary, projectName, projectID, subprojectName, subprojectID, userID, selSource, source, excludeTag, selTagType, tagType,
             myURL, tagName, selTagName, id, selId, name, selName, className, selClassName, innerText, selInnerText, placeholder, selPlaceholder, xPath, selXpath, scanning,
-            code, codeHeader, label, language, comment, actives, selectedActive, createdBy, updatedBy,
+            code, codeHeader, label, language, comment, actives, selectedActive, createdBy, updatedBy, myDelay,
             handleCancel, handleSubmit, handleFocus, handleBlur, handleScan
         }
 

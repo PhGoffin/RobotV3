@@ -7,7 +7,7 @@ module.exports = {
    * @Email: artcomputer123@gmail.com
    * @Date: 2023-11-28 07:49:49 
  * @Last Modified by: Someone
-   * @Last Modified time: 2026-03-04 12:29:30
+   * @Last Modified time: 2026-03-05 09:02:14
    * @Description: All the database services available for the API reference
    */
 
@@ -69,7 +69,7 @@ module.exports = {
 
       try {
         mysql.query(
-          `SELECT referenceID, label, 99 as inputoutput FROM reference WHERE projectID = ? AND userID=? AND code = ? AND active = 1 ORDER BY LPAD(LOWER(position), 10, 0)`,
+          `SELECT referenceID, label, 99 as inputoutput FROM reference WHERE projectID = ? AND userID=? AND code = ? and active = 1 ORDER BY LPAD(LOWER(position), 10, 0)`,
           [
             data.projectID,
             data.userID,

@@ -3,7 +3,7 @@
  * @Email: artcomputer123@gmail.com
  * @Date: 2024-03-07
  * @Last Modified by: Someone
- * @Last Modified time: 2025-05-23 14:04:07
+ * @Last Modified time: 2026-03-05 08:36:15
  * @Description: Execute a selenium suite
  */
 
@@ -23,7 +23,7 @@ const executeSuite = (suiteName, suiteID, projectID, subprojectID, userID, userN
                 consoleLog('executeSuite.js/execSuite', 3, 'suiteID: ' + suiteID + " - " + suiteName, trace)
 
                     const url = process.env.VUE_APP_MYSQL_API
-                    let data = await fetch(url + 'Seleplaywrightnium/robot/suite', {
+                    let data = await fetch(url + 'playwright/robot/suite', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({  'suiteName': suiteName, 'suiteID': suiteID, 'projectID': projectID, 'subprojectID': subprojectID, 'userID': userID , 'userName': userName})
