@@ -3,8 +3,8 @@
  * @Author: Philippe Goffin 
  * @Email: artcomputer123@gmail.com
  * @Date: 2024-01-30
- * @Last Modified by: 
- * @Last Modified time: 2024-08-07 12:03:30
+ * @Last Modified by: Someone
+ * @Last Modified time: 2026-03-09 11:38:16
  * @Description: All the controllers (call operations) for the API Dataset
  */
 
@@ -15,6 +15,7 @@ const {
   getDatasetByCode,
   getDatasetBySubProject,
   getDatasetByHeader,
+  getDatasetByHeaderCode,
   updateDataset,
   updateDatasetPosition,
   reorderDataset,
@@ -113,6 +114,20 @@ module.exports = {
     });
   }),
 
+
+  // ---------------------------------------------------------------------------
+  // get all Datasets info for a datasetheader code
+  // ---------------------------------------------------------------------------
+  getDatasetByHeaderCode: catchAsync(async (req, res, next) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    // Call the database services to get all Datasets per header code
+    const body = req.body;
+    const result = await getDatasetByHeaderCode(body);
+    return res.json({
+      success: 1,
+      data: result
+    });
+  }),
 
 
 

@@ -62,6 +62,9 @@ const trainingRouter = require("./api/ai_training/training.router");
 //const browserRouter = require("./api/Selenium/browser/browser.router");
 //const browserRouter = require("./api/playwright/browser/browser.router");
 
+// Certificate
+const certificateRouter = require("./api/certificate/certificate.router");
+const httpdataRouter = require("./api/httpdata/httpdata.router");
 
 
 // Selenium
@@ -135,6 +138,9 @@ app.use("/api/aitraining", trainingRouter);
 
 //app.use("/api/Selenium/robot", robotRouter);
 app.use("/api/playwright/robot", playwrightRouter);
+
+app.use("/api/certificate", certificateRouter);
+app.use("/api/httpdata", httpdataRouter);
 
 
 

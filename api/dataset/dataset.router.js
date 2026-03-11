@@ -15,6 +15,7 @@ const {
   getDatasetByCode,
   getDatasetBySubProject,
   getDatasetByHeader,
+  getDatasetByHeaderCode,
   updateDataset,
   updateDatasetPosition, 
   reorderDataset,
@@ -33,6 +34,7 @@ const {
 router.get("/:id", getDataset); 
 router.post("/subproject", getDatasetBySubProject); 
 router.post("/header", getDatasetByHeader); 
+router.post("/headercode", getDatasetByHeaderCode); 
 router.post("/code", getDatasetByCode);
 router.post("/update", updateDataset); 
 router.post("/position", updateDatasetPosition); 

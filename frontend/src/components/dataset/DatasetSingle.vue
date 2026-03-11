@@ -8,10 +8,11 @@
 
     <div class="actions">
 
-      <h3 @click="showDetails = !showDetails" title="Click to show details" class="data"  ref="single" v-if="dataset.active < 2">
-        {{ dataset.position }} > {{ dataset.headercode }}{{ dataset.code }} - {{ dataset.label }}
+      <h3 @click="showDetails = !showDetails" title="Click to show details" class="data" ref="single"
+        v-if="dataset.active < 2">
+        {{ dataset.position }} > {{ dataset.headercode }}{{ dataset.code }} - {{ shortLabel }}
       </h3>
-      <h3 @click="showDetails = !showDetails" title="Click to show details" class="data"  ref="single" v-else>
+      <h3 @click="showDetails = !showDetails" title="Click to show details" class="data" ref="single" v-else>
         {{ dataset.position }} > {{ dataset.comment }}
       </h3>
 
@@ -109,6 +110,11 @@ export default {
     const showDetails = ref(false)
     const showPopup = ref(false)
     const dataset = ref(props.dataset)
+    
+    let shortLabel = dataset.value.label
+    if (shortLabel.length > 40) {
+      shortLabel = dataset.value.label.slice(0, 40) + '...'
+    }
     const location = ref(props.location)
     const IamSuperUser = ref(props.superUser)
     const actionAllowed = ref(true)
@@ -289,7 +295,7 @@ export default {
 
     return {
       showDetails, projectID, userID, dataset, datasetID, actionAllowed, showPopup, recordSelected,
-      testID, importData, importWizard, importRule, classColor, importSingleData, single,
+      testID, importData, importWizard, importRule, classColor, importSingleData, single, shortLabel,
       handleConfirmation, handelDelete, handleCancelDelete, handleConfirmDelete,
       handleSelect, handleInsert, handleCopy, handleMove, handleImport
     }

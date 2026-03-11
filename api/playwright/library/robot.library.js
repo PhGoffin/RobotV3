@@ -3298,7 +3298,7 @@ async function showAllPopups(page, data, variables) {
         });
 
         return { success: 1, message: 'showAllPopups OK!', stop: 0 }
-        
+
     } catch (error) {
         console.error("showAllPopups Error:", error);
         return { success: 0, message: 'showAllPopups Error: ' + error.message, stop: 1 }
@@ -4813,6 +4813,7 @@ async function postData(data, variables, url, parameters, token) {
 * ---------------------------------------------------------------------------- 
 * @function
 *  httpPost:  Fetches data from a REST API using the POST method
+*             the result is stored in the global variable: httpResultUser 
 * 
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
@@ -4867,7 +4868,7 @@ async function httpPost(data, variables, apiUrl, paramsString, token) {
         httpResult = await postData(data, variables, apiUrl, paramsString, token);
         //httpResultUser[data.userID] = httpResult
         console.log("Success:", httpResult);
-        // httpResultUser.push ({"id": data.userID})
+        httpResultUser.push({ "id": data.userID })
         // console.log ('************************************************************=======')
         // console.log("Success User:", httpResultUser);
     } catch (error) {
@@ -4944,6 +4945,7 @@ async function putData(data, variables, url, parameters, token) {
 * ---------------------------------------------------------------------------- 
 * @function
 *  httpPut:  Fetches data from a REST API using the PUT method
+*            the result is stored in the global variable: httpResultUser 
 * 
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
@@ -4998,7 +5000,7 @@ async function httpPost(data, variables, apiUrl, paramsString, token) {
         httpResult = await putData(data, variables, apiUrl, paramsString, token);
         //httpResultUser[data.userID] = httpResult
         console.log("Success:", httpResult);
-        // httpResultUser.push ({"id": data.userID})
+        httpResultUser.push({ "id": data.userID })
         // console.log ('************************************************************=======')
         // console.log("Success User:", httpResultUser);
     } catch (error) {
@@ -5055,7 +5057,8 @@ async function fetchData(data, variables, url, token) {
 /**
 * ---------------------------------------------------------------------------- 
 * @function
-*  httpGet:  Fetches data from a REST API using the GET method. 
+*  httpGet:  Fetches data from a REST API using the GET method.
+*            the result is stored in the global variable: httpResultUser 
 * 
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
@@ -5145,6 +5148,7 @@ async function fetchData(data, variables, url, token) {
 * ---------------------------------------------------------------------------- 
 * @function
 *  httpDelete:  Fetches data from a REST API using the DELETE method. 
+*               the result is stored in the global variable: httpResultUser 
 * 
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
@@ -5205,28 +5209,19 @@ async function httpData(data, variables, expression, variable) {
 
     console.log('Expression', expression)
     expression = variables.evaluateVariable(expression)
-    //let expression2 = expression
 
     try {
-        // expression = 'httpResult' + expression
-        // let result = await eval(expression)
-        // console.log("result", result)
-        // variables.setVariable(variable, result)
-        //console.log('record size:', httpResultUser.length)
-
         // retrieve the record of the user id
         const record = httpResultUser.findLast(item => item.id === data.userID)
         //console.log(record)
         expression = 'record.result' + expression
-
         // process the expression
         //console.log('Expression', expression)
         let result = await eval(expression)
         console.log("result", result)
         variables.setVariable(variable, result)
-
-
         return { success: 1, message: "httpData: OK", value: result, stop: 0 }
+
     } catch (error) {
         console.error("Error:", error);
         return { success: 0, message: "Error in httpData", stop: 1 }
@@ -5242,8 +5237,10 @@ async function httpData(data, variables, expression, variable) {
 * 
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
-* @param {string} expression    Expression to access the structure of the data stored in httpResult 
-* @param {string} variable      Name of the variable to store the result of the expression
+* @param {string} element:      name of the element 
+* @param {string} operator:     'Equal' or 'Contains'
+* @param {string} expected:     the value to search
+* @param {string} variable:     name of the variable to store the result (-1 if not found)
 *
 */
 async function httpSearchData(data, variables, element, operator, expected, variable) {
@@ -5288,6 +5285,422 @@ async function httpSearchData(data, variables, element, operator, expected, vari
         return { success: 0, message: "Error in httpSearchData", stop: 1 }
     }
 }
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  PublicKey:  Extract the public key from a certificate
+* 
+* @param {object} data:             all the parameters
+* @param {object} variables:        array of all the variables
+* @param {string} certificatePath:   Path of the certificate 
+*
+*/
+async function PublicKey(data, variables, certificatePath, password) {
+    const forge = require('node-forge');
+    const fs = require('fs');
+    const { execSync } = require('child_process');
+
+    /*    
+    
+    
+        try {
+            console.log('Step 1: Reading file');
+            const p12Buffer = fs.readFileSync(certificatePath);
+            
+            // Utiliser forge.util.createBuffer pour une meilleure gestion binaire
+            const p12Asn1 = forge.asn1.fromDer(p12Buffer.toString('binary'));
+            
+            console.log('Step 2: Parsing PKCS#12');
+            const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, password);
+    
+            console.log('Step 3: Extracting bags');
+            // On récupère tous les sacs de type certBag
+            const certBags = p12.getBags({ bagType: forge.pki.oids.certBag })[forge.pki.oids.certBag];
+            
+            if (!certBags || certBags.length === 0) {
+                throw new Error("No certBags found in the p12 file.");
+            }
+    
+            // Étape cruciale : Chercher le premier bag qui contient un certificat valide
+            let cert = null;
+            for (let i = 0; i < certBags.length; i++) {
+                if (certBags[i].cert) {
+                    cert = certBags[i].cert;
+                    console.log(`Step 4: Valid certificate found in bag [${i}]`);
+                    break;
+                }
+            }
+    
+            if (!cert) {
+                throw new Error("Certificate object is null or empty in all bags.");
+            }
+    
+            console.log('Step 5: Converting to PEM');
+            // Si cert est valide, cette ligne ne plantera plus
+            const pem = forge.pki.certificateToPem(cert);
+            
+            console.log('Step 6: Cleaning Base64');
+            const base64Cert = pem
+                .replace(/-----BEGIN CERTIFICATE-----/g, '')
+                .replace(/-----END CERTIFICATE-----/g, '')
+                .replace(/\s+/g, ''); // Supprime les retours à la ligne et espaces
+    
+            console.log('Last Step: Success');
+            return base64Cert;
+    
+        } catch (error) {
+            // Gestion des erreurs améliorée
+            const errorMsg = error.message || "";
+            const isInvalidPassword = /PKCS#12 MAC could not be verified\. Invalid password\?$/i.test(errorMsg);
+            
+            if (isInvalidPassword) {
+                console.error("PublicKey Error: Invalid password");
+                // await logfile(...)
+            } else {
+                console.error("PublicKey Internal Error:", errorMsg);
+            }
+            return "<ERROR>";
+        }        
+    */
+
+    try {
+        // Commande pour extraire le certificat en PEM sans la clé privée
+        const cmd = `openssl pkcs12 -in "${certificatePath}" -nokeys -nodes -passin pass:${password}`;
+        const output = execSync(cmd).toString();
+
+        console.log('PublicKey: ', output)
+
+        return output
+            .replace(/-----BEGIN CERTIFICATE-----/g, '')
+            .replace(/-----END CERTIFICATE-----/g, '')
+            .replace(/\s+/g, '');
+    } catch (e) {
+        console.log('PublicKey Error', e)
+        return "<ERROR>";
+    }
+
+
+
+
+}
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  buildAssertionPayload:  process the dataset to build the playload
+* 
+* @param {string} dataset:          array of the dataset (from a datasetheader)
+* @param {string} certificateKey:   public key decoded from the certificate
+* @param {string} requestID:        (Optional) requestID, if not provided the requestID will be generated
+*
+*/
+async function buildAssertionPayload(dataset, certificateKey, requestID) {
+    const payload = {};
+    //const crypto = require('crypto');
+    if (requestID == '<N/A>' || requestID == undefined) requestID = ''
+
+    for (const item of dataset) {
+        // 1. Clean the key name (e.g., remove the leading underscore '_policy' -> 'policy')
+        const cleanKey = item.code.replace('_', '');
+
+        let finalValue = item.label;
+
+        // 2. Handle Placeholders
+        if (finalValue.toLowerCase() === '<publickey>') {
+            // Logic to extract the cert string
+            finalValue = certificateKey;
+        }
+        else if (finalValue.toLowerCase() === '<requestid>') {
+            // Generate a fresh UUID
+            //finalValue = crypto.randomUUID();
+            finalValue = requestID || `REQ-${Date.now()}` // Auto-generate ID if not provided
+        }
+        // Otherwise, it uses the literal value from 'label' (e.g., 'CN_POLICY')
+
+        payload[cleanKey] = finalValue;
+    }
+
+    return payload;
+}
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  getSAMLContext:  Create the SAML Context for the Assertion or the Transaction
+* 
+* @param {object} data:                 all the parameters
+* @param {string} certificateDataName:  name of the dataset for the certificate 
+*
+*/
+async function getSAMLContext(data, certificateDataName) {
+    const { getDatasetByHeaderCode } = require("../../dataset/dataset.service.js");
+    const { getProjectById } = require("../../project/project.service.js");
+    const { fileExist } = require("./file.library");
+    const { request } = require('playwright');
+    const path = require('path');
+
+    // 1. Get and build Certificate Data
+    const dataAPI1 = { subprojectID: data.subprojectID, datasetheaderCode: certificateDataName };
+    const result1 = await getDatasetByHeaderCode(dataAPI1);
+
+    if (!result1.length) throw new Error(`SAML: Cannot find the dataset: ${certificateDataName}!`);
+
+    // Assuming buildAssertionPayload is available in scope
+    const certificateData = await buildAssertionPayload(result1, '<N/A>', '<N/A>');
+
+    if (!certificateData.Url || certificateData.Url === '<N/A>' ||
+        !certificateData.Name || certificateData.Name === '<N/A>' ||
+        !certificateData.Key || certificateData.Key === '<N/A>') {
+        throw new Error("SAML Assertion: Certificate data not ok!");
+    }
+
+    // 2. Resolve Project Path
+    const projectResult = await getProjectById(data.projectID);
+    if (!projectResult.length) throw new Error(`SAML: Cannot find project: ${data.projectID}`);
+
+    const projectName = projectResult[0].project;
+    const pathName = `../../../uploads/${data.projectID}_${projectName}/`;
+    const certificatePath = path.join(__dirname, pathName + certificateData.Name);
+
+    if (!(await fileExist(certificatePath))) {
+        throw new Error(`SAML: Certificate file not found: ${certificatePath}`);
+    }
+
+    // 3. Configure Client Certificate
+    const isPfx = /\.(p12|pfx)$/i.test(certificateData.Name);
+    const isCrt = /\.crt$/i.test(certificateData.Name);
+    let clientCert;
+
+    if (isPfx) {
+        clientCert = {
+            origin: certificateData.Url,
+            pfxPath: certificatePath,
+            passphrase: certificateData.Key
+        };
+    } else if (isCrt) {
+        const certificateKeyPath = certificatePath.replace('.crt', '.key');
+        if (!(await fileExist(certificateKeyPath))) {
+            throw new Error(`SAML: Key file not found: ${certificateKeyPath}`);
+        }
+        clientCert = {
+            origin: certificateData.Url,
+            certPath: certificatePath,
+            keyPath: certificateKeyPath,
+            ...(certificateData.Key !== '<N/A>' && { passphrase: certificateData.Key })
+        };
+    } else {
+        throw new Error("SAML: Invalid certificate extension. Use .p12, .pfx or .crt");
+    }
+
+    // 4. Create the Playwright Context
+    const apiContext = await request.newContext({
+        baseURL: certificateData.Url,
+        extraHTTPHeaders: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        clientCertificates: [clientCert]
+    });
+
+    return { apiContext, certificateData };
+}
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  SAML_Assertion:  Perform a SAML Assertionrequest
+*         the result is stored in the global variable: httpResultUser 
+* 
+* @param {object} page:                 playwright page
+* @param {object} data:                 all the parameters
+* @param {object} variables:            array of all the variables
+* @param {string} certificateDataName:  name of the dataset for the certificate 
+* @param {string} assertionUrl:         Url for the assertion 
+* @param {string} assertionDataName:    name of the dataset for the assertion 
+*
+*/
+async function SAML_Assertion(page, data, variables, certificateDataName, assertionUrl, assertionDataName) {
+    const { getCertificateByCode, createCertificate, updateCertificate } = require("../../certificate/certificate.service.js");
+    const { getDatasetByHeaderCode } = require("../../dataset/dataset.service.js");
+
+    let apiContext;
+    let certificateKey = '<N/A>';
+    let requestID = null;
+
+    try {
+        // --- STEP 1: SETUP CONTEXT ---
+        const contextData = await getSAMLContext(data, certificateDataName);
+        apiContext = contextData.apiContext;
+        // Note: we can access contextData.certificateData if needed
+
+        // --- STEP 2: GET ASSERTION DATASET ---
+        console.log("SAML: Get Assertion Dataset");
+        let dynamicData;
+        const dataAPI2 = { subprojectID: data.subprojectID, datasetheaderCode: assertionDataName };
+        const result2 = await getDatasetByHeaderCode(dataAPI2);
+
+        if (result2.length) {
+            dynamicData = await buildAssertionPayload(result2, certificateKey, requestID);
+            console.log('Final Payload generated:', dynamicData);
+        } else {
+            return { success: 0, message: `SAML: Cannot find the dataset: ${assertionDataName}!`, stop: 1 };
+        }
+
+        // --- STEP 3: REQUEST ASSERTION ---
+        console.log("SAML: Requesting Assertion...");
+        const assertionResponse = await apiContext.post(assertionUrl, {
+            data: dynamicData
+        });
+
+        if (!assertionResponse.ok()) {
+            const errorText = await assertionResponse.text();
+            throw new Error(`Assertion failed: ${assertionResponse.status()} - ${errorText}`);
+        }
+
+        const assertionResult = await assertionResponse.json();
+        const samlToken = assertionResult.assertion;
+        console.log("Assertion Received.");
+
+        // --- STEP 4: STORE OR UPDATE TOKEN ---
+        const dataAPI3 = { subprojectID: data.subprojectID, code: assertionDataName };
+        const result3 = await getCertificateByCode(dataAPI3);
+
+        if (result3.length) {
+            // Update existing
+            console.log('Existing token found, updating ID:', result3[0].certificateID);
+            const updateResult = await updateCertificate({
+                token: samlToken,
+                certificateID: result3[0].certificateID
+            });
+
+            if (updateResult.affectedRows === 0) {
+                return { success: 0, message: "SAML Assertion: Update token fails!", stop: 1 };
+            }
+            console.log('Certificate token updated!');
+        } else {
+            // Create new
+            console.log('No token found, creating new record');
+            const createResult = await createCertificate({
+                subprojectID: data.subprojectID,
+                code: assertionDataName,
+                token: samlToken
+            });
+
+            if (createResult.affectedRows === 0) {
+                return { success: 0, message: "SAML Assertion: Store token fails!", stop: 1 };
+            }
+            console.log('Certificate token created!');
+        }
+
+        return { success: 1, message: "SAML Assertion: OK!", stop: 0 };
+
+    } catch (error) {
+        console.error("Error during SAML Assertion execution:", error.message);
+        return { success: 0, message: "SAML: Error during API execution! " + error.message, stop: 1 };
+    } finally {
+        // Ensure the Playwright context is always closed
+        if (apiContext) {
+            await apiContext.dispose();
+        }
+    }
+}
+
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  SAML_Transaction:  Perform a SAML transaction request
+* 
+* @param {object} page:                 playwright page
+* @param {object} data:                 all the parameters
+* @param {object} variables:            array of all the variables
+* @param {string} certificateDataName:  name of the dataset for the certificate 
+* @param {string} assertionDataName:    name of the dataset for the assertion 
+* @param {string} transactionUrl:       Url for the assertion 
+* @param {string} transactionDataName:  name of the dataset for the assertion 
+*
+*/
+async function SAML_Transaction(page, data, variables, certificateDataName, assertionDataName, transactionUrl, transactionDataName) {
+    const { getCertificateByCode } = require("../../certificate/certificate.service.js");
+    const { getDatasetByHeaderCode } = require("../../dataset/dataset.service.js");
+    const { getHttpdataByCode, createHttpdata, updateHttpdata } = require("../../httpdata/httpdata.service.js");
+
+
+    let apiContext;
+
+    try {
+        // Use the new helper
+        const contextData = await getSAMLContext(data, certificateDataName);
+        apiContext = contextData.apiContext;
+
+        // Get the samlToken
+        const tokenResult = await getCertificateByCode({ subprojectID: data.subprojectID, code: assertionDataName });
+        if (!tokenResult.length) return { success: 0, message: `SAML: Token not found for ${assertionDataName}`, stop: 1 };
+
+        const token = tokenResult[0].token;
+
+        // Get the transaction dataset
+        const result2 = await getDatasetByHeaderCode({ subprojectID: data.subprojectID, datasetheaderCode: transactionDataName });
+        if (!result2.length) return { success: 0, message: `SAML: Dataset not found: ${transactionDataName}`, stop: 1 };
+
+        const dynamicData = await buildAssertionPayload(result2, '<N/A>', null);
+
+        // Execute Transaction
+        console.log("Executing Transaction...");
+        const txResponse = await apiContext.post(transactionUrl, {
+            headers: { 'Authorization': token },
+            data: dynamicData
+        });
+
+        const txResult = await txResponse.json();
+        console.log("Transaction Result:", txResult);
+
+        // --- STEP 4: STORE OR UPDATE the txResult ---
+        const dataAPI1 = { subprojectID: data.subprojectID, code: assertionDataName };
+        const result1 = await getHttpdataByCode(dataAPI1);
+
+        if (result1.length) {
+            // Update existing
+            console.log('Existing httpdata found, updating ID:', result1[0].httpdataID);
+            const updateResult = await updateHttpdata({
+                jsondata: JSON.stringify(txResult),
+                httpdataID: result1[0].httpdataID
+            });
+
+            if (updateResult.affectedRows === 0) {
+                return { success: 0, message: "SAML Transaction: Update http data fails!", stop: 1 };
+            }
+            console.log('Httpdata updated!');
+        } else {
+            // Create new
+            console.log('No httpdata found, creating new record');
+            const createResult = await createHttpdata({
+                subprojectID: data.subprojectID,
+                code: assertionDataName,
+                jsondata: JSON.stringify(txResult)
+            });
+
+            if (createResult.affectedRows === 0) {
+                return { success: 0, message: "SAML Transaction: Store http data fails!", stop: 1 };
+            }
+            console.log('Httpdata created!');
+        }
+
+        return { success: 1, message: "SAML: OK!", stop: 0 };
+
+    } catch (error) {
+        console.error("SAML Error:", error.message);
+        return { success: 0, message: error.message, stop: 1 };
+    } finally {
+        if (apiContext) await apiContext.dispose();
+    }
+}
+
 
 
 /**
@@ -6075,6 +6488,16 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
             case 'httpSearchData':
                 ret = await httpSearchData(data, variables, param1, param2, param3, param4)
                 if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + param4 + ' = ' + ret.value)
+                return ret
+
+            case 'SAML_Assertion':
+                ret = await SAML_Assertion(page, data, variables, param1, param2, param3, param4)
+                //if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
+                return ret
+
+            case 'SAML_Transaction':
+                ret = await SAML_Transaction(page, data, variables, param1, param2, param3, param4)
+                //if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
             case 'imageDifference':
@@ -6915,6 +7338,8 @@ module.exports = {
     httpGet: httpGet,
     httpPost: httpPost,
     httpData: httpData,
+    SAML_Assertion: SAML_Assertion,
+    SAML_Transaction: SAML_Transaction,
     imageDifference: imageDifference,
     imageBaseline: imageBaseline,
     imageDifferenceData: imageDifferenceData,

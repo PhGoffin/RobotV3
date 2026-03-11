@@ -7,7 +7,7 @@ module.exports = {
  * @Email: artcomputer123@gmail.com
  * @Date: 2024-01-30
  * @Last Modified by: Someone
- * @Last Modified time: 2025-02-26 13:41:52
+ * @Last Modified time: 2026-03-09 11:31:53
  * @Description: All the database services available for the API Dataset
  */
 
@@ -150,6 +150,35 @@ module.exports = {
       );
     });
   },
+
+
+  // ---------------------------------------------------------------------------
+  // Get all Datasets info from the table Datasetheader with the code
+  // ---------------------------------------------------------------------------
+  getDatasetByHeaderCode: (data) => {
+    return new Promise((resolve, reject) => {
+      mysql.query(
+        `SELECT D.datasetID, D.subprojectID, CONCAT(H.code, D.code) as fullcode, 
+         H.code as headercode, D.code, D.label, D.comment, D.position, D.active, D.createdby, D.created, D.updatedby, D.updated  
+         FROM dataset D, datasetheader H 
+         WHERE H.subprojectID=?
+         AND H.code=? 
+         AND D.datasetheaderID = H.datasetheaderID
+         ORDER BY LPAD(LOWER(D.position), 10, 0) asc`,
+        [
+          data.subprojectID,
+          data.datasetheaderCode
+        ],
+        (error, results, fields) => {
+          if (error) {
+            return reject(error);
+          }
+          return resolve(results);
+        }
+      );
+    });
+  },
+
 
 
   // ---------------------------------------------------------------------------

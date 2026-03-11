@@ -52,8 +52,8 @@
                     </div>
 
                     <div class="input-container focus">
-                        <input type="text" name="label" class="input" @focus="handleFocus($event)"
-                            @blur="handleBlur($event)" maxlength="255" v-model="label" />
+                        <textarea type="text" name="label" class="input" @focus="handleFocus($event)"
+                            @blur="handleBlur($event)" v-model="label" />
                         <label>Value</label>
                         <span>Value</span>
                     </div>
