@@ -7,8 +7,6 @@ let browserMiddelware = new BrowserMiddelware
 let tabPage = []
 let tabPageID = 0
 let tabPageCurrent = 0
-//let httpResult = null
-let httpResultUser = []
 let imageResult = null
 
 
@@ -44,6 +42,31 @@ async function switchToDefaultContent(page, variables) {
 
 }
 
+
+/**
+ * @function
+ *   nameVariable: replace all the $$variable by the evaluate of the $variable
+ *
+ * @param {string} myName Name of the variable.
+ *
+ */
+async function nameVariable(variables, myName) {
+    // Regex is used to capture the name after the $$
+    const regex = /\$\$([a-zA-Z0-9]+)/g;
+
+    return myName.replace(regex, (match) => {
+        // 'match' contains the string (ex: "$$Loop")
+        // On passe ce match directement à votre fonction existante
+        const newName = variables.evaluateVariable(match.replace("$$", "$"), true);
+        //console.log(`Replace of ${match} par ${newName}`);
+        return newName;
+    });
+
+}
+
+
+
+
 /**
 * ---------------------------------------------------------------------------- 
 * @function <OK>
@@ -59,6 +82,9 @@ async function switchToDefaultContent(page, variables) {
 async function dictionary(variables, data, code, language, variable) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     let value = '<N/A>'
+
+    // replace $$name by the value of the variable $name
+    variable = await nameVariable (variables, variable)    
 
     if (code == undefined) {
         return { success: 0, message: 'code is undefined in the function dictionary!', stop: 1 }
@@ -76,8 +102,7 @@ async function dictionary(variables, data, code, language, variable) {
         code = code.substring(0, code.length - 1)
     }
 
-    code = variables.evaluateVariable(code)
-    code = code.replace(/'/g, "");
+    code = variables.evaluateVariable(code, true)
 
     // Check if the code is expressed in a valid dictionary format
     if (code[0] == '@') {
@@ -304,14 +329,11 @@ async function email(variables, data, myEmailTo, mySubject, myBody, myAttachment
 
 
     // evaluate the parameters
-    myEmailTo = variables.evaluateVariable(myEmailTo);
-    myEmailTo = myEmailTo.replace(/'/g, "");
-    mySubject = variables.evaluateVariable(mySubject);
-    mySubject = mySubject.replace(/'/g, "");
+    myEmailTo = variables.evaluateVariable(myEmailTo, true);
+    mySubject = variables.evaluateVariable(mySubject, true);
     mySubject = mySubject.replace(/<BR>/g, "\n");
     mySubject = mySubject.replace(/&quot/g, '"');
-    myBody = variables.evaluateVariable(myBody);
-    myBody = myBody.replace(/'/g, "");
+    myBody = variables.evaluateVariable(myBody, true);
     //myBody = myBody.replace(/<BR>/g, "\n");
     myBody = myBody.replace(/<BR>/g, "<br />");
     myBody = myBody.replace(/&quot/g, '"');
@@ -348,8 +370,7 @@ async function email(variables, data, myEmailTo, mySubject, myBody, myAttachment
 
     if (myAttachment != undefined && myAttachment != '' && myAttachment != 'N/A' && myAttachment != '<N/A>' && myAttachment != '0') {
 
-        myAttachment = variables.evaluateVariable(myAttachment);
-        myAttachment = myAttachment.replace(/'/g, "");
+        myAttachment = variables.evaluateVariable(myAttachment, true);
         variables.displayLog(1, 2, 'email attachment(' + myAttachment + ')');
         // Split the attachment by ;
         let myAttachmentArray = myAttachment.split(";");
@@ -429,10 +450,9 @@ async function stopTest(variables, condition, message) {
         return { success: 0, message: 'stopTest, condition is mandatory!', stop: 1 }
     }
 
-    condition = variables.evaluateVariable(condition)
+    condition = variables.evaluateVariable(condition, false)
     //condition = condition.replace(/'/g, "");    
-    message = variables.evaluateVariable(message)
-    message = message.replace(/'/g, "");
+    message = variables.evaluateVariable(message, true)
 
     try {
         resultCondition = await eval(condition);
@@ -806,8 +826,7 @@ async function detectGUI(page, variables, data, selectorID, myCriteria, myPositi
 
     // Search the text in the dataset 
     if (myCriteria[0] == '#') {
-        myCriteria = variables.evaluateVariable(myCriteria)
-        myCriteria = myCriteria.replace(/'/g, "");
+        myCriteria = variables.evaluateVariable(myCriteria, true)
         dataAPI = { subprojectID: data.subprojectID, code: myCriteria, language: '*', active: 1 }
         const result = await getDatasetByCode(dataAPI);
         if (result.length) {
@@ -1261,6 +1280,10 @@ async function getUrl(page, variables, myVariable) {
     console.log('getUrl...................')
     const { Left } = require("./string.library.js")
 
+    // replace $$name by the value of the variable $name
+    myVariable = await nameVariable (variables, myVariable)    
+
+
     try {
         console.log('getURL......')
         const url = await page.url();
@@ -1578,6 +1601,10 @@ async function dummyLogin(page, variables, data, dummyUser, variable) {
     let ret
     let dummyLogin = ''
 
+    // replace $$name by the value of the variable $name
+    variable = await nameVariable (variables, variable)    
+
+
     //console.log('Data: ', data)
     // Evaluate the dummyUser
     if (dummyUser == undefined) {
@@ -1631,6 +1658,10 @@ async function dummyExtraInfo(page, variables, data, dummyUser, variable) {
     const { getDummyuserByUser } = require("../../dummyuser/dummyuser.service.js");
     let ret
     let extraInfo = ''
+
+    // replace $$name by the value of the variable $name
+    variable = await nameVariable (variables, variable)    
+
 
     //console.log('Data: ', data)
     // Evaluate the dummyUser
@@ -1687,8 +1718,7 @@ async function pause(page, variables, subprojectID, delay) {
     else if (isNaN(delay)) {
         // Search the text in the dataset 
         if (delay[0] == '#') {
-            delay = variables.evaluateVariable(delay)
-            delay = delay.replace(/'/g, "");
+            delay = variables.evaluateVariable(delay, true)
             const dataAPI = { subprojectID: subprojectID, code: delay, language: '*', active: 1 }
             const result = await getDatasetByCode(dataAPI);
             if (result.length) {
@@ -1995,16 +2025,13 @@ async function setValue(page, data, variables, tag, value, delay) {
         if (value == undefined) {
             value = ''
         } else {
-            value = variables.evaluateVariable(value)
-            value = value.replace(/'/g, "");
+            value = variables.evaluateVariable(value, true)
         }
 
         // Evaluate special keywords like <TODAY>, <TODAY+1>.... (if any)
         value = variables.dataValue(value)
 
-        value = variables.evaluateVariable(value)
-        value = value.replace(/'/g, "");
-
+        value = variables.evaluateVariable(value, true)
 
         let clearFlag = 0
         let enterFlag = 0
@@ -2035,8 +2062,7 @@ async function setValue(page, data, variables, tag, value, delay) {
                 value = result[0].label
                 // Evaluate special keywords like <TODAY>, <TODAY+1>.... (if any)
                 value = variables.dataValue(value)
-                value = variables.evaluateVariable(value)
-                value = value.replace(/'/g, "");
+                value = variables.evaluateVariable(value, true)
             } else {
                 variables.displayLog(1, 1, 'Data not found in the dataset! - value: ' + value)
                 return { success: 0, message: "Cannot find the code: " + value + " in the dataset!", stop: 1 }
@@ -2119,6 +2145,8 @@ async function getValue(page, data, variables, tag, variableName) {
     ret = await getElement(page, variables, data, tag, 'getValue')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
+    // replace $$name by the value of the variable $name
+    variableName = await nameVariable(variables, variableName)
 
     // Get the element for the tag
     try {
@@ -2157,14 +2185,12 @@ async function select(page, data, variables, tag, value, delay) {
     if (value == undefined) {
         value = ''
     } else {
-        value = variables.evaluateVariable(value)
-        value = value.replace(/'/g, "");
+        value = variables.evaluateVariable(value, true)
     }
 
     // Evaluate special keywords like <TODAY>, <TODAY+1>.... (if any)
     value = variables.dataValue(value)
-    value = variables.evaluateVariable(value)
-    value = value.replace(/'/g, "");
+    value = variables.evaluateVariable(value, true)
     value = value.trim()
 
     // Evaluate the dataset (if any)
@@ -2175,8 +2201,7 @@ async function select(page, data, variables, tag, value, delay) {
             value = result[0].label
             // Evaluate special keywords like <TODAY>, <TODAY+1>.... (if any)
             value = variables.dataValue(value)
-            value = variables.evaluateVariable(value)
-            value = value.replace(/'/g, "");
+            value = variables.evaluateVariable(value, true)
         } else {
             variables.displayLog(1, 1, 'Data not found in the dataset! - value: ' + value)
             return { success: 0, message: "Cannot find the code: " + value + " in the dataset!", stop: 1 }
@@ -2231,6 +2256,9 @@ async function selectCount(page, data, variables, tag, variable) {
 
     ret = await getElement(page, variables, data, tag, 'selectCount')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+
+    // replace $$name by the value of the variable $name
+    variable = await nameVariable (variables, variable)    
 
 
     try {
@@ -2289,9 +2317,7 @@ async function uploadFile(page, data, variables, tag, fileName) {
 
 
     let pathName = '../../../uploads/' + data.projectID + '_' + projectName + '/'
-    fileName = variables.evaluateVariable(fileName);
-    fileName = fileName.replace(/'/g, "");
-
+    fileName = variables.evaluateVariable(fileName, true);
 
     // Evaluate the dataset (if any)
     if (fileName[0] == '#') {
@@ -2299,8 +2325,7 @@ async function uploadFile(page, data, variables, tag, fileName) {
         const result = await getDatasetByCode(dataAPI);
         if (result.length) {
             fileName = result[0].label
-            fileName = variables.evaluateVariable(fileName)
-            fileName = fileName.replace(/'/g, "");
+            fileName = variables.evaluateVariable(fileName, true)
         } else {
             variables.displayLog(1, 1, 'Data not found in the dataset! - value: ' + fileName)
             return { success: 0, message: "Cannot find the code: " + fileName + " in the dataset!", stop: 1 }
@@ -2544,6 +2569,10 @@ async function getTableData(page, data, variables, tagElement, row, column, vari
     let ret
     //variables.displayLog(1, 1,'----- getTableData')
 
+    // replace $$name by the value of the variable $name
+    variable = await nameVariable (variables, variable)    
+
+
     // Check if the tag is in the dictionary
     if (tagElement == '$GUI') tagElement = await variables.getVariable('$GUI')
     else if (tagElement[0] == '@') {
@@ -2559,11 +2588,9 @@ async function getTableData(page, data, variables, tagElement, row, column, vari
     }
     tagElement = variables.evaluateVariable(tagElement)
 
-    row = variables.evaluateVariable(row);
-    row = row.replace(/'/g, "");
+    row = variables.evaluateVariable(row, true);
     row = row * 1; // convert to number
-    column = variables.evaluateVariable(column);
-    column = column.replace(/'/g, "");
+    column = variables.evaluateVariable(column, true);
     column = column * 1; // convert to number
 
 
@@ -2614,6 +2641,10 @@ async function getTableHeader(page, data, variables, tagElement, row, column, va
     let ret
     //variables.displayLog(1, 1,'----- getTableData')
 
+    // replace $$name by the value of the variable $name
+    variable = await nameVariable (variables, variable)    
+
+
     // Check if the tag is in the dictionary
     if (tagElement == '$GUI') tagElement = await variables.getVariable('$GUI')
     else if (tagElement[0] == '@') {
@@ -2630,11 +2661,9 @@ async function getTableHeader(page, data, variables, tagElement, row, column, va
     tagElement = variables.evaluateVariable(tagElement)
 
 
-    row = variables.evaluateVariable(row);
-    row = row.replace(/'/g, "");
+    row = variables.evaluateVariable(row, true);
     row = row * 1; // convert to number
-    column = variables.evaluateVariable(column);
-    column = column.replace(/'/g, "");
+    column = variables.evaluateVariable(column, true);
     column = column * 1; // convert to number
 
 
@@ -2703,19 +2732,16 @@ async function setTableData(page, data, variables, tagElement, row, column, valu
     }
     tagElement = variables.evaluateVariable(tagElement)
 
-    row = variables.evaluateVariable(row);
-    row = row.replace(/'/g, "");
+    row = variables.evaluateVariable(row, true);
     row = row * 1; // convert to number
-    column = variables.evaluateVariable(column);
-    column = column.replace(/'/g, "");
+    column = variables.evaluateVariable(column, true);
     column = column * 1; // convert to number
 
     // Evaluate the value
     if (value == undefined) {
         value = ''
     } else {
-        value = variables.evaluateVariable(value)
-        value = value.replace(/'/g, "");
+        value = variables.evaluateVariable(value, true)
     }
 
     // Evaluate special keywords like <TODAY>, <TODAY+1>.... (if any)
@@ -2724,16 +2750,14 @@ async function setTableData(page, data, variables, tagElement, row, column, valu
 
     // Evaluate the dataset (if any)
     if (value[0] == '#') {
-        value = variables.evaluateVariable(value)
-        value = value.replace(/'/g, "");
+        value = variables.evaluateVariable(value, true)
         const dataAPI = { subprojectID: data.subprojectID, code: value, language: '*', active: 1 }
         const result = await getDatasetByCode(dataAPI);
         if (result.length) {
             value = result[0].label
             // Evaluate special keywords like <TODAY>, <TODAY+1>.... (if any)
             value = variables.dataValue(value)
-            value = variables.evaluateVariable(value)
-            value = value.replace(/'/g, "");
+            value = variables.evaluateVariable(value, true)
         } else {
             variables.displayLog(1, 1, 'Data not found in the dataset! - value: ' + value)
             return { success: 0, message: "Cannot find the code: " + value + " in the dataset!", stop: 1 }
@@ -2793,6 +2817,9 @@ async function countTableRow(page, data, variables, tagElement, variable) {
 
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     let ret
+
+    // replace $$name by the value of the variable $name
+    variable = await nameVariable (variables, variable)    
 
 
     // Check if the tag is not on the dictionary
@@ -2877,14 +2904,11 @@ async function searchTableData(page, data, variables, tagElement, column, search
     tagElement = variables.evaluateVariable(tagElement)
 
     let variable = '$Row'
-    column = variables.evaluateVariable(column);
-    column = column.replace(/'/g, "");
+    column = variables.evaluateVariable(column, true);
     column = column * 1; // convert to number
-    search = variables.evaluateVariable(search);
-    search = search.replace(/'/g, "");
+    search = variables.evaluateVariable(search, true);
     if (position == undefined) position = '1'
-    position = variables.evaluateVariable(position);
-    position = position.replace(/'/g, "");
+    position = variables.evaluateVariable(position, true);
     position = position * 1; // convert to number
 
     let caseSensitive = 1;
@@ -3009,11 +3033,9 @@ async function clickCell(page, data, variables, tagElement, row, column, delay) 
     tagElement = variables.evaluateVariable(tagElement)
 
 
-    row = variables.evaluateVariable(row);
-    row = row.replace(/'/g, "");
+    row = variables.evaluateVariable(row, true);
     row = row * 1; // convert to number
-    column = variables.evaluateVariable(column);
-    column = column.replace(/'/g, "");
+    column = variables.evaluateVariable(column, true);
     column = column * 1; // convert to number
 
     tagElement = tagElement + '/tbody/tr[' + row + ']/td[' + column + ']'
@@ -3196,6 +3218,9 @@ async function readAttribute(page, data, variables, tag, attribute, variableName
     let locator = ret.locator
     tag = ret.tag
 
+    // replace $$name by the value of the variable $name
+    variableName = await nameVariable(variables, variableName)
+
     try {
         // Read the attribute
         let myValue = await locator.getAttribute(attribute);
@@ -3330,6 +3355,8 @@ async function isExist(page, data, variables, tag, variableName, delay) {
     let timeout = 30 // 30 seconds by default
     let ret
 
+    // replace $$name by the value of the variable $name
+    variableName = await nameVariable(variables, variableName)
 
     ret = await getElement(page, variables, data, tag, 'isExist')
     if (!ret.success) {
@@ -3397,6 +3424,8 @@ async function isCheck(page, data, variables, tag, variableName, delay) {
     let ret
     let timeout = 30 // 30 seconds by default
 
+    // replace $$name by the value of the variable $name
+    variableName = await nameVariable(variables, variableName)
 
     ret = await getElement(page, variables, data, tag, 'isCheck')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
@@ -3457,6 +3486,9 @@ async function isEnable(page, data, variables, tag, variableName, delay) {
 
     let ret
     let timeout = 30 // 30 seconds by default
+
+    // replace $$name by the value of the variable $name
+    variableName = await nameVariable(variables, variableName)
 
     ret = await getElement(page, variables, data, tag, 'isEnable')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
@@ -3519,6 +3551,9 @@ async function isVisible(page, data, variables, tag, variableName, delay) {
 
     ret = await getElement(page, variables, data, tag, 'click')
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
+
+    // replace $$name by the value of the variable $name
+    variableName = await nameVariable(variables, variableName)
 
     let page1 = ret.page
     let locator = ret.locator
@@ -3840,8 +3875,7 @@ async function keyboard(page, data, variables, text) {
     else if (isNaN(text)) {
         // Search the text in the dataset 
         if (text[0] == '#') {
-            text = variables.evaluateVariable(text)
-            text = text.replace(/'/g, "");
+            text = variables.evaluateVariable(text, true)
             const dataAPI = { subprojectID: data.subprojectID, code: text, language: '*', active: 1 }
             const result = await getDatasetByCode(dataAPI);
             if (result.length) {
@@ -4026,6 +4060,9 @@ async function getReference(variables, projectID, userID, code, variableName) {
             code = code.replace(/'/g, "");
         }
 
+        // replace $$name by the value of the variable $name
+        variableName = await nameVariable(variables, variableName)
+
         // get the reference by code
         const dataAPI = { projectID: projectID, userID: userID, code: code }
         let ret
@@ -4158,8 +4195,11 @@ async function getData(data, variables, code, variable) {
         return { success: 0, message: "getData: the code cannot be empty!", stop: 1 }
     }
 
-    code = variables.evaluateVariable(code)
-    code = code.replace(/'/g, "");
+    // replace $$name by the value of the variable $name
+    variable = await nameVariable (variables, variable)    
+
+
+    code = variables.evaluateVariable(code, true)
 
     if (code[0] == '#') {
         const dataAPI = { subprojectID: data.subprojectID, code: code, active: 1 }
@@ -4381,6 +4421,9 @@ async function printScreen(page, data, slotID) {
 async function epoch(variables, myDate, myFormat, variable) {
     const { timeEpoch } = require("./time.library.js")
 
+    // replace $$name by the value of the variable $name
+    variable = await nameVariable (variables, variable)    
+
     myDate = variables.evaluateVariable(myDate)
     myDate = myDate.replace(/'/g, "");
 
@@ -4404,6 +4447,9 @@ async function epoch(variables, myDate, myFormat, variable) {
 */
 async function epochDate(variables, myEpoch, myFormat, variable) {
     const { timeEpochDate } = require("./time.library.js")
+
+    // replace $$name by the value of the variable $name
+    variable = await nameVariable (variables, variable)    
 
     myEpoch = variables.evaluateVariable(myEpoch)
     myEpoch = myEpoch.replace(/'/g, "");
@@ -4430,8 +4476,11 @@ async function epochDate(variables, myEpoch, myFormat, variable) {
 async function epochAddHour(variables, myDate, myFormat, myValue, variable) {
     const { timeEpochAdd } = require("./time.library.js")
 
-    myDate = variables.evaluateVariable(myDate)
-    myDate = myDate.replace(/'/g, "");
+    // replace $$name by the value of the variable $name
+    variable = await nameVariable (variables, variable)    
+
+
+    myDate = variables.evaluateVariable(myDate, true)
 
     let myUnit = 'h'
     let myEpoch = await timeEpochAdd(myDate, myFormat, myValue, myUnit)
@@ -4456,8 +4505,10 @@ async function epochAddHour(variables, myDate, myFormat, myValue, variable) {
 async function epochAddMinute(variables, myDate, myFormat, myValue, variable) {
     const { timeEpochAdd } = require("./time.library.js")
 
-    myDate = variables.evaluateVariable(myDate)
-    myDate = myDate.replace(/'/g, "");
+    // replace $$name by the value of the variable $name
+    variable = await nameVariable (variables, variable)    
+
+    myDate = variables.evaluateVariable(myDate, true)
 
     let myUnit = 'm'
     let myEpoch = await timeEpochAdd(myDate, myFormat, myValue, myUnit)
@@ -4482,8 +4533,10 @@ async function epochAddMinute(variables, myDate, myFormat, myValue, variable) {
 async function epochAddSecond(variables, myDate, myFormat, myValue, variable) {
     const { timeEpochAdd } = require("./time.library.js")
 
-    myDate = variables.evaluateVariable(myDate)
-    myDate = myDate.replace(/'/g, "");
+    // replace $$name by the value of the variable $name
+    variable = await nameVariable (variables, variable)    
+    
+    myDate = variables.evaluateVariable(myDate, true)
 
     let myUnit = 's'
     let myEpoch = await timeEpochAdd(myDate, myFormat, myValue, myUnit)
@@ -4868,13 +4921,9 @@ async function httpPost(data, variables, apiUrl, paramsString, token) {
 
     try {
         httpResult = await postData(data, variables, apiUrl, paramsString, token);
-        //httpResultUser[data.userID] = httpResult
         console.log("Success:", httpResult);
-        //httpResultUser.push({ "id": data.userID })
-        // console.log ('************************************************************=======')
-        // console.log("Success User:", httpResultUser);
-        let ret = await Store_HttpData(data, "httpost", httpResult)
         // --- STEP 4: STORE OR UPDATE the txResult ---
+        let ret = await Store_HttpData(data, "httpost", httpResult)
         if (ret.success == 1) {
             return { success: 1, message: "httpPost: OK!", stop: 0 };
         } else {
@@ -4954,7 +5003,6 @@ async function putData(data, variables, url, parameters, token) {
 * ---------------------------------------------------------------------------- 
 * @function
 *  httpPut:  Fetches data from a REST API using the PUT method
-*            the result is stored in the global variable: httpResultUser 
 * 
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
@@ -5007,12 +5055,7 @@ async function httpPut(data, variables, apiUrl, paramsString, token) {
 
     try {
         httpResult = await putData(data, variables, apiUrl, paramsString, token);
-        //httpResultUser[data.userID] = httpResult
         console.log("Success:", httpResult);
-        //httpResultUser.push({ "id": data.userID })
-        // console.log ('************************************************************=======')
-        // console.log("Success User:", httpResultUser);
-
         // --- STEP 4: STORE OR UPDATE the txResult ---
         let ret = await Store_HttpData(data, "httput", httpResult)
         if (ret.success == 1) {
@@ -5076,7 +5119,6 @@ async function fetchData(data, variables, url, token) {
 * ---------------------------------------------------------------------------- 
 * @function
 *  httpGet:  Fetches data from a REST API using the GET method.
-*            the result is stored in the global variable: httpResultUser 
 * 
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
@@ -5109,9 +5151,6 @@ async function httpGet(data, variables, url, token) {
     console.log('httpGet', url)
     try {
         httpResult = await fetchData(data, variables, url, token);
-        //httpResultUser.push({ "id": data.userID, "result": httpResult })
-        //console.log("Success User:", httpResultUser);
-        //return { success: 1, message: "httpGet: OK", stop: 0 }
 
         // --- STEP 4: STORE OR UPDATE the txResult ---
         let ret = await Store_HttpData(data, "httpGet", httpResult)
@@ -5174,7 +5213,6 @@ async function deleteData(data, variables, url, token) {
 * ---------------------------------------------------------------------------- 
 * @function
 *  httpDelete:  Fetches data from a REST API using the DELETE method. 
-*               the result is stored in the global variable: httpResultUser 
 * 
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
@@ -5209,9 +5247,6 @@ async function httpDelete(data, variables, url, token) {
     console.log('httpGet', url)
     try {
         httpResult = await deleteData(data, variables, url, token);
-        //httpResultUser.push({ "id": data.userID, "result": httpResult })
-        //console.log("Success User:", httpResultUser);
-        //return { success: 1, message: "httpDelete: OK", stop: 0 }
 
         // --- STEP 4: STORE OR UPDATE the txResult ---
         let ret = await Store_HttpData(data, "httpDelete", httpResult)
@@ -5232,7 +5267,7 @@ async function httpDelete(data, variables, url, token) {
 /**
 * ---------------------------------------------------------------------------- 
 * @function
-*  httpData:  Get data from a http request (get or post) -- OBSOLETE
+*  httpData:  Get data from a http request (get or post)
 * 
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
@@ -5244,6 +5279,9 @@ async function httpData(data, variables, expression, variable) {
 
     console.log('Expression', expression)
     expression = variables.evaluateVariable(expression)
+
+    // replace $$name by the value of the variable $name
+    variable = await nameVariable (variables, variable)    
 
     try {
         // retrieve the record of the user id
@@ -5264,64 +5302,6 @@ async function httpData(data, variables, expression, variable) {
 }
 
 
-
-/**
-* ---------------------------------------------------------------------------- 
-* @function
-*  httpSearchData:  Get the row of a searched data from a http request (get or post) -- OBSOLETE
-* 
-* @param {object} data:         all the parameters
-* @param {object} variables:    array of all the variables
-* @param {string} element:      name of the element 
-* @param {string} operator:     'Equal' or 'Contains'
-* @param {string} expected:     the value to search
-* @param {string} variable:     name of the variable to store the result (-1 if not found)
-*
-*/
-async function httpSearchData(data, variables, element, operator, expected, variable) {
-
-    let expression = ''
-
-    try {
-        element = variables.evaluateVariable(element)
-        element = element.replace(/'/g, "");
-        expected = variables.evaluateVariable(expected)
-        expected = expected.replace(/'/g, "");
-
-        // Find the record of the last hhtp of the user
-        const record = httpResultUser.findLast(item => item.id === data.userID)
-        //console.log(record)
-
-        // Loop on all the items
-        for (i = 0; i < record.result.length; i++) {
-            // Extract the element
-            expression = 'record.result[' + i + '].' + element
-            let text = await eval(expression)
-            // Compare with the expected value (find the first excpected value )
-            if (operator == 'Contains') {
-                if (text.includes(expected)) {
-                    variables.setVariable(variable, i)
-                    return { success: 1, message: "httpSearchData: OK", value: i, stop: 0 }
-                }
-
-            } else {
-                if (text == expected) {
-                    variables.setVariable(variable, i)
-                    return { success: 1, message: "httpSearchData: OK", value: i, stop: 0 }
-                }
-            }
-        }
-
-
-        variables.setVariable(variable, -1)
-        return { success: 1, message: "httpSearchData: OK", value: -1, stop: 0 }
-    } catch (error) {
-        console.error("Error:", error);
-        return { success: 0, message: "Error in httpSearchData", stop: 1 }
-    }
-}
-
-
 /**
 * ---------------------------------------------------------------------------- 
 * @function
@@ -5334,8 +5314,6 @@ async function httpSearchData(data, variables, element, operator, expected, vari
 async function PublicKey(certificatePath, password) {
     const forge = require('node-forge');
     const fs = require('fs');
-    const { execSync } = require('child_process');
-
 
     try {
         console.log('Step 1: Reading file');
@@ -5398,6 +5376,7 @@ async function PublicKey(certificatePath, password) {
         // --------------
         // Another method
         // --------------
+        const { execSync } = require('child_process');        
 
         try {
             // Commande pour extraire le certificat en PEM sans la clé privée
@@ -5444,7 +5423,6 @@ async function buildAssertionPayload(dataset, certificateKey, requestID) {
 
         // 2. Handle Placeholders
         if (finalValue.toLowerCase() === '<publickey>') {
-            // Logic to extract the cert string
             // ---------------------------------------------------------------------------------------------
             // The public key is not workinbg with the RRN certificate, it must be hardcoded in the dataset
             // ---------------------------------------------------------------------------------------------
@@ -5462,8 +5440,8 @@ async function buildAssertionPayload(dataset, certificateKey, requestID) {
             //finalValue = crypto.randomUUID();
             finalValue = requestID || `REQ-${Date.now()}` // Auto-generate ID if not provided
         }
-        // Otherwise, it uses the literal value from 'label' (e.g., 'CN_POLICY')
 
+        // Otherwise, it uses the literal value from 'label' (e.g., 'CN_POLICY')
         payload[cleanKey] = finalValue;
     }
 
@@ -5557,7 +5535,6 @@ async function getSAMLContext(data, certificateDataName) {
 * ---------------------------------------------------------------------------- 
 * @function
 *  SAML_Assertion:  Perform a SAML Assertionrequest
-*         the result is stored in the global variable: httpResultUser 
 * 
 * @param {object} page:                 playwright page
 * @param {object} data:                 all the parameters
@@ -5848,10 +5825,8 @@ async function httpSearchKeyValue(page, data, variables, assertionDataName, sear
     searchPosition = variables.evaluateVariable(searchPosition, true)
     scopePosition = variables.evaluateVariable(scopePosition, true)
 
-    if (variableName.includes("$Loop")) {
-        let loop = variables.evaluateVariable("$Loop", true)
-        variableName = variableName.replace("$Loop", loop.toString())
-    }
+    // replace $$name by the value of the variable $name
+    variableName = await nameVariable(variables, variableName)
 
     // console.log('assertionDataName', assertionDataName)
     // console.log('searchKey', searchKey)
@@ -6024,6 +5999,9 @@ async function httpKeyCount(page, data, variables, assertionDataName, searchKey,
 
     if (parentKey == '<N/A>') parentKey = null
 
+    // replace $$name by the value of the variable $name
+    variableName = await nameVariable (variables, variableName)    
+
     // Get the http data
     const dataAPI1 = { subprojectID: data.subprojectID, code: assertionDataName };
     const result1 = await getHttpdataByCode(dataAPI1);
@@ -6052,7 +6030,7 @@ async function httpKeyCount(page, data, variables, assertionDataName, searchKey,
         });
 
         //const jsonObj = parser.parse(xmlData);
-        
+
         let jsonObj;
 
         // Check if xmlData is a string and looks like JSON
@@ -6303,6 +6281,8 @@ async function imageDifference(page, data, baselineName, printscreenSlot, baseli
 */
 async function imageDifferenceData(variables, parameter, variable) {
 
+    // replace $$name by the value of the variable $name
+    variable = await nameVariable (variables, variable)    
 
     switch (parameter) {
 
@@ -6880,10 +6860,10 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
-            case 'httpSearchData':
-                ret = await httpSearchData(data, variables, param1, param2, param3, param4)
-                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + param4 + ' = ' + ret.value)
-                return ret
+            // case 'httpSearchData':
+            //     ret = await httpSearchData(data, variables, param1, param2, param3, param4)
+            //     if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + param4 + ' = ' + ret.value)
+            //     return ret
 
             case 'SAML_Assertion':
                 ret = await SAML_Assertion(page, data, variables, param1, param2, param3, param4)

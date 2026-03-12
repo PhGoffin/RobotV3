@@ -60,7 +60,6 @@ class Variables {
     }
 
 
-
     /**
      * @function
      *   getVariable: get the value of a variable (stored in an object)
@@ -354,7 +353,7 @@ class Variables {
         result = result.replace(/&apos;/g, "'");
         //console.log ('EvaluateVariable: ', result)
 
-        if (clearQuote) {
+        if (clearQuote && result.length) {
             result = result.replace(/'/g, "");
         }
 
