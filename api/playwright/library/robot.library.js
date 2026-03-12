@@ -4814,7 +4814,6 @@ async function postData(data, variables, url, parameters, token) {
 * ---------------------------------------------------------------------------- 
 * @function
 *  httpPost:  Fetches data from a REST API using the POST method
-*             the result is stored in the global variable: httpResultUser 
 * 
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
@@ -4865,19 +4864,28 @@ async function httpPost(data, variables, apiUrl, paramsString, token) {
     }
 
 
+
+
     try {
         httpResult = await postData(data, variables, apiUrl, paramsString, token);
         //httpResultUser[data.userID] = httpResult
         console.log("Success:", httpResult);
-        httpResultUser.push({ "id": data.userID })
+        //httpResultUser.push({ "id": data.userID })
         // console.log ('************************************************************=======')
         // console.log("Success User:", httpResultUser);
+        let ret = await Store_HttpData(data, "httpost", httpResult)
+        // --- STEP 4: STORE OR UPDATE the txResult ---
+        if (ret.success == 1) {
+            return { success: 1, message: "httpPost: OK!", stop: 0 };
+        } else {
+            return { success: 0, message: "httpPost: Store_HttpData Error!", stop: 1 };
+        }
+
     } catch (error) {
         console.error("Error in httpPost:", error);
         return { success: 0, message: "Error in httpPost", stop: 1 }
     }
 
-    return { success: 1, message: "httpPost: OK", stop: 0 }
 }
 
 
@@ -4956,7 +4964,7 @@ async function putData(data, variables, url, parameters, token) {
 * @returns {object} httpResult  A global variable to store the http result
 *
 */
-async function httpPost(data, variables, apiUrl, paramsString, token) {
+async function httpPut(data, variables, apiUrl, paramsString, token) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
     // Reset httpResult
@@ -4970,7 +4978,7 @@ async function httpPost(data, variables, apiUrl, paramsString, token) {
         if (result.length) {
             apiUrl = result[0].label
         } else {
-            return { success: 0, message: "Cannot find the url: " + url + " in the dictiona ry", stop: 1 }
+            return { success: 0, message: "Cannot find the url: " + url + " in the dictionary!", stop: 1 }
         }
     }
 
@@ -5001,15 +5009,24 @@ async function httpPost(data, variables, apiUrl, paramsString, token) {
         httpResult = await putData(data, variables, apiUrl, paramsString, token);
         //httpResultUser[data.userID] = httpResult
         console.log("Success:", httpResult);
-        httpResultUser.push({ "id": data.userID })
+        //httpResultUser.push({ "id": data.userID })
         // console.log ('************************************************************=======')
         // console.log("Success User:", httpResultUser);
+
+        // --- STEP 4: STORE OR UPDATE the txResult ---
+        let ret = await Store_HttpData(data, "httput", httpResult)
+        if (ret.success == 1) {
+            return { success: 1, message: "httpPut: OK!", stop: 0 };
+        } else {
+            return { success: 0, message: "httpPut: Store_HttpData Error!", stop: 1 };
+        }
+
     } catch (error) {
         console.error("Error in httpPut:", error);
         return { success: 0, message: "Error in httpPut", stop: 1 }
     }
 
-    return { success: 1, message: "httpPut: OK", stop: 0 }
+    //return { success: 1, message: "httpPut: OK", stop: 0 }
 }
 
 
@@ -5083,20 +5100,28 @@ async function httpGet(data, variables, url, token) {
         }
     }
 
-    url = variables.evaluateVariable(url)
-    url = url.replace(/'/g, "");
+    url = variables.evaluateVariable(url, true)
 
     if (token != undefined && token != 'N/A') {
-        token = variables.evaluateVariable(token)
-        token = token.replace(/'/g, "");
+        token = variables.evaluateVariable(token, true)
     } else token = null
 
     console.log('httpGet', url)
     try {
         httpResult = await fetchData(data, variables, url, token);
-        httpResultUser.push({ "id": data.userID, "result": httpResult })
+        //httpResultUser.push({ "id": data.userID, "result": httpResult })
         //console.log("Success User:", httpResultUser);
-        return { success: 1, message: "httpGet: OK", stop: 0 }
+        //return { success: 1, message: "httpGet: OK", stop: 0 }
+
+        // --- STEP 4: STORE OR UPDATE the txResult ---
+        let ret = await Store_HttpData(data, "httpGet", httpResult)
+        if (ret.success == 1) {
+            return { success: 1, message: "httpGet: OK!", stop: 0 };
+        } else {
+            return { success: 0, message: "httpGet: Store_HttpData Error!", stop: 1 };
+        }
+
+
     } catch (error) {
         console.error("Error:", error);
         return { success: 0, message: "Error in httpGet", stop: 1 }
@@ -5114,7 +5139,7 @@ async function httpGet(data, variables, url, token) {
  * @returns {Promise<any>} A promise that resolves with the fetched data (parsed as JSON) or rejects with an error.
  *
  */
-async function fetchData(data, variables, url, token) {
+async function deleteData(data, variables, url, token) {
     try {
         //const response = await fetch(url);
         const response = await fetch(url, {
@@ -5184,9 +5209,18 @@ async function httpDelete(data, variables, url, token) {
     console.log('httpGet', url)
     try {
         httpResult = await deleteData(data, variables, url, token);
-        httpResultUser.push({ "id": data.userID, "result": httpResult })
+        //httpResultUser.push({ "id": data.userID, "result": httpResult })
         //console.log("Success User:", httpResultUser);
-        return { success: 1, message: "httpDelete: OK", stop: 0 }
+        //return { success: 1, message: "httpDelete: OK", stop: 0 }
+
+        // --- STEP 4: STORE OR UPDATE the txResult ---
+        let ret = await Store_HttpData(data, "httpDelete", httpResult)
+        if (ret.success == 1) {
+            return { success: 1, message: "httpDelete: OK!", stop: 0 };
+        } else {
+            return { success: 0, message: "httpDelete: Store_HttpData Error!", stop: 1 };
+        }
+
     } catch (error) {
         console.error("Error:", error);
         return { success: 0, message: "Error in httpDelete", stop: 1 }
@@ -5198,7 +5232,7 @@ async function httpDelete(data, variables, url, token) {
 /**
 * ---------------------------------------------------------------------------- 
 * @function
-*  httpData:  Get data from a http request (get or post)
+*  httpData:  Get data from a http request (get or post) -- OBSOLETE
 * 
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
@@ -5234,7 +5268,7 @@ async function httpData(data, variables, expression, variable) {
 /**
 * ---------------------------------------------------------------------------- 
 * @function
-*  httpSearchData:  Get the row of a searched data from a http request (get or post)
+*  httpSearchData:  Get the row of a searched data from a http request (get or post) -- OBSOLETE
 * 
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
@@ -5293,95 +5327,94 @@ async function httpSearchData(data, variables, element, operator, expected, vari
 * @function
 *  PublicKey:  Extract the public key from a certificate
 * 
-* @param {object} data:             all the parameters
-* @param {object} variables:        array of all the variables
-* @param {string} certificatePath:   Path of the certificate 
+* @param {string} certificatePath:      Path of the certificate 
+* @param {string} password:             Password of the certificate 
 *
 */
-async function PublicKey(data, variables, certificatePath, password) {
+async function PublicKey(certificatePath, password) {
     const forge = require('node-forge');
     const fs = require('fs');
     const { execSync } = require('child_process');
 
-    /*    
-    
-    
-        try {
-            console.log('Step 1: Reading file');
-            const p12Buffer = fs.readFileSync(certificatePath);
-            
-            // Utiliser forge.util.createBuffer pour une meilleure gestion binaire
-            const p12Asn1 = forge.asn1.fromDer(p12Buffer.toString('binary'));
-            
-            console.log('Step 2: Parsing PKCS#12');
-            const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, password);
-    
-            console.log('Step 3: Extracting bags');
-            // On récupère tous les sacs de type certBag
-            const certBags = p12.getBags({ bagType: forge.pki.oids.certBag })[forge.pki.oids.certBag];
-            
-            if (!certBags || certBags.length === 0) {
-                throw new Error("No certBags found in the p12 file.");
-            }
-    
-            // Étape cruciale : Chercher le premier bag qui contient un certificat valide
-            let cert = null;
-            for (let i = 0; i < certBags.length; i++) {
-                if (certBags[i].cert) {
-                    cert = certBags[i].cert;
-                    console.log(`Step 4: Valid certificate found in bag [${i}]`);
-                    break;
-                }
-            }
-    
-            if (!cert) {
-                throw new Error("Certificate object is null or empty in all bags.");
-            }
-    
-            console.log('Step 5: Converting to PEM');
-            // Si cert est valide, cette ligne ne plantera plus
-            const pem = forge.pki.certificateToPem(cert);
-            
-            console.log('Step 6: Cleaning Base64');
-            const base64Cert = pem
-                .replace(/-----BEGIN CERTIFICATE-----/g, '')
-                .replace(/-----END CERTIFICATE-----/g, '')
-                .replace(/\s+/g, ''); // Supprime les retours à la ligne et espaces
-    
-            console.log('Last Step: Success');
-            return base64Cert;
-    
-        } catch (error) {
-            // Gestion des erreurs améliorée
-            const errorMsg = error.message || "";
-            const isInvalidPassword = /PKCS#12 MAC could not be verified\. Invalid password\?$/i.test(errorMsg);
-            
-            if (isInvalidPassword) {
-                console.error("PublicKey Error: Invalid password");
-                // await logfile(...)
-            } else {
-                console.error("PublicKey Internal Error:", errorMsg);
-            }
-            return "<ERROR>";
-        }        
-    */
 
     try {
-        // Commande pour extraire le certificat en PEM sans la clé privée
-        const cmd = `openssl pkcs12 -in "${certificatePath}" -nokeys -nodes -passin pass:${password}`;
-        const output = execSync(cmd).toString();
+        console.log('Step 1: Reading file');
+        const p12Buffer = fs.readFileSync(certificatePath);
 
-        console.log('PublicKey: ', output)
+        // Use forge.util.createBuffer for better binary handling
+        const p12Asn1 = forge.asn1.fromDer(p12Buffer.toString('binary'));
 
-        return output
+        console.log('Step 2: Parsing PKCS#12');
+        const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, password);
+
+        console.log('Step 3: Extracting bags');
+        const certBags = p12.getBags({ bagType: forge.pki.oids.certBag })[forge.pki.oids.certBag];
+
+        if (!certBags || certBags.length === 0) {
+            throw new Error("No certBags found in the p12 file.");
+        }
+
+        // Crucial step: Find the first bag that contains a valid certificate
+        let cert = null;
+        for (let i = 0; i < certBags.length; i++) {
+            if (certBags[i].cert) {
+                cert = certBags[i].cert;
+                console.log(`Step 4: Valid certificate found in bag [${i}]`);
+                break;
+            }
+        }
+
+        if (!cert) {
+            throw new Error("Certificate object is null or empty in all bags.");
+        }
+
+        console.log('Step 5: Converting to PEM');
+        // Si cert est valide, cette ligne ne plantera plus
+        const pem = forge.pki.certificateToPem(cert);
+
+        console.log('Step 6: Cleaning Base64');
+        const base64Cert = pem
             .replace(/-----BEGIN CERTIFICATE-----/g, '')
             .replace(/-----END CERTIFICATE-----/g, '')
-            .replace(/\s+/g, '');
-    } catch (e) {
-        console.log('PublicKey Error', e)
+            .replace(/\s+/g, ''); // Remove carriage returns and spaces
+
+        console.log('Last Step: Success');
+        return base64Cert;
+
+    } catch (error) {
+        const errorMsg = error.message || "";
+        const isInvalidPassword = /PKCS#12 MAC could not be verified\. Invalid password\?$/i.test(errorMsg);
+
+        if (isInvalidPassword) {
+            console.error("PublicKey Error: Invalid password");
+        } else {
+            console.error("PublicKey Internal Error:", errorMsg);
+        }
         return "<ERROR>";
     }
 
+
+    /*
+        // --------------
+        // Another method
+        // --------------
+
+        try {
+            // Commande pour extraire le certificat en PEM sans la clé privée
+            const cmd = `openssl pkcs12 -in "${certificatePath}" -nokeys -nodes -passin pass:${password}`;
+            const output = execSync(cmd).toString();
+
+            console.log('PublicKey: ', output)
+
+            return output
+                .replace(/-----BEGIN CERTIFICATE-----/g, '')
+                .replace(/-----END CERTIFICATE-----/g, '')
+                .replace(/\s+/g, '');
+        } catch (e) {
+            console.log('PublicKey Error', e)
+            return "<ERROR>";
+        }
+*/
 
 
 
@@ -5412,6 +5445,16 @@ async function buildAssertionPayload(dataset, certificateKey, requestID) {
         // 2. Handle Placeholders
         if (finalValue.toLowerCase() === '<publickey>') {
             // Logic to extract the cert string
+            // ---------------------------------------------------------------------------------------------
+            // The public key is not workinbg with the RRN certificate, it must be hardcoded in the dataset
+            // ---------------------------------------------------------------------------------------------
+            // Decode the public key of the certificate
+            certificateKey = await PublicKey(certificatePath, certificateData.key)
+
+            if (certificateKey == '<ERROR>') {
+                return ("Public Key Error")
+            }
+
             finalValue = certificateKey;
         }
         else if (finalValue.toLowerCase() === '<requestid>') {
@@ -5547,6 +5590,7 @@ async function SAML_Assertion(page, data, variables, certificateDataName, assert
         if (result2.length) {
             dynamicData = await buildAssertionPayload(result2, certificateKey, requestID);
             console.log('Final Payload generated:', dynamicData);
+            if (dynamicData == "Public Key Error") return { success: 0, message: "SAML Assertion: Cannot find the Public key of the certificate!", stop: 1 };
         } else {
             return { success: 0, message: `SAML: Cannot find the dataset: ${assertionDataName}!`, stop: 1 };
         }
@@ -5614,6 +5658,71 @@ async function SAML_Assertion(page, data, variables, certificateDataName, assert
 /**
 * ---------------------------------------------------------------------------- 
 * @function
+*  SAML_Transaction:  Perform a SAML transaction request
+* 
+* @param {object} page:                 playwright page
+* @param {object} data:                 all the parameters
+* @param {object} variables:            array of all the variables
+* @param {string} certificateDataName:  name of the dataset for the certificate 
+* @param {string} assertionDataName:    name of the dataset for the assertion 
+* @param {string} transactionUrl:       Url for the assertion 
+* @param {string} transactionDataName:  name of the dataset for the assertion 
+*
+*/
+async function SAML_Transaction(page, data, variables, certificateDataName, assertionDataName, transactionUrl, transactionDataName) {
+    const { getCertificateByCode } = require("../../certificate/certificate.service.js");
+    const { getDatasetByHeaderCode } = require("../../dataset/dataset.service.js");
+
+
+    let apiContext;
+
+    try {
+        // Use the new helper
+        const contextData = await getSAMLContext(data, certificateDataName);
+        apiContext = contextData.apiContext;
+
+        // Get the samlToken
+        const tokenResult = await getCertificateByCode({ subprojectID: data.subprojectID, code: assertionDataName });
+        if (!tokenResult.length) return { success: 0, message: `SAML: Token not found for ${assertionDataName}`, stop: 1 };
+
+        const token = tokenResult[0].token;
+
+        // Get the transaction dataset
+        const result2 = await getDatasetByHeaderCode({ subprojectID: data.subprojectID, datasetheaderCode: transactionDataName });
+        if (!result2.length) return { success: 0, message: `SAML: Dataset not found: ${transactionDataName}`, stop: 1 };
+
+        const dynamicData = await buildAssertionPayload(result2, '<N/A>', null);
+
+        // Execute Transaction
+        console.log("Executing Transaction...");
+        const txResponse = await apiContext.post(transactionUrl, {
+            headers: { 'Authorization': token },
+            data: dynamicData
+        });
+
+        const txResult = await txResponse.json();
+        console.log("Transaction Result:", txResult);
+        let ret = await Store_HttpData(data, assertionDataName, txResult)
+
+        // --- STEP 4: STORE OR UPDATE the txResult ---
+        if (ret.success == 1) {
+            return { success: 1, message: "SAML: OK!", stop: 0 };
+        } else {
+            return { success: 0, message: "SAML: Error!", stop: 1 };
+        }
+
+    } catch (error) {
+        console.error("SAML Error:", error.message);
+        return { success: 0, message: error.message, stop: 1 };
+    } finally {
+        if (apiContext) await apiContext.dispose();
+    }
+}
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
 *  Store_HttpData:  Store a result into a httpData table
 * 
 * @param {object} data:                 all the parameters
@@ -5659,106 +5768,6 @@ async function Store_HttpData(data, code, txResult) {
 
 
 }
-
-
-/**
-* ---------------------------------------------------------------------------- 
-* @function
-*  SAML_Transaction:  Perform a SAML transaction request
-* 
-* @param {object} page:                 playwright page
-* @param {object} data:                 all the parameters
-* @param {object} variables:            array of all the variables
-* @param {string} certificateDataName:  name of the dataset for the certificate 
-* @param {string} assertionDataName:    name of the dataset for the assertion 
-* @param {string} transactionUrl:       Url for the assertion 
-* @param {string} transactionDataName:  name of the dataset for the assertion 
-*
-*/
-async function SAML_Transaction(page, data, variables, certificateDataName, assertionDataName, transactionUrl, transactionDataName) {
-    const { getCertificateByCode } = require("../../certificate/certificate.service.js");
-    const { getDatasetByHeaderCode } = require("../../dataset/dataset.service.js");
-    const { getHttpdataByCode, createHttpdata, updateHttpdata } = require("../../httpdata/httpdata.service.js");
-
-
-    let apiContext;
-
-    try {
-        // Use the new helper
-        const contextData = await getSAMLContext(data, certificateDataName);
-        apiContext = contextData.apiContext;
-
-        // Get the samlToken
-        const tokenResult = await getCertificateByCode({ subprojectID: data.subprojectID, code: assertionDataName });
-        if (!tokenResult.length) return { success: 0, message: `SAML: Token not found for ${assertionDataName}`, stop: 1 };
-
-        const token = tokenResult[0].token;
-
-        // Get the transaction dataset
-        const result2 = await getDatasetByHeaderCode({ subprojectID: data.subprojectID, datasetheaderCode: transactionDataName });
-        if (!result2.length) return { success: 0, message: `SAML: Dataset not found: ${transactionDataName}`, stop: 1 };
-
-        const dynamicData = await buildAssertionPayload(result2, '<N/A>', null);
-
-        // Execute Transaction
-        console.log("Executing Transaction...");
-        const txResponse = await apiContext.post(transactionUrl, {
-            headers: { 'Authorization': token },
-            data: dynamicData
-        });
-
-        const txResult = await txResponse.json();
-        console.log("Transaction Result:", txResult);
-        let ret = await Store_HttpData(data, assertionDataName, txResult)
-
-        // --- STEP 4: STORE OR UPDATE the txResult ---
-        /*        
-                const dataAPI1 = { subprojectID: data.subprojectID, code: assertionDataName };
-                const result1 = await getHttpdataByCode(dataAPI1);
-        
-                if (result1.length) {
-                    // Update existing
-                    console.log('Existing httpdata found, updating ID:', result1[0].httpdataID);
-                    const updateResult = await updateHttpdata({
-                        jsondata: JSON.stringify(txResult),
-                        httpdataID: result1[0].httpdataID
-                    });
-        
-                    if (updateResult.affectedRows === 0) {
-                        return { success: 0, message: "SAML Transaction: Update http data fails!", stop: 1 };
-                    }
-                    console.log('Httpdata updated!');
-                } else {
-                    // Create new
-                    console.log('No httpdata found, creating new record');
-                    const createResult = await createHttpdata({
-                        subprojectID: data.subprojectID,
-                        code: assertionDataName,
-                        jsondata: JSON.stringify(txResult)
-                    });
-        
-                    if (createResult.affectedRows === 0) {
-                        return { success: 0, message: "SAML Transaction: Store http data fails!", stop: 1 };
-                    }
-                    console.log('Httpdata created!');
-                }
-            */
-
-        if (ret.success == 1) {
-            return { success: 1, message: "SAML: OK!", stop: 0 };
-        } else {
-            return { success: 0, message: "SAML: Error!", stop: 1 };
-        }
-
-    } catch (error) {
-        console.error("SAML Error:", error.message);
-        return { success: 0, message: error.message, stop: 1 };
-    } finally {
-        if (apiContext) await apiContext.dispose();
-    }
-}
-
-
 
 /**
 * ---------------------------------------------------------------------------- 
@@ -5839,15 +5848,17 @@ async function httpSearchKeyValue(page, data, variables, assertionDataName, sear
     searchPosition = variables.evaluateVariable(searchPosition, true)
     scopePosition = variables.evaluateVariable(scopePosition, true)
 
-    console.log('assertionDataName', assertionDataName)
-    console.log('searchKey', searchKey)
-    console.log('searchPosition', searchPosition)
-    console.log('scopeKey', scopeKey)
-    console.log('scopePosition', scopePosition)
-    console.log('variableName', variableName)
+    if (variableName.includes("$Loop")) {
+        let loop = variables.evaluateVariable("$Loop", true)
+        variableName = variableName.replace("$Loop", loop.toString())
+    }
 
-
-
+    // console.log('assertionDataName', assertionDataName)
+    // console.log('searchKey', searchKey)
+    // console.log('searchPosition', searchPosition)
+    // console.log('scopeKey', scopeKey)
+    // console.log('scopePosition', scopePosition)
+    // console.log('variableName', variableName)
 
 
     // Get the http data
@@ -5878,7 +5889,27 @@ async function httpSearchKeyValue(page, data, variables, assertionDataName, sear
         });
 
         let keyValue = null
-        const jsonObj = parser.parse(xmlData);
+        //const jsonObj = parser.parse(xmlData);
+        let jsonObj;
+
+        // Check if xmlData is a string and looks like JSON
+        if (typeof xmlData === 'string' && (xmlData.trim().startsWith('{') || xmlData.trim().startsWith('['))) {
+            try {
+                jsonObj = JSON.parse(xmlData);
+            } catch (e) {
+                console.error("Failed to parse as JSON, trying XML...");
+            }
+        }
+
+        // If it wasn't JSON or parsing failed, use the XML Parser
+        if (!jsonObj) {
+            const parser = new XMLParser({
+                ignoreAttributes: true,
+                removeNSPrefix: true
+            });
+            jsonObj = parser.parse(xmlData);
+        }
+
 
         let searchRoot = jsonObj;
 
@@ -5936,99 +5967,6 @@ async function httpSearchKeyValue(page, data, variables, assertionDataName, sear
         return { success: 0, message: "httpSearchKeyValue KO! : " + error.message, value: -1, stop: 1 };
     }
 
-}
-
-
-
-/**
-* ---------------------------------------------------------------------------- 
-* @function
-*  httpSearchKeyValue:  Search for a key value into the http result -- OBSOLETE
-* 
-* @param {object} page:                 playwright page
-* @param {object} data:                 all the parameters
-* @param {object} variables:            array of all the variables
-* @param {string} assertionDataName:    name of the dataset for the assertion 
-* @param {string} searchKey:            the key in the json structure 
-* @param {string} parentKey:            (optional) the parent key in the json structure 
-* @param {string} searchPosition:       Occurrence of the key (1 by default) 
-*
-*/
-async function httpSearchKeyValueV0(page, data, variables, assertionDataName, searchKey, parentKey = null, searchPosition) {
-
-    const { getHttpdataByCode } = require("../../httpdata/httpdata.service.js");
-
-    if (parentKey == '<N/A>') parentKey = null
-    let variableName = "$KeyValue"
-
-    searchPosition = variables.evaluateVariable(searchPosition)
-    searchPosition = searchPosition.replace(/'/g, "");
-
-    // Get the http data
-    const dataAPI1 = { subprojectID: data.subprojectID, code: assertionDataName };
-    const result1 = await getHttpdataByCode(dataAPI1);
-    variables.setVariable("$Error", "0");
-    if (result1.length == 0) {
-        console.log("httpdata not found! : " + assertionDataName)
-        variables.setVariable("$Error", "1");
-        variables.setVariable(variableName, "-1")
-        return { success: 0, message: "httpdata not found! : " + assertionDataName, value: -1, stop: 1 };
-    }
-
-    const dataResult = result1[0]
-
-    try {
-        let xmlData = dataResult.jsondata;
-        if (!xmlData) {
-            console.log("httpSearchKeyValue: jsondata is empty!",);
-            variables.setVariable("$Error", "1");
-            variables.setVariable(variableName, "-1")
-            return { success: 0, message: "httpSearchKeyValue: transactionResponse is empty!", value: -1, stop: 1 };
-        }
-
-        const parser = new XMLParser({
-            ignoreAttributes: true,
-            removeNSPrefix: true
-        });
-
-        let keyValue = null
-        const jsonObj = parser.parse(xmlData);
-        if (parentKey != null) {
-            const result1 = findValueByKey(jsonObj, parentKey, searchPosition);
-            if (result1 != undefined) {
-                console.log('Parent: ', result1)
-                const result2 = findValueByKey(result1, searchKey, 1);
-                keyValue = result2 !== undefined ? result2 : null;
-                console.log('KeyValue with parent: ', keyValue)
-            } else {
-                console.log('Parent not found! ', parentKey)
-            }
-
-        } else {
-            const result = findValueByKey(jsonObj, searchKey, searchPosition);
-            keyValue = result !== undefined ? result : null;
-            console.log('KeyValue: ', keyValue)
-        }
-
-        if (keyValue == null) {
-            // No data found!
-            console.log("httpSearchKeyValue: No data found! : " + (parentKey == null ? '' : parentKey + ' / ') + searchKey);
-            variables.setVariable("$Error", "1");
-            variables.setVariable(variableName, "-1")
-            return { success: 0, message: "httpSearchKeyValue: No data found!", value: -1, stop: 1 };
-        } else {
-            // Data found!
-            console.log("httpSearchKeyValue: Data found! : " + (parentKey == null ? '' : parentKey + ' / ') + searchKey + " = " + keyValue);
-            variables.setVariable(variableName, keyValue)
-            return { success: 1, message: "httpSearchKeyValue: Data found!", value: (parentKey == null ? '' : parentKey + ' / ') + searchKey + " = " + keyValue, stop: 0 };
-        }
-
-    } catch (error) {
-        console.error("httpSearchKeyValue: Internal Error: ", error.message);
-        variables.setVariable("$Error", "1");
-        variables.setVariable(variableName, "-1")
-        return { success: 0, message: "httpSearchKeyValue KO! : " + error.message, value: -1, stop: 1 };
-    }
 }
 
 
@@ -6113,7 +6051,27 @@ async function httpKeyCount(page, data, variables, assertionDataName, searchKey,
             removeNSPrefix: true
         });
 
-        const jsonObj = parser.parse(xmlData);
+        //const jsonObj = parser.parse(xmlData);
+        
+        let jsonObj;
+
+        // Check if xmlData is a string and looks like JSON
+        if (typeof xmlData === 'string' && (xmlData.trim().startsWith('{') || xmlData.trim().startsWith('['))) {
+            try {
+                jsonObj = JSON.parse(xmlData);
+            } catch (e) {
+                console.error("Failed to parse as JSON, trying XML...");
+            }
+        }
+
+        // If it wasn't JSON or parsing failed, use the XML Parser
+        if (!jsonObj) {
+            const parser = new XMLParser({
+                ignoreAttributes: true,
+                removeNSPrefix: true
+            });
+            jsonObj = parser.parse(xmlData);
+        }
 
 
         //
@@ -6966,8 +6924,6 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 ret = await clickXY(variables, param1, param2)
                 if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
-
-
 
             default:
                 variables.displayLog(1, 1, 'No function with the name: ' + name)
