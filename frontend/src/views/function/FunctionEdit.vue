@@ -60,15 +60,7 @@
                         <span>Default Value 1</span>
                     </div>
 
-                    <!-- <div class="input-container focus" v-if="activeID != 2">
-                        <input type="text" name="natural1" class="input" @focus="handleFocus($event)"
-                            title="Name of the attribute in the natural" @blur="handleBlur($event)" maxlength="40"
-                            v-model="natural1" />
-                        <label>Natural 1</label>
-                        <span>Natural 1</span>
-                    </div> -->
-
-                    <div class="input-container focus">
+                    <div class="input-container focus" v-if="activeID != 2">
                         <select id="natural1" class="input" @focus="handleFocus($event)" @blur="handleBlur($event)"
                             @change="handleNatural1Change()" v-model="selectedNatural1">
                             <option v-for="natural in naturals1" :key="natural.naturalID"
@@ -77,7 +69,7 @@
                         </select>
                         <label>Natural 1</label>
                         <span>Natural 1</span>
-                    </div>                    
+                    </div>
 
                     <div class="input-container focus" v-if="activeID != 2">
                         <input type="text" name="tip2" class="input" @focus="handleFocus($event)"
@@ -102,15 +94,7 @@
                         <span>Default Value 2</span>
                     </div>
 
-                    <!-- <div class="input-container focus" v-if="activeID != 2">
-                        <input type="text" name="natural2" class="input" @focus="handleFocus($event)"
-                            title="Name of the attribute in the natural" @blur="handleBlur($event)" maxlength="40"
-                            v-model="natural2" />
-                        <label>Natural 2</label>
-                        <span>Natural 2</span>
-                    </div> -->
-
-                    <div class="input-container focus">
+                    <div class="input-container focus" v-if="activeID != 2">
                         <select id="natural2" class="input" @focus="handleFocus($event)" @blur="handleBlur($event)"
                             @change="handleNatural2Change()" v-model="selectedNatural2">
                             <option v-for="natural in naturals2" :key="natural.naturalID"
@@ -119,7 +103,7 @@
                         </select>
                         <label>Natural 2</label>
                         <span>Natural 2</span>
-                    </div>                    
+                    </div>
 
 
                     <div class="input-container focus" v-if="activeID != 2">
@@ -145,15 +129,7 @@
                         <span>Default Value 3</span>
                     </div>
 
-                    <!-- <div class="input-container focus" v-if="activeID != 2">
-                        <input type="text" name="natural3" class="input" @focus="handleFocus($event)"
-                            title="Name of the attribute in the natural" @blur="handleBlur($event)" maxlength="40"
-                            v-model="natural3" />
-                        <label>Natural 3</label>
-                        <span>Natural 3</span>
-                    </div> -->
-
-                    <div class="input-container focus">
+                    <div class="input-container focus" v-if="activeID != 2">
                         <select id="natural3" class="input" @focus="handleFocus($event)" @blur="handleBlur($event)"
                             @change="handleNatural3Change()" v-model="selectedNatural3">
                             <option v-for="natural in naturals3" :key="natural.naturalID"
@@ -162,7 +138,7 @@
                         </select>
                         <label>Natural 3</label>
                         <span>Natural 3</span>
-                    </div>                    
+                    </div>
 
 
                     <div class="input-container focus" v-if="activeID != 2">
@@ -188,15 +164,7 @@
                         <span>Default Value 4</span>
                     </div>
 
-                    <!-- <div class="input-container focus" v-if="activeID != 2">
-                        <input type="text" name="natural4" class="input" @focus="handleFocus($event)"
-                            title="Name of the attribute in the natural" @blur="handleBlur($event)" maxlength="40"
-                            v-model="natural4" />
-                        <label>Natural 4</label>
-                        <span>Natural 4</span>
-                    </div> -->
-
-                    <div class="input-container focus">
+                    <div class="input-container focus" v-if="activeID != 2">
                         <select id="natural4" class="input" @focus="handleFocus($event)" @blur="handleBlur($event)"
                             @change="handleNatural4Change()" v-model="selectedNatural4">
                             <option v-for="natural in naturals4" :key="natural.naturalID"
@@ -205,7 +173,147 @@
                         </select>
                         <label>Natural 4</label>
                         <span>Natural 4</span>
-                    </div>                    
+                    </div>
+
+
+                    <div class="input-container focus" v-if="activeID != 2">
+                        <input type="text" name="tip5" class="input" @focus="handleFocus($event)"
+                            @blur="handleBlur($event)" maxlength="80" v-model="tip5" />
+                        <label>Tip 5</label>
+                        <span>Tip 5</span>
+                    </div>
+
+                    <div class="input-container focus" v-if="activeID != 2">
+                        <input type="text" name="parameter5" class="input" @focus="handleFocus($event)"
+                            title="Info: if no parameter 5 is foreseen, let's the field empty!"
+                            @blur="handleBlur($event)" maxlength="20" v-model="parameter5" />
+                        <label>Parameter 5</label>
+                        <span>Parameter 5</span>
+                    </div>
+
+                    <div class="input-container focus" v-if="activeID != 2">
+                        <input type="text" name="defaultvalue5" class="input" @focus="handleFocus($event)"
+                            title="empty or a default value or a list (example: 1:A, 2:B, 3:C) or <DATA>, <DICT>,<RULE>,<USER>, :<SELECTOR>"
+                            @blur="handleBlur($event)" maxlength="400" v-model="defaultValue5" />
+                        <label>Default Value 5</label>
+                        <span>Default Value 5</span>
+                    </div>
+
+                    <div class="input-container focus" v-if="activeID != 2">
+                        <select id="natural5" class="input" @focus="handleFocus($event)" @blur="handleBlur($event)"
+                            @change="handleNatural5Change()" v-model="selectedNatural5">
+                            <option v-for="natural in naturals5" :key="natural.naturalID"
+                                v-bind:value="{ id: natural.naturalID }">
+                                {{ natural.naturalID }}</option>
+                        </select>
+                        <label>Natural 5</label>
+                        <span>Natural 5</span>
+                    </div>
+
+                    <div class="input-container focus" v-if="activeID != 2">
+                        <input type="text" name="tip6" class="input" @focus="handleFocus($event)"
+                            @blur="handleBlur($event)" maxlength="80" v-model="tip6" />
+                        <label>Tip 6</label>
+                        <span>Tip 6</span>
+                    </div>
+
+                    <div class="input-container focus" v-if="activeID != 2">
+                        <input type="text" name="parameter6" class="input" @focus="handleFocus($event)"
+                            title="Info: if no parameter 6 is foreseen, let's the field empty!"
+                            @blur="handleBlur($event)" maxlength="20" v-model="parameter6" />
+                        <label>Parameter 6</label>
+                        <span>Parameter 6</span>
+                    </div>
+
+                    <div class="input-container focus" v-if="activeID != 2">
+                        <input type="text" name="defaultvalue6" class="input" @focus="handleFocus($event)"
+                            title="empty or a default value or a list (example: 1:A, 2:B, 3:C) or <DATA>, <DICT>,<RULE>,<USER>"
+                            @blur="handleBlur($event)" maxlength="400" v-model="defaultValue6" />
+                        <label>Default Value 6</label>
+                        <span>Default Value 6</span>
+                    </div>
+
+                    <div class="input-container focus" v-if="activeID != 2">
+                        <select id="natural6" class="input" @focus="handleFocus($event)" @blur="handleBlur($event)"
+                            @change="handleNatural6Change()" v-model="selectedNatural6">
+                            <option v-for="natural in naturals6" :key="natural.naturalID"
+                                v-bind:value="{ id: natural.naturalID }">
+                                {{ natural.naturalID }}</option>
+                        </select>
+                        <label>Natural 6</label>
+                        <span>Natural 6</span>
+                    </div>
+
+
+                    <div class="input-container focus" v-if="activeID != 2">
+                        <input type="text" name="tip7" class="input" @focus="handleFocus($event)"
+                            @blur="handleBlur($event)" maxlength="80" v-model="tip7" />
+                        <label>Tip 7</label>
+                        <span>Tip 7</span>
+                    </div>
+
+                    <div class="input-container focus" v-if="activeID != 2">
+                        <input type="text" name="parameter7" class="input" @focus="handleFocus($event)"
+                            title="Info: if no parameter 7 is foreseen, let's the field empty!"
+                            @blur="handleBlur($event)" maxlength="20" v-model="parameter7" />
+                        <label>Parameter 7</label>
+                        <span>Parameter 7</span>
+                    </div>
+
+                    <div class="input-container focus" v-if="activeID != 2">
+                        <input type="text" name="defaultvalue7" class="input" @focus="handleFocus($event)"
+                            title="empty or a default value or a list (example: 1:A, 2:B, 3:C) or <DATA>, <DICT>,<RULE>,<USER>"
+                            @blur="handleBlur($event)" maxlength="400" v-model="defaultValue7" />
+                        <label>Default Value 7</label>
+                        <span>Default Value 7</span>
+                    </div>
+
+                    <div class="input-container focus" v-if="activeID != 2">
+                        <select id="natural7" class="input" @focus="handleFocus($event)" @blur="handleBlur($event)"
+                            @change="handleNatural7Change()" v-model="selectedNatural7">
+                            <option v-for="natural in naturals7" :key="natural.naturalID"
+                                v-bind:value="{ id: natural.naturalID }">
+                                {{ natural.naturalID }}</option>
+                        </select>
+                        <label>Natural 7</label>
+                        <span>Natural 7</span>
+                    </div>
+
+
+                    <div class="input-container focus" v-if="activeID != 2">
+                        <input type="text" name="tip8" class="input" @focus="handleFocus($event)"
+                            @blur="handleBlur($event)" maxlength="80" v-model="tip8" />
+                        <label>Tip 8</label>
+                        <span>Tip 8</span>
+                    </div>
+
+                    <div class="input-container focus" v-if="activeID != 2">
+                        <input type="text" name="parameter8" class="input" @focus="handleFocus($event)"
+                            title="Info: if no parameter 8 is foreseen, let's the field empty!"
+                            @blur="handleBlur($event)" maxlength="20" v-model="parameter8" />
+                        <label>Parameter 8</label>
+                        <span>Parameter 8</span>
+                    </div>
+
+                    <div class="input-container focus" v-if="activeID != 2">
+                        <input type="text" name="defaultvalue8" class="input" @focus="handleFocus($event)"
+                            title="empty or a default value or a list (example: 1:A, 2:B, 3:C) or <DATA>, <DICT>,<RULE>,<USER>"
+                            @blur="handleBlur($event)" maxlength="400" v-model="defaultValue8" />
+                        <label>Default Value 8</label>
+                        <span>Default Value 8</span>
+                    </div>
+
+                    <div class="input-container focus" v-if="activeID != 2">
+                        <select id="natural8" class="input" @focus="handleFocus($event)" @blur="handleBlur($event)"
+                            @change="handleNatural8Change()" v-model="selectedNatural8">
+                            <option v-for="natural in naturals4" :key="natural.naturalID"
+                                v-bind:value="{ id: natural.naturalID }">
+                                {{ natural.naturalID }}</option>
+                        </select>
+                        <label>Natural 8</label>
+                        <span>Natural 8</span>
+                    </div>
+
 
                     <div class="input-container focus">
                         <select id="active" class="input" @focus="handleFocus($event)" @blur="handleBlur($event)"
@@ -278,41 +386,76 @@ export default {
         const comment = ref('')
         const parameter1 = ref('')
         const defaultValue1 = ref('')
-        //const natural1 = ref('')
         const tip1 = ref('')
         const parameter2 = ref('')
         const defaultValue2 = ref('')
-        //const natural2 = ref('')
         const tip2 = ref('')
         const parameter3 = ref('')
         const defaultValue3 = ref('')
-        //const natural3 = ref('')
         const tip3 = ref('')
         const parameter4 = ref('')
         const defaultValue4 = ref('')
-        //const natural4 = ref('')
         const tip4 = ref('')
+        const parameter5 = ref('')
+        const defaultValue5 = ref('')
+        const tip5 = ref('')
+        const parameter6 = ref('')
+        const defaultValue6 = ref('')
+        const tip6 = ref('')
+        const parameter7 = ref('')
+        const defaultValue7 = ref('')
+        const tip7 = ref('')
+        const parameter8 = ref('')
+        const defaultValue8 = ref('')
+        const tip8 = ref('')
+
+
 
         const activeID = ref(1)
         const actives = ref([{ activeID: '1', active: 'Active' }, { activeID: '0', active: 'Not Active' }, { activeID: '2', active: 'Comment' }])
         const selectedActive = ref({ id: activeID.value })
         const naturals1 = ref([{ naturalID: '' }, { naturalID: 'value:text' }, { naturalID: 'value:number' }, { naturalID: 'expression:text' }, { naturalID: 'data:text' }, { naturalID: 'data:number' },
-        { naturalID: 'variable:text' }, { naturalID: 'dictionary:text' }, {naturalID: 'position:number'}, {naturalID: 'wait:number'}, {naturalID: 'before:number'},
-        { naturalID: 'codevalue:text'}, { naturalID: 'comment:text'}, {naturalID: 'reference:text'}, {naturalID: 'element:text'}])
+        { naturalID: 'variable:text' }, { naturalID: 'dictionary:text' }, { naturalID: 'position:number' }, { naturalID: 'wait:number' }, { naturalID: 'before:number' },
+        { naturalID: 'codevalue:text' }, { naturalID: 'comment:text' }, { naturalID: 'reference:text' }, { naturalID: 'element:text' }])
         const natural1ID = ref('value:text')
         const selectedNatural1 = ref({ id: natural1ID.value })
+
         const naturals2 = ref([])
         naturals2.value = naturals1.value
         const natural2ID = ref('value:text')
-        const selectedNatural2 = ref({ id: natural2ID.value })    
+        const selectedNatural2 = ref({ id: natural2ID.value })
+
         const naturals3 = ref([])
         naturals3.value = naturals1.value
         const natural3ID = ref('value:text')
-        const selectedNatural3 = ref({ id: natural3ID.value })  
+        const selectedNatural3 = ref({ id: natural3ID.value })
+
         const naturals4 = ref([])
         naturals4.value = naturals1.value
         const natural4ID = ref('value:text')
-        const selectedNatural4 = ref({ id: natural4ID.value })                      
+        const selectedNatural4 = ref({ id: natural4ID.value })
+
+        const naturals5 = ref([])
+        naturals5.value = naturals1.value
+        const natural5ID = ref('value:text')
+        const selectedNatural5 = ref({ id: natural5ID.value })
+
+        const naturals6 = ref([])
+        naturals6.value = naturals1.value
+        const natural6ID = ref('value:text')
+        const selectedNatural6 = ref({ id: natural6ID.value })
+
+        const naturals7 = ref([])
+        naturals7.value = naturals1.value
+        const natural7ID = ref('value:text')
+        const selectedNatural7 = ref({ id: natural7ID.value })
+
+        const naturals8 = ref([])
+        naturals8.value = naturals1.value
+        const natural8ID = ref('value:text')
+        const selectedNatural8 = ref({ id: natural8ID.value })
+
+
 
         // -------------------------------------------
         // Management of the errors
@@ -359,28 +502,47 @@ export default {
                     ruleFunction.value = testfunction.value[0].rulefunction
                     parameter1.value = testfunction.value[0].parameter1
                     defaultValue1.value = testfunction.value[0].defaultValue1
-                    //natural1.value = testfunction.value[0].natural1
                     natural1ID.value = testfunction.value[0].natural1
-                    selectedNatural1.value = ({ id: natural1ID.value })              
+                    selectedNatural1.value = ({ id: natural1ID.value })
                     tip1.value = testfunction.value[0].tip1
                     parameter2.value = testfunction.value[0].parameter2
                     defaultValue2.value = testfunction.value[0].defaultValue2
-                    //natural2.value = testfunction.value[0].natural2
                     natural2ID.value = testfunction.value[0].natural2
-                    selectedNatural2.value = ({ id: natural2ID.value })              
+                    selectedNatural2.value = ({ id: natural2ID.value })
                     tip2.value = testfunction.value[0].tip2
                     parameter3.value = testfunction.value[0].parameter3
                     defaultValue3.value = testfunction.value[0].defaultValue3
-                    //natural3.value = testfunction.value[0].natural3
                     natural3ID.value = testfunction.value[0].natural3
-                    selectedNatural3.value = ({ id: natural3ID.value })              
+                    selectedNatural3.value = ({ id: natural3ID.value })
                     tip3.value = testfunction.value[0].tip3
                     parameter4.value = testfunction.value[0].parameter4
                     defaultValue4.value = testfunction.value[0].defaultValue4
-                    //natural4.value = testfunction.value[0].natural4
                     natural4ID.value = testfunction.value[0].natural4
-                    selectedNatural4.value = ({ id: natural4ID.value })              
+                    selectedNatural4.value = ({ id: natural4ID.value })
                     tip4.value = testfunction.value[0].tip4
+
+                    parameter5.value = testfunction.value[0].parameter5
+                    defaultValue5.value = testfunction.value[0].defaultValue5
+                    natural5ID.value = testfunction.value[0].natural5
+                    selectedNatural5.value = ({ id: natural5ID.value })
+                    tip5.value = testfunction.value[0].tip5
+                    parameter6.value = testfunction.value[0].parameter6
+                    defaultValue6.value = testfunction.value[0].defaultValue6
+                    natural6ID.value = testfunction.value[0].natural6
+                    selectedNatural6.value = ({ id: natural6ID.value })
+                    tip6.value = testfunction.value[0].tip6
+                    parameter7.value = testfunction.value[0].parameter7
+                    defaultValue7.value = testfunction.value[0].defaultValue7
+                    natural7ID.value = testfunction.value[0].natural7
+                    selectedNatural7.value = ({ id: natural7ID.value })
+                    tip7.value = testfunction.value[0].tip7
+                    parameter8.value = testfunction.value[0].parameter8
+                    defaultValue8.value = testfunction.value[0].defaultValue8
+                    natural8ID.value = testfunction.value[0].natural8
+                    selectedNatural8.value = ({ id: natural8ID.value })
+                    tip8.value = testfunction.value[0].tip8
+
+
                     comment.value = testfunction.value[0].comment
                     activeID.value = testfunction.value[0].active
                     selectedActive.value = ({ id: testfunction.value[0].active })
@@ -447,6 +609,37 @@ export default {
             natural4ID.value = selectedNatural4.value.id
         }
 
+        // --------------------------------------------------------------------------
+        // User selects another natural 5 value, store the current value
+        // --------------------------------------------------------------------------
+        const handleNatural5Change = () => {
+            consoleLog('RuleEdit.vue/handleNatural5Change', 2, 'User changed the natural 5 value: ' + selectedNatural5.value.id, trace.value)
+            natural5ID.value = selectedNatural5.value.id
+        }
+
+        // --------------------------------------------------------------------------
+        // User selects another natural 6 value, store the current value
+        // --------------------------------------------------------------------------
+        const handleNatural6Change = () => {
+            consoleLog('RuleEdit.vue/handleNatural6Change', 2, 'User changed the natural 6 value: ' + selectedNatural6.value.id, trace.value)
+            natural6ID.value = selectedNatural6.value.id
+        }
+
+        // --------------------------------------------------------------------------
+        // User selects another natural 7 value, store the current value
+        // --------------------------------------------------------------------------
+        const handleNatural7Change = () => {
+            consoleLog('RuleEdit.vue/handleNatural7Change', 2, 'User changed the natural 7 value: ' + selectedNatural7.value.id, trace.value)
+            natural7ID.value = selectedNatural7.value.id
+        }
+
+        // --------------------------------------------------------------------------
+        // User selects another natural 8 value, store the current value
+        // --------------------------------------------------------------------------
+        const handleNatural8Change = () => {
+            consoleLog('RuleEdit.vue/handleNatural8Change', 2, 'User changed the natural 8 value: ' + selectedNatural8.value.id, trace.value)
+            natural8ID.value = selectedNatural8.value.id
+        }
 
         // --------------------------------------------------------------------------
         // User cancel the action, leave the screen and returns to the list
@@ -469,9 +662,16 @@ export default {
         const handleSubmit = () => {
             consoleLog('FunctionEdit.vue/handleSubmit', 2, 'User Submit the action - functionID: ' + functionID.value, trace.value)
             // functionName, comment, tip1, parameter1, defaultValue1, tip2, parameter2, defaultValue2, tip3, parameter3, defaultValue3, active, functionID
-            const { error, updateTheFunction } = updateFunction(functionName.value, ruleFunction.value, comment.value, tip1.value, parameter1.value, defaultValue1.value, selectedNatural1.value.id,
-                tip2.value, parameter2.value, defaultValue2.value, selectedNatural2.value.id, tip3.value, parameter3.value, defaultValue3.value, selectedNatural3.value.id,
-                tip4.value, parameter4.value, defaultValue4.value, selectedNatural4.value.id, selectedActive.value.id, functionID.value)
+            const { error, updateTheFunction } = updateFunction(functionName.value, ruleFunction.value, comment.value,
+                tip1.value, parameter1.value, defaultValue1.value, selectedNatural1.value.id,
+                tip2.value, parameter2.value, defaultValue2.value, selectedNatural2.value.id,
+                tip3.value, parameter3.value, defaultValue3.value, selectedNatural3.value.id,
+                tip4.value, parameter4.value, defaultValue4.value, selectedNatural4.value.id,
+                tip5.value, parameter5.value, defaultValue5.value, selectedNatural5.value.id,
+                tip6.value, parameter6.value, defaultValue6.value, selectedNatural6.value.id,
+                tip7.value, parameter7.value, defaultValue7.value, selectedNatural7.value.id,
+                tip8.value, parameter8.value, defaultValue8.value, selectedNatural8.value.id,
+                selectedActive.value.id, functionID.value)
             updateTheFunction(testfunction, trace.value)
                 .then(function () {
                     consoleLog('FunctionEdit.vue/handleSubmit', 2, '------ Update a function - functionID: ' + functionID.value, trace.value)
@@ -491,11 +691,15 @@ export default {
 
         return {
             errorMessage, styleMessage, testfunction, projectName, projectID, userID, functionName, ruleFunction, comment,
-            tip1, parameter1, defaultValue1, tip2, parameter2, defaultValue2, tip3, parameter3, defaultValue3, 
+            tip1, parameter1, defaultValue1, tip2, parameter2, defaultValue2,
+            tip3, parameter3, defaultValue3, tip4, parameter4, defaultValue4,
+            tip5, parameter5, defaultValue5, tip6, parameter6, defaultValue6,
+            tip7, parameter7, defaultValue7, tip8, parameter8, defaultValue8,
             naturals1, selectedNatural1, naturals2, selectedNatural2, naturals3, selectedNatural3, naturals4, selectedNatural4,
-            tip4, parameter4, defaultValue4, actives, activeID, selectedActive,  
-            handleCancel, handleSubmit, handleFocus, handleBlur, handleActiveChange, 
-            handleNatural1Change, handleNatural2Change, handleNatural3Change, handleNatural4Change
+            naturals5, selectedNatural5, naturals6, selectedNatural6, naturals7, selectedNatural7, naturals8, selectedNatural8,
+            actives, activeID, selectedActive,
+            handleCancel, handleSubmit, handleFocus, handleBlur, handleActiveChange,
+            handleNatural1Change, handleNatural2Change, handleNatural3Change, handleNatural4Change, handleNatural5Change, handleNatural6Change, handleNatural7Change, handleNatural8Change
         }
 
     }
@@ -601,11 +805,14 @@ title {
     color: black;
 }
 
+
 .banner img {
     position: absolute;
-    top: 30%;
-    width: 50%;
-    height: 30%;
+    top: 8rem;
+    width: 12rem;
+    height: 12rem;
+    max-width: 12rem;
+    max-height: 12rem;
     animation: rotatehead 1.0s linear;
 }
 

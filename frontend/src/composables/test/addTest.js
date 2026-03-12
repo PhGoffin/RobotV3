@@ -2,8 +2,8 @@
  * @Author: Philippe Goffin 
  * @Email: artcomputer123@gmail.com
  * @Date: 2024-01-28
- * @Last Modified by: Philippe Goffin
- * @Last Modified time: 2024-03-10 07:33:47
+ * @Last Modified by: Someone
+ * @Last Modified time: 2026-03-11 16:16:25
  * @Description: Add a new test
  */
 
@@ -12,7 +12,7 @@ import { ref } from 'vue'
 import { consoleLog}  from '../../util/debug';
 
 
-const addTest = (scenarioID, action, comment, testCondition, functionID, parameter1, parameter2, parameter3, parameter4, active, position) => {
+const addTest = (scenarioID, action, comment, testCondition, functionID, parameter1, parameter2, parameter3, parameter4, parameter5, parameter6, parameter7, parameter8, active, position) => {
 
     const error = ref(null)
 
@@ -28,7 +28,8 @@ const addTest = (scenarioID, action, comment, testCondition, functionID, paramet
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },                    
                     body: JSON.stringify({ 'scenarioID': scenarioID, 'action': action, 'comment': comment, 'testCondition': testCondition, 'functionID': functionID,
-                     'parameter1': parameter1, 'parameter2': parameter2, 'parameter3': parameter3, 'parameter4': parameter4, 'active': active, 'position': position })
+                     'parameter1': parameter1, 'parameter2': parameter2, 'parameter3': parameter3, 'parameter4': parameter4,
+                     'parameter5': parameter5, 'parameter6': parameter6, 'parameter7': parameter7, 'parameter8': parameter8, 'active': active, 'position': position })
                 })
                 if (!data.ok) {
                     throw Error('Error during the insert of a test')

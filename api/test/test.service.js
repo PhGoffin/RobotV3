@@ -6,8 +6,8 @@ module.exports = {
    * @Author: Philippe Goffin 
    * @Email: artcomputer123@gmail.com
    * @Date: 2024-01-28
- * @Last Modified by: 
-   * @Last Modified time: 2025-01-17 11:26:58
+ * @Last Modified by: Someone
+   * @Last Modified time: 2026-03-12 07:46:12
    * @Description: All the database services available for the API Test
    */
 
@@ -17,8 +17,9 @@ module.exports = {
   createTest: (data) => {
     return new Promise((resolve, reject) => {
       mysql.query(
-        `insert into test(scenarioID, action, comment, commentType, transpose, testCondition, functionID, parameter1, parameter2, parameter3, parameter4, active, position) 
-                  values(?,?,?,1,?,?,?,?,?,?,?,?,?)`,
+        `insert into test(scenarioID, action, comment, commentType, transpose, testCondition, functionID, parameter1, parameter2, parameter3, parameter4, 
+        parameter5, parameter6, parameter7, parameter8, active, position) 
+                  values(?,?,?,1,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
         [
           data.scenarioID,
           data.action,
@@ -30,6 +31,10 @@ module.exports = {
           data.parameter2,
           data.parameter3,
           data.parameter4,
+          data.parameter5,
+          data.parameter6,
+          data.parameter7,
+          data.parameter8,
           (data.active != undefined ? data.active : 1),
           data.position,
         ],
@@ -54,6 +59,10 @@ module.exports = {
          T.parameter2, F.defaultValue2, F.tip2, F.parameter2 as label2,
          T.parameter3, F.defaultValue3, F.tip3, F.parameter3 as label3, 
          T.parameter4, F.defaultValue4, F.tip4, F.parameter4 as label4, 
+         T.parameter5, F.defaultValue5, F.tip5, F.parameter5 as label5, 
+         T.parameter6, F.defaultValue6, F.tip6, F.parameter6 as label6, 
+         T.parameter7, F.defaultValue7, F.tip7, F.parameter7 as label7, 
+         T.parameter8, F.defaultValue8, F.tip8, F.parameter8 as label8, 
          T.active, T.position 
          FROM test T, testfunction F, scenario S 
          WHERE T.scenarioID = ? AND F.functionID = T.functionID
@@ -70,19 +79,23 @@ module.exports = {
     });
   },
 
-  // -----------------------------------------------------------
-  // Get Test by dictionary (used in parameter1, 2, 3 or 4)
-  // -----------------------------------------------------------
+  // ------------------------------------------------------------------
+  // Get Test by dictionary (used in parameter1, 2, 3, 4, 5, 6, 7 or 8)
+  // ------------------------------------------------------------------
   getTestByDictionary: (data) => {
     return new Promise((resolve, reject) => {
       mysql.query(
         `SELECT T.testID, T.scenarioID, S.scenario, T.action, T.comment, T.commentType, T.transpose, T.testCondition, T.functionID,
-         T.parameter1, T.parameter2, T.parameter3, T.parameter4, T.active, T.position 
+         T.parameter1, T.parameter2, T.parameter3, T.parameter4, T.parameter5, T.parameter6, T.parameter7, T.parameter8, T.active, T.position 
          FROM test T, scenario S 
          WHERE S.subprojectID = ?
          AND T.scenarioID = S.scenarioID
-         AND (T.parameter1 = ? OR T.parameter2 = ? OR T.parameter3 = ? OR T.parameter4 = ?)`,
+         AND (T.parameter1 = ? OR T.parameter2 = ? OR T.parameter3 = ? OR T.parameter4 = ? OR T.parameter5 = ? OR T.parameter6 = ? OR T.parameter7 = ? OR T.parameter8 = ?)`,
         [data.subprojectID,
+        data.word,
+        data.word,
+        data.word,
+        data.word,
         data.word,
         data.word,
         data.word,
@@ -110,6 +123,10 @@ module.exports = {
         T.parameter2, F.defaultValue2, F.tip2, F.parameter2 as label2,
         T.parameter3, F.defaultValue3, F.tip3, F.parameter3 as label3, 
         T.parameter4, F.defaultValue4, F.tip4, F.parameter4 as label4, 
+        T.parameter5, F.defaultValue5, F.tip5, F.parameter5 as label5, 
+        T.parameter6, F.defaultValue6, F.tip6, F.parameter6 as label6,
+        T.parameter7, F.defaultValue7, F.tip7, F.parameter7 as label7, 
+        T.parameter8, F.defaultValue8, F.tip8, F.parameter8 as label8, 
         T.active, T.position 
         FROM test T, testfunction F, scenario S 
         WHERE T.testID = ? AND F.functionID = T.functionID AND S.scenarioID = T.scenarioID `,
@@ -131,7 +148,8 @@ module.exports = {
     //console.log (data)
     return new Promise((resolve, reject) => {
       mysql.query(
-        `UPDATE test SET action=?, comment=?, commentType=?, transpose=?, testCondition=? ,functionID=?, parameter1=?, parameter2=?, parameter3=?, parameter4=?, active=?  WHERE testID = ?`,
+        `UPDATE test SET action=?, comment=?, commentType=?, transpose=?, testCondition=? ,functionID=?, parameter1=?, parameter2=?, parameter3=?, parameter4=?,
+         parameter5=?, parameter6=?, parameter7=?, parameter8=?, active=?  WHERE testID = ?`,
         [
           data.action,
           data.comment,
@@ -143,6 +161,10 @@ module.exports = {
           data.parameter2,
           data.parameter3,
           data.parameter4,
+          data.parameter5,
+          data.parameter6,
+          data.parameter7,
+          data.parameter8,
           (data.active != undefined ? data.active : 1),
           data.testID
         ],
@@ -163,12 +185,16 @@ module.exports = {
     //console.log (data)
     return new Promise((resolve, reject) => {
       mysql.query(
-        `UPDATE test SET parameter1=?, parameter2=?, parameter3=?, parameter4=? WHERE testID = ?`,
+        `UPDATE test SET parameter1=?, parameter2=?, parameter3=?, parameter4=?, parameter5=?, parameter6=?, parameter7=?, parameter8=? WHERE testID = ?`,
         [
           data.parameter1,
           data.parameter2,
           data.parameter3,
           data.parameter4,
+          data.parameter5,
+          data.parameter6,
+          data.parameter7,
+          data.parameter8,
           data.testID
         ],
         (error, results) => {
@@ -282,8 +308,8 @@ module.exports = {
 
     return new Promise((resolve, reject) => {
       mysql.query(
-        `INSERT INTO test ( scenarioID, action, comment, commentType, transpose, testCondition, functionID, parameter1, parameter2, parameter3, parameter4, active, position )
-         SELECT ?, t1.action, t1.comment, t1.commentType, t1.transpose, t1.testCondition, t1.functionID, t1.parameter1, t1.parameter2, t1.parameter3, t1.parameter4, t1.active, ? 
+        `INSERT INTO test ( scenarioID, action, comment, commentType, transpose, testCondition, functionID, parameter1, parameter2, parameter3, parameter4, parameter5, parameter6, parameter7, parameter8, active, position )
+         SELECT ?, t1.action, t1.comment, t1.commentType, t1.transpose, t1.testCondition, t1.functionID, t1.parameter1, t1.parameter2, t1.parameter3, t1.parameter4, t1.parameter5, t1.parameter6, t1.parameter7, t1.parameter8, t1.active, ? 
          FROM test t1 WHERE t1.testID = ?`,
         [
           data.currentScenarioID,
@@ -357,7 +383,10 @@ module.exports = {
         testID: result[elt].testID, position: result[elt].position, action: result[elt].action,
         comment: result[elt].comment, commentType: result[elt].commentType, transpose: result[elt].transpose, condition: result[elt].testCondition,  function: result[elt].functionName,
         param1: result[elt].parameter1, param2: result[elt].parameter2,
-        param3: result[elt].parameter3, param4: result[elt].parameter4, active: result[elt].active
+        param3: result[elt].parameter3, param4: result[elt].parameter4, 
+        param5: result[elt].parameter5, param6: result[elt].parameter6,
+        param7: result[elt].parameter7, param8: result[elt].parameter8, 
+        active: result[elt].active
       })
     }
 
@@ -382,8 +411,10 @@ module.exports = {
 
     return new Promise((resolve, reject) => {
       mysql.query(
-        `INSERT INTO test ( scenarioID, action, comment, commentType, transpose, testCondition, functionID, parameter1, parameter2, parameter3, parameter4, active, position )
-        SELECT t1.scenarioID, t1.action, t1.comment, t1.commentType, t1.transpose, t1.testCondition, t1.functionID, t1.parameter1, t1.parameter2, t1.parameter3, t1.parameter4, t1.active, ? FROM test t1 WHERE t1.testID = ?`,
+        `INSERT INTO test ( scenarioID, action, comment, commentType, transpose, testCondition, functionID, parameter1, parameter2, parameter3, parameter4,
+         parameter5, parameter6, parameter7, parameter8,  active, position )
+        SELECT t1.scenarioID, t1.action, t1.comment, t1.commentType, t1.transpose, t1.testCondition, t1.functionID, t1.parameter1, t1.parameter2, t1.parameter3, t1.parameter4, 
+         t1.parameter5, t1.parameter6, t1.parameter7, t1.parameter8, t1.active, ? FROM test t1 WHERE t1.testID = ?`,
         [
           data.position,
           data.testID
@@ -407,8 +438,10 @@ module.exports = {
 
     return new Promise((resolve, reject) => {
       mysql.query(
-        `INSERT INTO test ( scenarioID, action, comment, commentType, transpose, testCondition, functionID, parameter1, parameter2, parameter3, parameter4, active, position )
-         SELECT ?, t1.action, t1.comment, t1.commentType, t1.transpose, t1.testCondition, t1.functionID, t1.parameter1, t1.parameter2, t1.parameter3, t1.parameter4, t1.active, t1.position 
+        `INSERT INTO test ( scenarioID, action, comment, commentType, transpose, testCondition, functionID, parameter1, parameter2, parameter3, parameter4,
+         parameter5, parameter6, parameter7, parameter8,  active, position )
+         SELECT ?, t1.action, t1.comment, t1.commentType, t1.transpose, t1.testCondition, t1.functionID, t1.parameter1, t1.parameter2, t1.parameter3, t1.parameter4,
+          t1.parameter5, t1.parameter6, t1.parameter7, t1.parameter8, t1.active, t1.position 
          FROM test t1 WHERE t1.scenarioID = ?`,
         [
           data.scenarioIDCopy,

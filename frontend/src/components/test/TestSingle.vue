@@ -93,6 +93,10 @@
       <p v-if="test.label2">2) {{ test.label2 }}: {{ test.parameter2 }}</p>
       <p v-if="test.label3">3) {{ test.label3 }}: {{ test.parameter3 }}</p>
       <p v-if="test.label4">4) {{ test.label4 }}: {{ test.parameter4 }}</p>
+      <p v-if="test.label5">5) {{ test.label5 }}: {{ test.parameter5 }}</p>
+      <p v-if="test.label6">6) {{ test.label6 }}: {{ test.parameter6 }}</p>
+      <p v-if="test.label7">7) {{ test.label7 }}: {{ test.parameter7 }}</p>
+      <p v-if="test.label8">8) {{ test.label8 }}: {{ test.parameter8 }}</p>
     </div>
 
   </div>

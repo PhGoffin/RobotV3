@@ -294,7 +294,7 @@ export default {
             consoleLog('Functions.vue/doInsert', 2, 'Insert a new Function - position: ' + position, trace.value)
             // const addFunction = (functionName, comment, tip1, parameter1, defaultValue1, natural1, tip2, parameter2, defaultValue2, natural2, tip3, parameter3, defaultValue3, natural3, tip4, parameter4, defaultValue4, natural4, position, active) => {
 
-            const { error, addNewFunction } = addFunction(functionName, '#', comment, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', position, 1)
+            const { error, addNewFunction } = addFunction(functionName, '#', comment, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', position, 1)
             return await addNewFunction(testfunction, trace.value)
                 .then(function () {
                     // check the status of the insert

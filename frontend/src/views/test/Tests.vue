@@ -429,7 +429,7 @@ export default {
             let comment = 'New'
 
             consoleLog('Tests.vue/doInsert', 2, 'Insert a new Test', trace.value)
-            const { error, addNewTest } = addTest(scenarioID.value, action, comment, '', 0, '', '', '', '', 1, position)
+            const { error, addNewTest } = addTest(scenarioID.value, action, comment, '', 0, '', '', '', '', '', '', '', '', 1, position)
             return await addNewTest(test, trace.value)
                 .then(function () {
                     // check the status of the reorder

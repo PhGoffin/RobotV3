@@ -2,6 +2,7 @@ const { By, Key, Keys, until } = require("selenium-webdriver")
 let frameID = 0
 let frameLocator = null
 const BrowserMiddelware = require("../library/browser.library.js")
+const { XMLParser } = require('fast-xml-parser');
 let browserMiddelware = new BrowserMiddelware
 let tabPage = []
 let tabPageID = 0
@@ -5610,6 +5611,55 @@ async function SAML_Assertion(page, data, variables, certificateDataName, assert
 }
 
 
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  Store_HttpData:  Store a result into a httpData table
+* 
+* @param {object} data:                 all the parameters
+* @param {string} code:                 code of the httpdata 
+* @param {object} txResult:             json file to store
+*
+*/
+async function Store_HttpData(data, code, txResult) {
+
+    const { getHttpdataByCode, createHttpdata, updateHttpdata } = require("../../httpdata/httpdata.service.js");
+
+    const dataAPI1 = { subprojectID: data.subprojectID, code: code };
+    const result1 = await getHttpdataByCode(dataAPI1);
+
+    if (result1.length) {
+        // Update existing
+        console.log('Existing httpdata found, updating ID:', result1[0].httpdataID);
+        const updateResult = await updateHttpdata({
+            jsondata: JSON.stringify(txResult),
+            httpdataID: result1[0].httpdataID
+        });
+
+        if (updateResult.affectedRows === 0) {
+            return { success: 0, message: "Store_HttpData: Update http data fails!", stop: 1 };
+        }
+        console.log('Httpdata updated!');
+    } else {
+        // Create new
+        console.log('No httpdata found, creating new record');
+        const createResult = await createHttpdata({
+            subprojectID: data.subprojectID,
+            code: code,
+            jsondata: JSON.stringify(txResult)
+        });
+
+        if (createResult.affectedRows === 0) {
+            return { success: 0, message: "Store_HttpData: Store http data fails!", stop: 1 };
+        }
+        console.log('Httpdata created!');
+    }
+
+    return { success: 1, message: "Store_HttpDatan: Store http data OK!", stop: 0 };
+
+
+}
+
 
 /**
 * ---------------------------------------------------------------------------- 
@@ -5659,39 +5709,46 @@ async function SAML_Transaction(page, data, variables, certificateDataName, asse
 
         const txResult = await txResponse.json();
         console.log("Transaction Result:", txResult);
+        let ret = await Store_HttpData(data, assertionDataName, txResult)
 
         // --- STEP 4: STORE OR UPDATE the txResult ---
-        const dataAPI1 = { subprojectID: data.subprojectID, code: assertionDataName };
-        const result1 = await getHttpdataByCode(dataAPI1);
+        /*        
+                const dataAPI1 = { subprojectID: data.subprojectID, code: assertionDataName };
+                const result1 = await getHttpdataByCode(dataAPI1);
+        
+                if (result1.length) {
+                    // Update existing
+                    console.log('Existing httpdata found, updating ID:', result1[0].httpdataID);
+                    const updateResult = await updateHttpdata({
+                        jsondata: JSON.stringify(txResult),
+                        httpdataID: result1[0].httpdataID
+                    });
+        
+                    if (updateResult.affectedRows === 0) {
+                        return { success: 0, message: "SAML Transaction: Update http data fails!", stop: 1 };
+                    }
+                    console.log('Httpdata updated!');
+                } else {
+                    // Create new
+                    console.log('No httpdata found, creating new record');
+                    const createResult = await createHttpdata({
+                        subprojectID: data.subprojectID,
+                        code: assertionDataName,
+                        jsondata: JSON.stringify(txResult)
+                    });
+        
+                    if (createResult.affectedRows === 0) {
+                        return { success: 0, message: "SAML Transaction: Store http data fails!", stop: 1 };
+                    }
+                    console.log('Httpdata created!');
+                }
+            */
 
-        if (result1.length) {
-            // Update existing
-            console.log('Existing httpdata found, updating ID:', result1[0].httpdataID);
-            const updateResult = await updateHttpdata({
-                jsondata: JSON.stringify(txResult),
-                httpdataID: result1[0].httpdataID
-            });
-
-            if (updateResult.affectedRows === 0) {
-                return { success: 0, message: "SAML Transaction: Update http data fails!", stop: 1 };
-            }
-            console.log('Httpdata updated!');
+        if (ret.success == 1) {
+            return { success: 1, message: "SAML: OK!", stop: 0 };
         } else {
-            // Create new
-            console.log('No httpdata found, creating new record');
-            const createResult = await createHttpdata({
-                subprojectID: data.subprojectID,
-                code: assertionDataName,
-                jsondata: JSON.stringify(txResult)
-            });
-
-            if (createResult.affectedRows === 0) {
-                return { success: 0, message: "SAML Transaction: Store http data fails!", stop: 1 };
-            }
-            console.log('Httpdata created!');
+            return { success: 0, message: "SAML: Error!", stop: 1 };
         }
-
-        return { success: 1, message: "SAML: OK!", stop: 0 };
 
     } catch (error) {
         console.error("SAML Error:", error.message);
@@ -5701,6 +5758,389 @@ async function SAML_Transaction(page, data, variables, certificateDataName, asse
     }
 }
 
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function 
+* findValueByKey: Generic function to search for a key in a nested object/tree
+*
+* @param {Object|Array} schema - The object to search
+* @param {string} targetKey - The key to find (e.g., "Year")
+* @param {number} position - Which occurrence to return
+* @param {number} tracker - internal tracker position (recursive function)
+* @returns {any|null} - The value found or null
+*
+*/
+function findValueByKey(obj, targetKey, position, tracker = { count: 0 }) {
+    if (obj && typeof obj === 'object') {
+
+        // If the current object has the key
+        if (Object.prototype.hasOwnProperty.call(obj, targetKey)) {
+            const value = obj[targetKey];
+            console.log('Object targetKey: ' + targetKey, value)
+
+            // If it's an array (multiple sibling tags), we need to check if our 
+            // desired position falls within this array
+            if (Array.isArray(value)) {
+                for (let i = 0; i < value.length; i++) {
+                    tracker.count++;
+                    // console.log('Array: Tracker (position) = ', tracker.count + " (" + position + ") = " + (tracker.count == position))
+                    if (tracker.count == position) {
+                        console.log("found in array")
+                        return value[i];
+                    }
+                }
+            } else {
+                // If it's a single occurrence
+                tracker.count++;
+                // console.log('Single: Tracker (position) = ', tracker.count + " (" + position + ") = " + (tracker.count == position) )
+                if (tracker.count == position) {
+                    console.log("found in single")
+                    return value;
+                }
+            }
+        }
+
+        // console.log ('Dive deeper into children')
+        // Dive deeper into children
+        for (const key of Object.keys(obj)) {
+            // Skip the targetKey itself to avoid re-scanning its value
+            if (key !== targetKey) {
+                const found = findValueByKey(obj[key], targetKey, position, tracker);
+                if (found !== undefined) return found;
+            }
+        }
+    }
+    return undefined;
+}
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  httpSearchKeyValue:  Search for a key value into the http result
+* 
+* @param {object} page:                 playwright page
+* @param {object} data:                 all the parameters
+* @param {object} variables:            array of all the variables
+* @param {string} assertionDataName:    name of the dataset for the assertion 
+* @param {string} searchKey:            the key in the json structure 
+* @param {string} searchPosition:       occurrence of the key (1 by default) 
+* @param {string} scopeKey:             (optional) "Grandparent" (e.g., "FamilyMember")
+* @param {string} scopePosition:        occurrence of the "Grandparent": 1 by default (e.g., 3 for the 3rd family member)
+* @param {string} variableName:         name of the variable to store the result 
+*
+*/
+async function httpSearchKeyValue(page, data, variables, assertionDataName, searchKey, searchPosition = 1, scopeKey = null, scopePosition = 1, variableName) {
+    const { getHttpdataByCode } = require("../../httpdata/httpdata.service.js");
+
+    if (scopeKey == '<N/A>') scopeKey = null
+    searchPosition = variables.evaluateVariable(searchPosition, true)
+    scopePosition = variables.evaluateVariable(scopePosition, true)
+
+    console.log('assertionDataName', assertionDataName)
+    console.log('searchKey', searchKey)
+    console.log('searchPosition', searchPosition)
+    console.log('scopeKey', scopeKey)
+    console.log('scopePosition', scopePosition)
+    console.log('variableName', variableName)
+
+
+
+
+
+    // Get the http data
+    const dataAPI1 = { subprojectID: data.subprojectID, code: assertionDataName };
+    const result1 = await getHttpdataByCode(dataAPI1);
+    variables.setVariable("$Error", "0");
+    if (result1.length == 0) {
+        console.log("httpdata not found! : " + assertionDataName)
+        variables.setVariable("$Error", "1");
+        variables.setVariable(variableName, "-1")
+        return { success: 0, message: "httpdata not found! : " + assertionDataName, value: -1, stop: 1 };
+    }
+
+    const dataResult = result1[0]
+
+    try {
+        let xmlData = dataResult.jsondata;
+        if (!xmlData) {
+            console.log("httpSearchKeyValue: jsondata is empty!",);
+            variables.setVariable("$Error", "1");
+            variables.setVariable(variableName, "-1")
+            return { success: 0, message: "httpSearchKeyValue: transactionResponse is empty!", value: -1, stop: 1 };
+        }
+
+        const parser = new XMLParser({
+            ignoreAttributes: true,
+            removeNSPrefix: true
+        });
+
+        let keyValue = null
+        const jsonObj = parser.parse(xmlData);
+
+        let searchRoot = jsonObj;
+
+        // --- STEP 1: NARROW THE SCOPE ---
+        // If a scope is provided, find that specific "Grandparent" first
+        if (scopeKey) {
+            console.log('Search for the Grandparent: ' + scopeKey + " (" + scopePosition + ")")
+            searchRoot = findValueByKey(jsonObj, scopeKey, scopePosition);
+            console.log('Grandparent search result', searchRoot)
+            if (!searchRoot) {
+                // No scope found!
+                console.log("httpSearchKeyValue: No scope found! : " + scopeKey);
+                variables.setVariable("$Error", "1");
+                variables.setVariable(variableName, "-1")
+                return { success: 0, message: "httpSearchKeyValue: No scope found! : " + scopeKey, value: -1, stop: 1 };
+            }
+
+            // Check if the searchKey is a direct property of the scope we just found.
+            // If it is, return it directly instead of searching deeper.
+            console.log('typeof searchRoot', typeof searchRoot)
+            console.log('SearchRoot[searchKey]', searchRoot[searchKey])
+            if (searchRoot && typeof searchRoot !== 'object' && searchRoot[searchKey] === undefined) {
+                // Data found!
+                console.log("httpSearchKeyValue: Data found! : " + (scopeKey == null ? '' : scopeKey + ' / ') + searchKey + " = " + searchRoot);
+                variables.setVariable(variableName, searchRoot)
+                return { success: 1, message: "httpSearchKeyValue: Data found!" + (scopeKey == null ? '' : scopeKey + ' / ') + searchKey + " = " + searchRoot, value: searchRoot, stop: 0 };
+            }
+
+        }
+
+
+        // --- STEP 2: FIND THE VALUE ---
+        // Search inside the resolved scope
+        console.log('Search for the key: ' + searchKey + " (" + searchPosition + ")")
+        keyValue = findValueByKey(searchRoot, searchKey, searchPosition);
+        console.log('Key search result', keyValue)
+
+        if (keyValue == null || keyValue == undefined) {
+            // No data found!
+            console.log("httpSearchKeyValue: No data found! : " + (scopeKey == null ? '' : scopeKey + ' / ') + searchKey);
+            variables.setVariable("$Error", "1");
+            variables.setVariable(variableName, "-1")
+            return { success: 0, message: "httpSearchKeyValue: No data found! : " + (scopeKey == null ? '' : scopeKey + ' / ') + searchKey, value: -1, stop: 1 };
+        } else {
+            // Data found!
+            console.log("httpSearchKeyValue: Data found! : " + (scopeKey == null ? '' : scopeKey + ' / ') + searchKey + " = " + keyValue);
+            variables.setVariable(variableName, keyValue)
+            return { success: 1, message: "httpSearchKeyValue: Data found! " + (scopeKey == null ? '' : scopeKey + ' / ') + searchKey + " = " + keyValue, value: keyValue, stop: 0 };
+        }
+
+    } catch (error) {
+        console.error("httpSearchKeyValue: Internal Error: ", error.message);
+        variables.setVariable("$Error", "1");
+        variables.setVariable(variableName, "-1")
+        return { success: 0, message: "httpSearchKeyValue KO! : " + error.message, value: -1, stop: 1 };
+    }
+
+}
+
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  httpSearchKeyValue:  Search for a key value into the http result -- OBSOLETE
+* 
+* @param {object} page:                 playwright page
+* @param {object} data:                 all the parameters
+* @param {object} variables:            array of all the variables
+* @param {string} assertionDataName:    name of the dataset for the assertion 
+* @param {string} searchKey:            the key in the json structure 
+* @param {string} parentKey:            (optional) the parent key in the json structure 
+* @param {string} searchPosition:       Occurrence of the key (1 by default) 
+*
+*/
+async function httpSearchKeyValueV0(page, data, variables, assertionDataName, searchKey, parentKey = null, searchPosition) {
+
+    const { getHttpdataByCode } = require("../../httpdata/httpdata.service.js");
+
+    if (parentKey == '<N/A>') parentKey = null
+    let variableName = "$KeyValue"
+
+    searchPosition = variables.evaluateVariable(searchPosition)
+    searchPosition = searchPosition.replace(/'/g, "");
+
+    // Get the http data
+    const dataAPI1 = { subprojectID: data.subprojectID, code: assertionDataName };
+    const result1 = await getHttpdataByCode(dataAPI1);
+    variables.setVariable("$Error", "0");
+    if (result1.length == 0) {
+        console.log("httpdata not found! : " + assertionDataName)
+        variables.setVariable("$Error", "1");
+        variables.setVariable(variableName, "-1")
+        return { success: 0, message: "httpdata not found! : " + assertionDataName, value: -1, stop: 1 };
+    }
+
+    const dataResult = result1[0]
+
+    try {
+        let xmlData = dataResult.jsondata;
+        if (!xmlData) {
+            console.log("httpSearchKeyValue: jsondata is empty!",);
+            variables.setVariable("$Error", "1");
+            variables.setVariable(variableName, "-1")
+            return { success: 0, message: "httpSearchKeyValue: transactionResponse is empty!", value: -1, stop: 1 };
+        }
+
+        const parser = new XMLParser({
+            ignoreAttributes: true,
+            removeNSPrefix: true
+        });
+
+        let keyValue = null
+        const jsonObj = parser.parse(xmlData);
+        if (parentKey != null) {
+            const result1 = findValueByKey(jsonObj, parentKey, searchPosition);
+            if (result1 != undefined) {
+                console.log('Parent: ', result1)
+                const result2 = findValueByKey(result1, searchKey, 1);
+                keyValue = result2 !== undefined ? result2 : null;
+                console.log('KeyValue with parent: ', keyValue)
+            } else {
+                console.log('Parent not found! ', parentKey)
+            }
+
+        } else {
+            const result = findValueByKey(jsonObj, searchKey, searchPosition);
+            keyValue = result !== undefined ? result : null;
+            console.log('KeyValue: ', keyValue)
+        }
+
+        if (keyValue == null) {
+            // No data found!
+            console.log("httpSearchKeyValue: No data found! : " + (parentKey == null ? '' : parentKey + ' / ') + searchKey);
+            variables.setVariable("$Error", "1");
+            variables.setVariable(variableName, "-1")
+            return { success: 0, message: "httpSearchKeyValue: No data found!", value: -1, stop: 1 };
+        } else {
+            // Data found!
+            console.log("httpSearchKeyValue: Data found! : " + (parentKey == null ? '' : parentKey + ' / ') + searchKey + " = " + keyValue);
+            variables.setVariable(variableName, keyValue)
+            return { success: 1, message: "httpSearchKeyValue: Data found!", value: (parentKey == null ? '' : parentKey + ' / ') + searchKey + " = " + keyValue, stop: 0 };
+        }
+
+    } catch (error) {
+        console.error("httpSearchKeyValue: Internal Error: ", error.message);
+        variables.setVariable("$Error", "1");
+        variables.setVariable(variableName, "-1")
+        return { success: 0, message: "httpSearchKeyValue KO! : " + error.message, value: -1, stop: 1 };
+    }
+}
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  countKeysRecursive:  Recursively counts how many times a key appears in an object or array
+* 
+* @param {object} obj:                  json object
+* @param {string} targetKey:            the key in the json structure 
+*
+*/
+function countKeysRecursive(obj, targetKey) {
+    let count = 0;
+
+    if (obj && typeof obj === 'object') {
+        // If the current object has the key, count it
+        if (Object.prototype.hasOwnProperty.call(obj, targetKey)) {
+            // If the value is an array (multiple tags), count the array length
+            // If it's a single object/value, count as 1
+            count += Array.isArray(obj[targetKey]) ? obj[targetKey].length : 1;
+        }
+
+        // Continue searching deeper into all properties
+        for (const key of Object.keys(obj)) {
+            // Don't re-scan the targetKey's children to avoid double-counting 
+            // if the key name repeats internally
+            if (key !== targetKey) {
+                count += countKeysRecursive(obj[key], targetKey);
+            }
+        }
+    }
+    return count;
+}
+
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  httpKeyCount:  Count the number of occurrence of a key into the http result
+* 
+* @param {object} page:                 playwright page
+* @param {object} data:                 all the parameters
+* @param {object} variables:            array of all the variables
+* @param {string} assertionDataName:    name of the dataset for the assertion 
+* @param {string} searchKey:            the key in the json structure 
+* @param {string} parentKey:            the key in the parent in the json structure 
+* @param {string} variableName:         name of the variable 
+*
+*/
+async function httpKeyCount(page, data, variables, assertionDataName, searchKey, parentKey = null, variableName) {
+
+    const { getHttpdataByCode } = require("../../httpdata/httpdata.service.js");
+
+    if (parentKey == '<N/A>') parentKey = null
+
+    // Get the http data
+    const dataAPI1 = { subprojectID: data.subprojectID, code: assertionDataName };
+    const result1 = await getHttpdataByCode(dataAPI1);
+    variables.setVariable("$Error", "0");
+    if (result1.length == 0) {
+        console.log("httpdata not found! : " + assertionDataName)
+        variables.setVariable("$Error", "1");
+        variables.setVariable(variableName, "-1")
+        return { success: 0, message: "httpdata not found! : " + assertionDataName, value: -1, stop: 1 };
+    }
+
+    const dataResult = result1[0]
+    //console.log ('dataResult: ', dataResult)
+    try {
+        const xmlData = dataResult.jsondata;
+        if (!xmlData) {
+            console.log("httpKeyCount: transactionResponse is empty!",);
+            variables.setVariable("$Error", "1");
+            variables.setVariable(variableName, "-1")
+            return { success: 0, message: "httpKeyCount: transactionResponse is empty!", value: -1, stop: 1 };
+        }
+
+        const parser = new XMLParser({
+            ignoreAttributes: true,
+            removeNSPrefix: true
+        });
+
+        const jsonObj = parser.parse(xmlData);
+
+
+        //
+        // If a parent scope is defined, find it first
+        // if (parentKey) {
+        //     const { findValueByKey } = require('./your-util-file'); // Use the finder from previous step
+        //     rootToSearch = findValueByKey(jsonObj, parentKey);
+        // }
+
+        //return countKeysRecursive(rootToSearch, searchKey);
+        //        
+
+
+        let countKey = countKeysRecursive(jsonObj, searchKey);
+        console.log('countKey: ', countKey)
+
+        variables.setVariable(variableName, countKey)
+        return { success: 1, message: "httpKeyCount OK!", value: countKey, stop: 0 };
+
+    } catch (error) {
+        console.error("httpKeyCount: Error counting occurrences:", error);
+        variables.setVariable("$Error", "1");
+        variables.setVariable(variableName, "-1")
+        return { success: 0, message: "httpKeyCount KO! : " + error.message, value: -1, stop: 1 };
+    }
+
+}
 
 
 /**
@@ -6009,14 +6449,11 @@ async function clickXY(variables, xPosition, yPosition) {
 * @function <OK>
 *   evaluateFunction: convert a function name into a selenium function
 *
-* @param {object} driver:      selenium driver
-* @param {object} variables:   array of all the variables
-* @param {string} name:        name of the function
-* @param {object} data:        all the parameters
-* @param {string} param1:      parameter 1 of the function
-* @param {string} param2:      parameter 2 of the function
-* @param {string} param3:      parameter 3 of the function
-* @param {string} param4:      parameter 4 of the function
+* @param {object} page:                 playwright page
+* @param {object} variables:            array of all the variables
+* @param {string} name:                 name of the function
+* @param {object} data:                 all the parameters
+* @param {string} param1 --> param8:    parameter 1 to 8 of the function
 * 
 * 
 *  Return value:   success       stop    skipIt  skipDescribe StopAll
@@ -6030,7 +6467,7 @@ async function clickXY(variables, xPosition, yPosition) {
 * ---------------------------------------------------------------------------- 
 *
  */
-async function evaluateFunction(page, variables, name, data, param1, param2, param3, param4) {
+async function evaluateFunction(page, variables, name, data, param1, param2, param3, param4, param5, param6, param7, param8) {
 
     let delay = 2
     let ret
@@ -6492,12 +6929,22 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
 
             case 'SAML_Assertion':
                 ret = await SAML_Assertion(page, data, variables, param1, param2, param3, param4)
-                //if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.message)
                 return ret
 
             case 'SAML_Transaction':
                 ret = await SAML_Transaction(page, data, variables, param1, param2, param3, param4)
-                //if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.message)
+                return ret
+
+            case 'httpSearchKeyValue':
+                ret = await httpSearchKeyValue(page, data, variables, param1, param2, param3, param4, param5, param6)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
+                return ret
+
+            case 'httpKeyCount':
+                ret = await httpKeyCount(page, data, variables, param1, param2, param3, param4)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
             case 'imageDifference':
@@ -6869,6 +7316,7 @@ async function executeScenario(data, page, tests) {
                 action: tests[index].action, comment: tests[index].comment,
                 testCondition: myCondition, Condition: tests[index].testCondition, functionID: tests[index].functionID, functionName: tests[index].functionName,
                 parameter1: tests[index].parameter1, parameter2: tests[index].parameter2, parameter3: tests[index].parameter3, parameter4: tests[index].parameter4,
+                parameter5: tests[index].parameter5, parameter6: tests[index].parameter6, parameter7: tests[index].parameter7, parameter8: tests[index].parameter8,
                 active: tests[index].active, position: tests[index].position,
             }
 
@@ -7094,7 +7542,7 @@ async function executeScenario(data, page, tests) {
                             }
                             // Check if we can process the test (depending of the condition)
                             if (process == 1) {
-                                ret = await robot.evaluateFunction(page, variables, item.functionName, data, item.parameter1, item.parameter2, item.parameter3, item.parameter4)
+                                ret = await robot.evaluateFunction(page, variables, item.functionName, data, item.parameter1, item.parameter2, item.parameter3, item.parameter4, item.parameter5, item.parameter6, item.parameter7, item.parameter8)
 
                             } else if (process == 0) {
                                 variables.displayLog(1, 1, 'Skip the step due to the condition: ' + item.Condition + "' evaluated as  (" + item.testCondition + ')')
@@ -7340,6 +7788,8 @@ module.exports = {
     httpData: httpData,
     SAML_Assertion: SAML_Assertion,
     SAML_Transaction: SAML_Transaction,
+    httpSearchKeyValue: httpSearchKeyValue,
+    httpKeyCount: httpKeyCount,
     imageDifference: imageDifference,
     imageBaseline: imageBaseline,
     imageDifferenceData: imageDifferenceData,

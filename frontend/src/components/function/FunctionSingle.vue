@@ -61,6 +61,14 @@
         testfunction.defaultValue3 }} Natural: {{ testfunction.natural3 }}</p>
       <p v-if="testfunction.parameter4">4) {{ testfunction.parameter4 }}: {{ testfunction.tip4 }} > {{
         testfunction.defaultValue4 }} Natural: {{ testfunction.natural4 }}</p>
+      <p v-if="testfunction.parameter5">5) {{ testfunction.parameter5 }}: {{ testfunction.tip5 }} > {{
+        testfunction.defaultValue5 }} Natural: {{ testfunction.natural5 }}</p>
+      <p v-if="testfunction.parameter6">6) {{ testfunction.parameter6 }}: {{ testfunction.tip6 }} > {{
+        testfunction.defaultValue6 }} Natural: {{ testfunction.natural6 }}</p>
+      <p v-if="testfunction.parameter7">7) {{ testfunction.parameter7 }}: {{ testfunction.tip7 }} > {{
+        testfunction.defaultValue7 }} Natural: {{ testfunction.natural7 }}</p>
+      <p v-if="testfunction.parameter8">8) {{ testfunction.parameter8 }}: {{ testfunction.tip8 }} > {{
+        testfunction.defaultValue8 }} Natural: {{ testfunction.natural8 }}</p>
 
     </div>
 

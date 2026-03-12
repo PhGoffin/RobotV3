@@ -2,8 +2,8 @@
  * @Author: Philippe Goffin 
  * @Email: artcomputer123@gmail.com
  * @Date: 2024-04-06
- * @Last Modified by: Philippe Goffin
- * @Last Modified time: 2024-04-06 11:48:19
+ * @Last Modified by: Someone
+ * @Last Modified time: 2026-03-11 16:20:59
  * @Description: Update Test parameters
  */
 
@@ -11,7 +11,7 @@
 import { ref } from 'vue'
 import { consoleLog}  from '../../util/debug';
 
-const updateTestParameter = (testID, parameter1, parameter2, parameter3, parameter4) => {
+const updateTestParameter = (testID, parameter1, parameter2, parameter3, parameter4, parameter5, parameter6, parameter7, parameter8) => {
 
     const error = ref(null)
 
@@ -26,7 +26,8 @@ const updateTestParameter = (testID, parameter1, parameter2, parameter3, paramet
                 let data = await fetch(url + 'test/parameter', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 'parameter1': parameter1, 'parameter2': parameter2,'parameter3': parameter3,'parameter4': parameter4, 'testID': testID  })
+                    body: JSON.stringify({ 'parameter1': parameter1, 'parameter2': parameter2,'parameter3': parameter3,'parameter4': parameter4,
+                         'parameter5': parameter5, 'parameter6': parameter6,'parameter7': parameter7,'parameter8': parameter8, 'testID': testID  })
                 })
                 if (!data.ok) {
                     throw Error('Error during the update of the test parameters')

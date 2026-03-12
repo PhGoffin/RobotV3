@@ -28,9 +28,13 @@ const express = require("express")
  * @param {string} param2:       Parameter 2
  * @param {string} param3:       Parameter 3
  * @param {string} param4:       Parameter 4
+ * @param {string} param5:       Parameter 5
+ * @param {string} param6:       Parameter 6
+ * @param {string} param7:       Parameter 7
+ * @param {string} param8:       Parameter 8
  * 
  */
-async function specialFunction(page, variables, data, rulePosition, functionName, param1, param2, param3, param4) {
+async function specialFunction(page, variables, data, rulePosition, functionName, param1, param2, param3, param4, param5, param6, param7, param8) {
     const { logfile, speaking, dictionary, setReference, getReference, loginUser, loginPassword, dummyExtraInfo, dummyLogin, pause, getData, setData, debug, email,
         pressEnter, pressEscape, pressTab, click, doubleClick, setValue, getValue, select, selectCount, getElementDummy, setValueDummy, ask, waitInvisible,
         JSclick, JSinput, isExist, isCheck, isVisible, url, waitFor, waitForNot, setVariable, setFocus, refreshURL, printScreen, executeRules, openNewTab, switchTab, closeTab,
@@ -46,20 +50,29 @@ async function specialFunction(page, variables, data, rulePosition, functionName
     if (param2 == undefined) param2 = ''
     if (param3 == undefined) param3 = ''
     if (param4 == undefined) param4 = ''
+    if (param5 == undefined) param5 = ''
+    if (param6 == undefined) param6 = ''
+    if (param7 == undefined) param7 = ''
+    if (param8 == undefined) param8 = ''
 
     let originalParam1 = param1
     let originalParam2 = param2
     let originalParam3 = param3
     let originalParam4 = param4
+    let originalParam5 = param5
+    let originalParam6 = param6
+    let originalParam7 = param7
+    let originalParam8 = param8
 
 
     param1 = variables.evaluateVariable(param1.trim())
-    //param1 = param1.replace(/'/g, "");
     param2 = variables.evaluateVariable(param2.trim())
-    //param2 = param2.replace(/'/g, "");
     param3 = variables.evaluateVariable(param3.trim())
-    //param3 = param3.replace(/'/g, "");
     param4 = variables.evaluateVariable(param4.trim())
+    param5 = variables.evaluateVariable(param5.trim())
+    param6 = variables.evaluateVariable(param6.trim())
+    param7 = variables.evaluateVariable(param7.trim())
+    param8 = variables.evaluateVariable(param8.trim())
 
     variables.displayLog(2, 2, 'special function: ' + functionName + ', param1: ' + param1 + ', param2: ' + param2 + ', param3: ' + param3)
     let ret = 0
@@ -588,7 +601,7 @@ async function execRules(page, variables, data, ruleName) {
                         } else {
                             //console.log (parameters)
                             await logfile(data.userID, 'Step', '--> (R' + item.position + ') ' + item.comment)
-                            let ret = await specialFunction(page, variables, data, item.position, functionName, parameters[0], parameters[1], parameters[2], parameters[3])
+                            let ret = await specialFunction(page, variables, data, item.position, functionName, parameters[0], parameters[1], parameters[2], parameters[3] , parameters[4], parameters[5], parameters[6], parameters[7])
                             if (item.ruleMessage.trim() != '') {
                                 expr = variables.evaluateVariable(item.ruleMessage)
                                 await logfile(data.userID, 'Info', '  >>> Message: ' + expr)

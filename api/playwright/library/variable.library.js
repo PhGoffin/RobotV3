@@ -231,7 +231,7 @@ class Variables {
      * @param {string} myExpr expression to transpose.
      *
      */
-    evaluateVariable(myExpr) {
+    evaluateVariable(myExpr, clearQuote = false) {
 
         //console.log('*** EvaluateVariable: ' + myExpr + ' type: ' + typeof (myExpr));
 
@@ -354,6 +354,9 @@ class Variables {
         result = result.replace(/&apos;/g, "'");
         //console.log ('EvaluateVariable: ', result)
 
+        if (clearQuote) {
+            result = result.replace(/'/g, "");
+        }
 
         return result;
     }

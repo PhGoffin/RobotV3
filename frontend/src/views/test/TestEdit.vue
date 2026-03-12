@@ -42,9 +42,9 @@
                             <span>Comment</span>
                         </div>
                         <i class="fa-solid fa-lightbulb" @click="commentType = !commentType" v-if="commentType"
-                            title="Comment for the Business" style="color: #c5b807;"></i>                        
-                            <i class="fa-solid fa-gear" @click="commentType = !commentType" v-if="!commentType"
-                            title="Comment for the Designer" style="color: blue;"></i>                        
+                            title="Comment for the Business" style="color: #c5b807;"></i>
+                        <i class="fa-solid fa-gear" @click="commentType = !commentType" v-if="!commentType"
+                            title="Comment for the Designer" style="color: blue;"></i>
                     </div>
 
                     <div class="actions3" v-if="action == 'Step'">
@@ -210,7 +210,7 @@
                                     v-if="dict4"> </i>
                                 <i class="fa-solid fa-database" @click="handleDataset(4)" title="Go to Dataset"
                                     v-if="data4"></i>
-                                <i class="fa-solid fa-gears" @click="handleRule(4)" title="Go to Rule" v-if="rule3"></i>
+                                <i class="fa-solid fa-gears" @click="handleRule(4)" title="Go to Rule" v-if="rule4"></i>
                                 <i class="fa-regular fa-face-grin-tongue-squint" @click="handleDummy(4)"
                                     title="Go to Dummy User" v-if="dummy4"></i>
                                 <i class="fa-solid fa-bookmark" @click="handleReference(4)" title="Go to Reference"
@@ -228,6 +228,128 @@
                         <label>{{ label4 }}</label>
                         <span>{{ label4 }}</span>
                     </div>
+
+
+                    <div class="input-container focus" v-if="label5 && action == 'Step' && !filterFlag">
+                        <div v-if="!defVal5">
+                            <div class="actions">
+                                <input type="text" name="param5" class="input" @focus="handleFocus($event)"
+                                    @blur="handleBlur($event)" maxlength="255" v-model="parameter5" :title="tip5" />
+                                <i class="fa-solid fa-spell-check" @click="handleDictionary(5)" title="Go to Dictionary"
+                                    v-if="dict5"> </i>
+                                <i class="fa-solid fa-database" @click="handleDataset(5)" title="Go to Dataset"
+                                    v-if="data5"></i>
+                                <i class="fa-solid fa-gears" @click="handleRule(5)" title="Go to Rule" v-if="rule5"></i>
+                                <i class="fa-regular fa-face-grin-tongue-squint" @click="handleDummy(5)"
+                                    title="Go to Dummy User" v-if="dummy5"></i>
+                                <i class="fa-solid fa-bookmark" @click="handleReference(5)" title="Go to Reference"
+                                    v-if="ref5"> </i>
+                            </div>
+
+                        </div>
+                        <div v-else>
+                            <select id="listval5" class="input" @focus="handleFocus($event)" @blur="handleBlur($event)"
+                                @change="handleListValue1Change" v-model="selectVal5" :title="tip5">
+                                <option v-for="defval5 in defLists5" :key="defval5.id"
+                                    v-bind:value="{ id: defval5.id }">
+                                    {{ defval5.name }}</option>
+                            </select>
+                        </div>
+                        <label>{{ label5 }}</label>
+                        <span>{{ label5 }}</span>
+
+                    </div>
+
+                    <div class="input-container focus" v-if="label6 && action == 'Step' && !filterFlag">
+
+                        <div v-if="!defVal6">
+                            <div class="actions">
+                                <input type="text" name="param6" class="input" @focus="handleFocus($event)"
+                                    @blur="handleBlur($event)" maxlength="255" v-model="parameter6" :title="tip6" />
+                                <i class="fa-solid fa-spell-check" @click="handleDictionary(6)" title="Go to Dictionary"
+                                    v-if="dict6"> </i>
+                                <i class="fa-solid fa-database" @click="handleDataset(6)" title="Go to Dataset"
+                                    v-if="data6"></i>
+                                <i class="fa-solid fa-gears" @click="handleRule(6)" title="Go to Rule" v-if="rule6"></i>
+                                <i class="fa-regular fa-face-grin-tongue-squint" @click="handleDummy(6)"
+                                    title="Go to Dummy User" v-if="dummy6"></i>
+                                <i class="fa-solid fa-bookmark" @click="handleReference(6)" title="Go to Reference"
+                                    v-if="ref6">
+                                </i>
+                            </div>
+                        </div>
+                        <div v-else>
+                            <select id="listval6" class="input" @focus="handleFocus($event)" @blur="handleBlur($event)"
+                                @change="handleListValue2Change" v-model="selectVal6" :title="tip6">
+                                <option v-for="defval6 in defLists6" :key="defval6.id"
+                                    v-bind:value="{ id: defval6.id }">
+                                    {{ defval6.name }}</option>
+                            </select>
+                        </div>
+                        <label>{{ label6 }}</label>
+                        <span>{{ label6 }}</span>
+                    </div>
+
+                    <div class="input-container focus" v-if="label7 && action == 'Step' && !filterFlag">
+                        <div v-if="!defVal7">
+                            <div class="actions">
+                                <input type="text" name="param7" class="input" @focus="handleFocus($event)"
+                                    @blur="handleBlur($event)" maxlength="255" v-model="parameter7" :title="tip7" />
+                                <i class="fa-solid fa-spell-check" @click="handleDictionary(7)" title="Go to Dictionary"
+                                    v-if="dict7"> </i>
+                                <i class="fa-solid fa-database" @click="handleDataset(7)" title="Go to Dataset"
+                                    v-if="data7"></i>
+                                <i class="fa-solid fa-gears" @click="handleRule(7)" title="Go to Rule" v-if="rule7"></i>
+                                <i class="fa-regular fa-face-grin-tongue-squint" @click="handleDummy(7)"
+                                    title="Go to Dummy User" v-if="dummy7"></i>
+                                <i class="fa-solid fa-bookmark" @click="handleReference(7)" title="Go to Reference"
+                                    v-if="ref7">
+                                </i>
+                            </div>
+                        </div>
+                        <div v-else>
+                            <select id="listval7" class="input" @focus="handleFocus($event)" @blur="handleBlur($event)"
+                                @change="handleListValue7Change" v-model="selectVal7" :title="tip7">
+                                <option v-for="defval7 in defLists7" :key="defval7.id"
+                                    v-bind:value="{ id: defval7.id }">
+                                    {{ defval7.name }}</option>
+                            </select>
+                        </div>
+                        <label>{{ label7 }}</label>
+                        <span>{{ label7 }}</span>
+                    </div>
+
+
+                    <div class="input-container focus" v-if="label8 && action == 'Step' && !filterFlag">
+                        <div v-if="!defVal8">
+                            <div class="actions">
+                                <input type="text" name="param8" class="input" @focus="handleFocus($event)"
+                                    @blur="handleBlur($event)" maxlength="255" v-model="parameter8" :title="tip8" />
+                                <i class="fa-solid fa-spell-check" @click="handleDictionary(8)" title="Go to Dictionary"
+                                    v-if="dict8"> </i>
+                                <i class="fa-solid fa-database" @click="handleDataset(8)" title="Go to Dataset"
+                                    v-if="data8"></i>
+                                <i class="fa-solid fa-gears" @click="handleRule(8)" title="Go to Rule" v-if="rule8"></i>
+                                <i class="fa-regular fa-face-grin-tongue-squint" @click="handleDummy(8)"
+                                    title="Go to Dummy User" v-if="dummy8"></i>
+                                <i class="fa-solid fa-bookmark" @click="handleReference(8)" title="Go to Reference"
+                                    v-if="ref8">
+                                </i>
+                            </div>
+                        </div>
+                        <div v-else>
+                            <select id="listval8" class="input" @focus="handleFocus($event)" @blur="handleBlur($event)"
+                                @change="handleListValue8Change" v-model="selectVal8" :title="tip8">
+                                <option v-for="defval8 in defLists8" :key="defval8.id"
+                                    v-bind:value="{ id: defval8.id }">
+                                    {{ defval8.name }}</option>
+                            </select>
+                        </div>
+                        <label>{{ label8 }}</label>
+                        <span>{{ label8 }}</span>
+                    </div>
+
+
 
 
                     <div class="input-container focus">
@@ -366,24 +488,78 @@ export default {
         const rule4 = ref(false)
         const dummy4 = ref(false)
         const ref4 = ref(false)
+        const parameter5 = ref('')
+        const defaultValue5 = ref('')
+        const label5 = ref('')
+        const tip5 = ref('')
+        const data5 = ref(false)
+        const dict5 = ref(false)
+        const rule5 = ref(false)
+        const dummy5 = ref(false)
+        const ref5 = ref(false)
+        const parameter6 = ref('')
+        const defaultValue6 = ref('')
+        const label6 = ref('')
+        const tip6 = ref('')
+        const data6 = ref(false)
+        const dict6 = ref(false)
+        const rule6 = ref(false)
+        const dummy6 = ref(false)
+        const ref6 = ref(false)
+        const parameter7 = ref('')
+        const defaultValue7 = ref('')
+        const label7 = ref('')
+        const tip7 = ref('')
+        const data7 = ref(false)
+        const dict7 = ref(false)
+        const rule7 = ref(false)
+        const dummy7 = ref(false)
+        const ref7 = ref(false)
+        const parameter8 = ref('')
+        const defaultValue8 = ref('')
+        const label8 = ref('')
+        const tip8 = ref('')
+        const data8 = ref(false)
+        const dict8 = ref(false)
+        const rule8 = ref(false)
+        const dummy8 = ref(false)
+        const ref8 = ref(false)
         const natural1 = ref('')
         const natural2 = ref('')
         const natural3 = ref('')
         const natural4 = ref('')
+        const natural5 = ref('')
+        const natural6 = ref('')
+        const natural7 = ref('')
+        const natural8 = ref('')
+
 
 
         const defVal1 = ref(0)
         const defVal2 = ref(0)
         const defVal3 = ref(0)
         const defVal4 = ref(0)
+        const defVal5 = ref(0)
+        const defVal6 = ref(0)
+        const defVal7 = ref(0)
+        const defVal8 = ref(0)
+
         const defLists1 = ref({})
         const defLists2 = ref({})
         const defLists3 = ref({})
         const defLists4 = ref({})
+        const defLists5 = ref({})
+        const defLists6 = ref({})
+        const defLists7 = ref({})
+        const defLists8 = ref({})
         const selectVal1 = ref({})
         const selectVal2 = ref({})
         const selectVal3 = ref({})
         const selectVal4 = ref({})
+        const selectVal5 = ref({})
+        const selectVal6 = ref({})
+        const selectVal7 = ref({})
+        const selectVal8 = ref({})
 
         const natural = ref([])
         const words = ref([])
@@ -490,6 +666,26 @@ export default {
                         defLists4.value = {}
                         selectVal4.value = {}
                         break
+                    case 5:
+                        defVal5.value = 0
+                        defLists5.value = {}
+                        selectVal5.value = {}
+                        break
+                    case 6:
+                        defVal6.value = 0
+                        defLists6.value = {}
+                        selectVal6.value = {}
+                        break
+                    case 7:
+                        defVal7.value = 0
+                        defLists7.value = {}
+                        selectVal7.value = {}
+                        break
+                    case 8:
+                        defVal8.value = 0
+                        defLists8.value = {}
+                        selectVal8.value = {}
+                        break
                 }
                 return
             }
@@ -517,6 +713,26 @@ export default {
                         defaultValue4.value = defaultValue4.value.replace('<DATA>', '').trim()
                         defValue = defaultValue4.value
                         break
+                    case 5:
+                        data5.value = true
+                        defaultValue5.value = defaultValue5.value.replace('<DATA>', '').trim()
+                        defValue = defaultValue5.value
+                        break
+                    case 6:
+                        data6.value = true
+                        defaultValue6.value = defaultValue6.value.replace('<DATA>', '').trim()
+                        defValue = defaultValue6.value
+                        break
+                    case 7:
+                        data7.value = true
+                        defaultValue7.value = defaultValue7.value.replace('<DATA>', '').trim()
+                        defValue = defaultValue7.value
+                        break
+                    case 8:
+                        data8.value = true
+                        defaultValue8.value = defaultValue8.value.replace('<DATA>', '').trim()
+                        defValue = defaultValue8.value
+                        break
                 }
 
             }
@@ -543,6 +759,26 @@ export default {
                         defaultValue4.value = defaultValue4.value.replace('<DICT>', '').trim()
                         defValue = defaultValue4.value
                         break
+                    case 5:
+                        dict5.value = true
+                        defaultValue5.value = defaultValue5.value.replace('<DICT>', '').trim()
+                        defValue = defaultValue5.value
+                        break
+                    case 6:
+                        dict6.value = true
+                        defaultValue6.value = defaultValue6.value.replace('<DICT>', '').trim()
+                        defValue = defaultValue6.value
+                        break
+                    case 7:
+                        dict7.value = true
+                        defaultValue7.value = defaultValue7.value.replace('<DICT>', '').trim()
+                        defValue = defaultValue7.value
+                        break
+                    case 8:
+                        dict8.value = true
+                        defaultValue8.value = defaultValue8.value.replace('<DICT>', '').trim()
+                        defValue = defaultValue8.value
+                        break
                 }
 
             }
@@ -568,6 +804,26 @@ export default {
                         ref4.value = true
                         defaultValue4.value = defaultValue4.value.replace('<REF>', '').trim()
                         defValue = defaultValue4.value
+                        break
+                    case 5:
+                        ref5.value = true
+                        defaultValue5.value = defaultValue5.value.replace('<REF>', '').trim()
+                        defValue = defaultValue5.value
+                        break
+                    case 6:
+                        ref6.value = true
+                        defaultValue6.value = defaultValue6.value.replace('<REF>', '').trim()
+                        defValue = defaultValue6.value
+                        break
+                    case 7:
+                        ref7.value = true
+                        defaultValue7.value = defaultValue7.value.replace('<REF>', '').trim()
+                        defValue = defaultValue7.value
+                        break
+                    case 8:
+                        ref8.value = true
+                        defaultValue8.value = defaultValue8.value.replace('<REF>', '').trim()
+                        defValue = defaultValue8.value
                         break
                 }
 
@@ -596,6 +852,26 @@ export default {
                         defaultValue4.value = defaultValue4.value.replace('<RULE>', '').trim()
                         defValue = defaultValue4.value
                         break
+                    case 5:
+                        rule5.value = true
+                        defaultValue5.value = defaultValue5.value.replace('<RULE>', '').trim()
+                        defValue = defaultValue5.value
+                        break
+                    case 6:
+                        rule6.value = true
+                        defaultValue6.value = defaultValue6.value.replace('<RULE>', '').trim()
+                        defValue = defaultValue6.value
+                        break
+                    case 7:
+                        rule7.value = true
+                        defaultValue7.value = defaultValue7.value.replace('<RULE>', '').trim()
+                        defValue = defaultValue7.value
+                        break
+                    case 8:
+                        rule8.value = true
+                        defaultValue8.value = defaultValue8.value.replace('<RULE>', '').trim()
+                        defValue = defaultValue8.value
+                        break
                 }
 
             } else if (defValue.toUpperCase().indexOf('<USER>') >= 0) {
@@ -619,6 +895,26 @@ export default {
                         dummy4.value = true
                         defaultValue4.value = defaultValue4.value.replace('<USER>', '').trim()
                         defValue = defaultValue4.value
+                        break
+                    case 5:
+                        dummy5.value = true
+                        defaultValue5.value = defaultValue5.value.replace('<USER>', '').trim()
+                        defValue = defaultValue5.value
+                        break
+                    case 6:
+                        dummy6.value = true
+                        defaultValue6.value = defaultValue6.value.replace('<USER>', '').trim()
+                        defValue = defaultValue6.value
+                        break
+                    case 7:
+                        dummy7.value = true
+                        defaultValue7.value = defaultValue7.value.replace('<USER>', '').trim()
+                        defValue = defaultValue7.value
+                        break
+                    case 8:
+                        dummy8.value = true
+                        defaultValue8.value = defaultValue8.value.replace('<USER>', '').trim()
+                        defValue = defaultValue8.value
                         break
                 }
 
@@ -651,6 +947,30 @@ export default {
                         defLists4.value = []
                         selectVal4.value = {}
                         if (parameter4.value == '') parameter4.value = defValue
+                        break
+                    case 5:
+                        defVal5.value = 0
+                        defLists5.value = []
+                        selectVal5.value = {}
+                        if (parameter5.value == '') parameter5.value = defValue
+                        break
+                    case 6:
+                        defVal6.value = 0
+                        defLists6.value = []
+                        selectVal6.value = {}
+                        if (parameter6.value == '') parameter6.value = defValue
+                        break
+                    case 7:
+                        defVal7.value = 0
+                        defLists7.value = []
+                        selectVal7.value = {}
+                        if (parameter7.value == '') parameter7.value = defValue
+                        break
+                    case 8:
+                        defVal8.value = 0
+                        defLists8.value = []
+                        selectVal8.value = {}
+                        if (parameter8.value == '') parameter8.value = defValue
                         break
                 }
             } else if (defValue.search(":<SELECTOR>") >= 0) {
@@ -697,6 +1017,38 @@ export default {
                                     else selectVal4.value = { id: parameter4.value }
                                 }
                                 defLists4.value = myArray
+                                break
+                            case 5:
+                                if (counter == 1) {
+                                    defVal5.value = selectors.value[0].selectorID
+                                    if (parameter5.value == '') selectVal5.value = { id: selectors.value[0].selectorID }
+                                    else selectVal5.value = { id: parameter5.value }
+                                }
+                                defLists5.value = myArray
+                                break
+                            case 6:
+                                if (counter == 1) {
+                                    defVal6.value = selectors.value[0].selectorID
+                                    if (parameter6.value == '') selectVal6.value = { id: selectors.value[0].selectorID }
+                                    else selectVal6.value = { id: parameter6.value }
+                                }
+                                defLists6.value = myArray
+                                break
+                            case 7:
+                                if (counter == 1) {
+                                    defVal7.value = selectors.value[0].selectorID
+                                    if (parameter7.value == '') selectVal7.value = { id: selectors.value[0].selectorID }
+                                    else selectVal7.value = { id: parameter7.value }
+                                }
+                                defLists7.value = myArray
+                                break
+                            case 8:
+                                if (counter == 1) {
+                                    defVal8.value = selectors.value[0].selectorID
+                                    if (parameter8.value == '') selectVal8.value = { id: selectors.value[0].selectorID }
+                                    else selectVal8.value = { id: parameter8.value }
+                                }
+                                defLists8.value = myArray
                                 break
                         }
                     }
@@ -745,6 +1097,38 @@ export default {
                                 defVal4.value = elt[0]
                                 if (parameter4.value == '') selectVal4.value = { id: elt[0] }
                                 else selectVal4.value = { id: parameter4.value }
+                            }
+                            defLists4.value = myArray
+                            break
+                        case 5:
+                            if (counter == 1) {
+                                defVal5.value = elt[0]
+                                if (parameter5.value == '') selectVal5.value = { id: elt[0] }
+                                else selectVal5.value = { id: parameter5.value }
+                            }
+                            defLists5.value = myArray
+                            break
+                        case 6:
+                            if (counter == 1) {
+                                defVal6.value = elt[0]
+                                if (parameter6.value == '') selectVal6.value = { id: elt[0] }
+                                else selectVal6.value = { id: parameter6.value }
+                            }
+                            defLists6.value = myArray
+                            break
+                        case 7:
+                            if (counter == 1) {
+                                defVal7.value = elt[0]
+                                if (parameter7.value == '') selectVal7.value = { id: elt[0] }
+                                else selectVal7.value = { id: parameter7.value }
+                            }
+                            defLists7.value = myArray
+                            break
+                        case 8:
+                            if (counter == 1) {
+                                defVal8.value = elt[0]
+                                if (parameter8.value == '') selectVal8.value = { id: elt[0] }
+                                else selectVal8.value = { id: parameter8.value }
                             }
                             defLists4.value = myArray
                             break
@@ -845,6 +1229,29 @@ export default {
                         label4.value = test.value[0].label4
                         tip4.value = test.value[0].tip4
 
+                        parameter5.value = test.value[0].parameter5
+                        defaultValue5.value = test.value[0].defaultValue5
+                        manageDefault(5, defaultValue5.value)
+                        label5.value = test.value[0].label5
+                        tip5.value = test.value[0].tip5
+                        parameter6.value = test.value[0].parameter6
+                        defaultValue6.value = test.value[0].defaultValue6
+                        manageDefault(6, defaultValue6.value)
+                        label6.value = test.value[0].label6
+                        tip6.value = test.value[0].tip6
+                        parameter7.value = test.value[0].parameter7
+                        defaultValue7.value = test.value[0].defaultValue7
+                        manageDefault(7, defaultValue7.value)
+                        label7.value = test.value[0].label7
+                        tip7.value = test.value[0].tip7
+                        parameter8.value = test.value[0].parameter8
+                        defaultValue8.value = test.value[0].defaultValue8
+                        manageDefault(8, defaultValue8.value)
+                        label8.value = test.value[0].label8
+                        tip8.value = test.value[0].tip8
+
+
+
                         active.value = test.value[0].active
                         selectedActive.value = ({ id: active.value })
 
@@ -858,6 +1265,10 @@ export default {
                                 parameter2.value = data[3]
                                 parameter3.value = data[4]
                                 parameter4.value = data[5]
+                                parameter5.value = data[6]
+                                parameter6.value = data[7]
+                                parameter7.value = data[8]
+                                parameter8.value = data[9]
                             }
                         } else if (location.value.includes('dictionary=') || location.value.includes('dataset=') || location.value.includes('reference=')) {
                             let data = location.value.split("=");
@@ -866,6 +1277,10 @@ export default {
                                 parameter2.value = data[4]
                                 parameter3.value = data[5]
                                 parameter4.value = data[6]
+                                parameter5.value = data[7]
+                                parameter6.value = data[8]
+                                parameter7.value = data[9]
+                                parameter8.value = data[10]
                             }
                         }
                         return (1)
@@ -954,6 +1369,28 @@ export default {
             dummy4.value = false
             ref4.value = false
 
+            data5.value = false
+            dict5.value = false
+            rule5.value = false
+            dummy5.value = false
+            ref5.value = false
+            data6.value = false
+            dict6.value = false
+            rule6.value = false
+            dummy6.value = false
+            ref6.value = false
+            data7.value = false
+            dict7.value = false
+            rule7.value = false
+            dummy7.value = false
+            ref7.value = false
+            data8.value = false
+            dict8.value = false
+            rule8.value = false
+            dummy8.value = false
+            ref8.value = false
+
+
             // Filter the list of function to get the one selected by the user and reset the values 
             testfunctions.value.filter(item => item.functionID == selectedFunction.value.id)
                 .forEach(item => {
@@ -976,7 +1413,28 @@ export default {
                     defaultValue4.value = item.defaultValue4
                     manageDefault(4, defaultValue4.value)
                     label4.value = item.parameter4
-                    tip4.value = item.tip40
+                    tip4.value = item.tip4
+
+                    parameter5.value = ''
+                    defaultValue5.value = item.defaultValue5
+                    manageDefault(5, defaultValue5.value)
+                    label5.value = item.parameter5
+                    tip5.value = item.tip5
+                    parameter6.value = ''
+                    defaultValue6.value = item.defaultValue6
+                    manageDefault(6, defaultValue6.value)
+                    label6.value = item.parameter6
+                    tip6.value = item.tip6
+                    parameter7.value = ''
+                    defaultValue7.value = item.defaultValue7
+                    manageDefault(7, defaultValue7.value)
+                    label7.value = item.parameter7
+                    tip7.value = item.tip7
+                    parameter8.value = ''
+                    defaultValue8.value = item.defaultValue8
+                    manageDefault(8, defaultValue8.value)
+                    label8.value = item.parameter8
+                    tip8.value = item.tip8
 
                 })
         }
@@ -1000,6 +1458,20 @@ export default {
             parameter4.value = ('')
             label4.value = ('')
             tip4.value = ('')
+
+            parameter5.value = ('')
+            label5.value = ('')
+            tip5.value = ('')
+            parameter6.value = ('')
+            label6.value = ('')
+            tip6.value = ('')
+            parameter7.value = ('')
+            label7.value = ('')
+            tip7.value = ('')
+            parameter8.value = ('')
+            label8.value = ('')
+            tip8.value = ('')
+
             testfunctionID.value = 0
             testfunctionName.value = 'Not selected'
             selectedFunction.value = ({ id: testfunctionID.value, name: testfunctionName.value })
@@ -1049,6 +1521,42 @@ export default {
             parameter4.value = selectVal4.value.id
         }
 
+
+
+        // --------------------------------------------------------------------------
+        // User select a value in the list for the parameter 5
+        // --------------------------------------------------------------------------
+        const handleListValue5Change = () => {
+            consoleLog('TestEdit.vue/handleListValue5Change', 2, 'User selects a default value in the list: ' + selectVal5.value.id, trace.value)
+            parameter5.value = selectVal5.value.id
+        }
+
+        // --------------------------------------------------------------------------
+        // User select a value in the list for the parameter 6
+        // --------------------------------------------------------------------------
+        const handleListValue6Change = () => {
+            consoleLog('TestEdit.vue/handleListValue6Change', 2, 'User selects a default value in the list: ' + selectVal6.value.id, trace.value)
+            parameter6.value = selectVal6.value.id
+        }
+
+        // --------------------------------------------------------------------------
+        // User select a value in the list for the parameter 7
+        // --------------------------------------------------------------------------
+        const handleListValue7Change = () => {
+            consoleLog('TestEdit.vue/handleListValue7Change', 2, 'User selects a default value in the list: ' + selectVal7.value.id, trace.value)
+            parameter7.value = selectVal7.value.id
+        }
+
+        // --------------------------------------------------------------------------
+        // User select a value in the list for the parameter 8
+        // --------------------------------------------------------------------------
+        const handleListValue8Change = () => {
+            consoleLog('TestEdit.vue/handleListValue8Change', 2, 'User selects a default value in the list: ' + selectVal8.value.id, trace.value)
+            parameter8.value = selectVal8.value.id
+        }
+
+
+
         const handleFilter = () => {
             filterFlag.value = !filterFlag.value
             if (!filteredData.value.length) {
@@ -1069,16 +1577,28 @@ export default {
             if (ret) {
                 switch (position) {
                     case 1:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=1=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=1=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 2:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=2=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=2=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 3:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=3=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=3=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 4:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=4=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=4=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        break
+                    case 5:
+                        context.emit('storelocation', 'test=' + testID.value + '=0=5=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        break
+                    case 6:
+                        context.emit('storelocation', 'test=' + testID.value + '=0=6=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        break
+                    case 7:
+                        context.emit('storelocation', 'test=' + testID.value + '=0=7=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        break
+                    case 8:
+                        context.emit('storelocation', 'test=' + testID.value + '=0=8=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                 }
                 router.push({ name: 'Dictionary' })
@@ -1099,16 +1619,28 @@ export default {
             if (ret) {
                 switch (position) {
                     case 1:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=1=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=1=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 2:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=2=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=2=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 3:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=3=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=3=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 4:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=4=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=4=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        break
+                    case 5:
+                        context.emit('storelocation', 'test=' + testID.value + '=0=5=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        break
+                    case 6:
+                        context.emit('storelocation', 'test=' + testID.value + '=0=6=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        break
+                    case 7:
+                        context.emit('storelocation', 'test=' + testID.value + '=0=7=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        break
+                    case 8:
+                        context.emit('storelocation', 'test=' + testID.value + '=0=8=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                 }
                 router.push({ name: 'References' })
@@ -1129,16 +1661,28 @@ export default {
                 //console.log ('test=' + testID.value + '=0=2=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value)
                 switch (position) {
                     case 1:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=1=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=1=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 2:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=2=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=2=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 3:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=3=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=3=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 4:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=4=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=4=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        break
+                    case 5:
+                        context.emit('storelocation', 'test=' + testID.value + '=0=5=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        break
+                    case 6:
+                        context.emit('storelocation', 'test=' + testID.value + '=0=6=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        break
+                    case 7:
+                        context.emit('storelocation', 'test=' + testID.value + '=0=7=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        break
+                    case 8:
+                        context.emit('storelocation', 'test=' + testID.value + '=0=8=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                 }
                 router.push({ name: 'Data' })
@@ -1160,16 +1704,28 @@ export default {
             if (ret) {
                 switch (position) {
                     case 1:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=1=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=1=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 2:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=2=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=2=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 3:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=3=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=3=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 4:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=4=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=4=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        break
+                    case 5:
+                        context.emit('storelocation', 'test=' + testID.value + '=0=5=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        break
+                    case 6:
+                        context.emit('storelocation', 'test=' + testID.value + '=0=6=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        break
+                    case 7:
+                        context.emit('storelocation', 'test=' + testID.value + '=0=7=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        break
+                    case 8:
+                        context.emit('storelocation', 'test=' + testID.value + '=0=8=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                 }
                 router.push({ name: 'Dummy Users' })
@@ -1190,16 +1746,28 @@ export default {
             if (ret) {
                 switch (position) {
                     case 1:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=1=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=1=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 2:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=2=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=2=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 3:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=3=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=3=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 4:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=4=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=4=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        break
+                    case 5:
+                        context.emit('storelocation', 'test=' + testID.value + '=0=5=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        break
+                    case 6:
+                        context.emit('storelocation', 'test=' + testID.value + '=0=6=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        break
+                    case 7:
+                        context.emit('storelocation', 'test=' + testID.value + '=0=7=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        break
+                    case 8:
+                        context.emit('storelocation', 'test=' + testID.value + '=0=8=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                 }
                 router.push({ name: 'Rules Set' })
@@ -1219,11 +1787,16 @@ export default {
             if (defVal2.value) parameter2.value = selectVal2.value.id
             if (defVal3.value) parameter3.value = selectVal3.value.id
             if (defVal4.value) parameter4.value = selectVal4.value.id
+            if (defVal5.value) parameter5.value = selectVal5.value.id
+            if (defVal6.value) parameter6.value = selectVal6.value.id
+            if (defVal7.value) parameter7.value = selectVal7.value.id
+            if (defVal8.value) parameter8.value = selectVal8.value.id
 
             consoleLog('TestEdit.vue/saveData', 2, 'save the data - testID: ' + testID.value, trace.value)
             // action, comment, functionID, test1, test2, test3, active, testID
             const { error, updateTheTest } = updateTest(action.value, comment.value, commentType.value, transpose.value, testCondition.value, selectedFunction.value.id,
-                parameter1.value, parameter2.value, parameter3.value, parameter4.value, selectedActive.value.id, testID.value)
+                parameter1.value, parameter2.value, parameter3.value, parameter4.value,
+                parameter5.value, parameter6.value, parameter7.value, parameter8.value, selectedActive.value.id, testID.value)
             return await updateTheTest(test, trace.value)
                 .then(function () {
                     consoleLog('TestEdit.vue/handleSubmit', 2, '------ Update a test - testID: ' + testID.value + ', functionID: ' + selectedFunction.value.id + ', action: ' + action.value + ', commment: ' + comment.value, trace.value)
@@ -1324,6 +1897,11 @@ export default {
             else if (id == 2) defList = defLists2.value
             else if (id == 3) defList = defLists3.value
             else if (id == 4) defList = defLists4.value
+            else if (id == 5) defList = defLists5.value
+            else if (id == 6) defList = defLists6.value
+            else if (id == 7) defList = defLists7.value
+            else if (id == 8) defList = defLists8.value
+
             param = param.toLowerCase()
             for (let i = 0; i < defList.length; i++) {
                 if (defList[i].name.toString().toLowerCase().indexOf(param) >= 0) selectVal = defList[i].id
@@ -1334,6 +1912,10 @@ export default {
                 else if (id == 2) selectVal2.value.id = selectVal
                 else if (id == 3) selectVal3.value.id = selectVal
                 else if (id == 4) selectVal4.value.id = selectVal
+                else if (id == 5) selectVal5.value.id = selectVal
+                else if (id == 6) selectVal6.value.id = selectVal
+                else if (id == 7) selectVal7.value.id = selectVal
+                else if (id == 8) selectVal8.value.id = selectVal
             }
         }
 
@@ -1449,6 +2031,33 @@ export default {
                         natural4.value = functionTest.value[0].natural4
                         label4.value = functionTest.value[0].parameter4
                         tip4.value = functionTest.value[0].tip4
+
+                        parameter5.value = functionTest.value[0].defaultValue5
+                        defaultValue5.value = functionTest.value[0].defaultValue5
+                        manageDefault(5, defaultValue5.value)
+                        natural5.value = functionTest.value[0].natural5
+                        label5.value = functionTest.value[0].parameter5
+                        tip5.value = functionTest.value[0].tip5
+                        parameter6.value = functionTest.value[0].defaultValue6
+                        defaultValue6.value = functionTest.value[0].defaultValue6
+                        manageDefault(6, defaultValue6.value)
+                        natural6.value = functionTest.value[0].natural6
+                        label6.value = functionTest.value[0].parameter6
+                        tip6.value = functionTest.value[0].tip6
+                        parameter7.value = functionTest.value[0].defaultValue7
+                        defaultValue7.value = functionTest.value[0].defaultValue7
+                        manageDefault(7, defaultValue7.value)
+                        natural7.value = functionTest.value[0].natural7
+                        label7.value = functionTest.value[0].parameter7
+                        tip7.value = functionTest.value[0].tip7
+                        parameter8.value = functionTest.value[0].defaultValue8
+                        defaultValue8.value = functionTest.value[0].defaultValue8
+                        manageDefault(8, defaultValue8.value)
+                        natural8.value = functionTest.value[0].natural8
+                        label8.value = functionTest.value[0].parameter8
+                        tip8.value = functionTest.value[0].tip8
+
+
                     } else {
                         DisplayError("Cannot find the function: " + name, 'Alert')
                         functionName.value = '<N/A>'
@@ -1568,6 +2177,10 @@ export default {
                 parameter2.value = await cleanFunctionParameter(parameter2.value)
                 parameter3.value = await cleanFunctionParameter(parameter3.value)
                 parameter4.value = await cleanFunctionParameter(parameter4.value)
+                parameter5.value = await cleanFunctionParameter(parameter5.value)
+                parameter6.value = await cleanFunctionParameter(parameter6.value)
+                parameter7.value = await cleanFunctionParameter(parameter7.value)
+                parameter8.value = await cleanFunctionParameter(parameter8.value)
             }
         }
 
@@ -1911,6 +2524,18 @@ export default {
             } else if (id == 4) {
                 natural = natural4.value
                 defValue = parameter4.value
+            } else if (id == 5) {
+                natural = natural5.value
+                defValue = parameter5.value
+            } else if (id == 6) {
+                natural = natural6.value
+                defValue = parameter6.value
+            } else if (id == 7) {
+                natural = natural7.value
+                defValue = parameter7.value
+            } else if (id == 8) {
+                natural = natural8.value
+                defValue = parameter8.value
             }
             //console.log('!!!!!!!!!!!!!!!! id: ' + id + ', natural: ', natural)
             if (natural == undefined) return "natural " + id + " is not defined!"
@@ -2192,6 +2817,19 @@ export default {
             if (label4.value) parameter4.value = (await functionParameter(4))
             if (label4.value) await selectValue(4, parameter4.value)
             if (label4.value) await displayConsole("parameter 4: ", parameter4.value)
+
+            if (label5.value) parameter5.value = (await functionParameter(5))
+            if (label5.value) await selectValue(5, parameter5.value)
+            if (label5.value) await displayConsole("parameter 5: ", parameter5.value)
+            if (label6.value) parameter6.value = (await functionParameter(6))
+            if (label6.value) await selectValue(6, parameter6.value)
+            if (label6.value) await displayConsole("parameter 6: ", parameter6.value)
+            if (label7.value) parameter7.value = (await functionParameter(7))
+            if (label7.value) await selectValue(7, parameter7.value)
+            if (label7.value) await displayConsole("parameter 7: ", parameter7.value)
+            if (label8.value) parameter8.value = (await functionParameter(8))
+            if (label8.value) await selectValue(8, parameter8.value)
+            if (label8.value) await displayConsole("parameter 8: ", parameter8.value)            
         }
 
 
@@ -2200,9 +2838,14 @@ export default {
             selectedActive, actions, selectedAction, action, testfunctions, selectedFunction, scenarioName, filterFunction, filterFlag, classColor, filteredData, filteredRows,
             parameter1, label1, tip1, data1, dict1, rule1, dummy1, ref1, parameter2, label2, tip2, data2, dict2, rule2, dummy2, ref2,
             parameter3, label3, tip3, data3, dict3, rule3, dummy3, ref3, parameter4, label4, tip4, data4, dict4, rule4, dummy4, ref4,
-            defVal1, defVal2, defVal3, defVal4, defLists1, defLists2, defLists3, defLists4, selectVal1, selectVal2, selectVal3, selectVal4,
+            parameter5, label5, tip5, data5, dict5, rule5, dummy5, ref5, parameter6, label6, tip6, data6, dict6, rule6, dummy6, ref6,
+            parameter7, label7, tip7, data7, dict7, rule7, dummy7, ref7, parameter8, label8, tip8, data8, dict8, rule8, dummy8, ref8,            
+            defVal1, defVal2, defVal3, defVal4, defVal5, defVal6, defVal7, defVal8, 
+            defLists1, defLists2, defLists3, defLists4, defLists5, defLists6, defLists7, defLists8, 
+            selectVal1, selectVal2, selectVal3, selectVal4, selectVal5, selectVal6, selectVal7, selectVal8,
             handleCancel, handleSubmit, handleFocus, handleBlur, handleFunctionChange, handleActionChange, handleFilter, handleTranscribe,
-            handleListValue1Change, handleListValue2Change, handleListValue3Change, handleListValue4Change, handleDictionary, handleDataset, handleRule, handleDummy, handleReference
+            handleListValue1Change, handleListValue2Change, handleListValue3Change, handleListValue4Change, handleListValue5Change, handleListValue6Change, handleListValue7Change, handleListValue8Change, 
+            handleDictionary, handleDataset, handleRule, handleDummy, handleReference
         }
 
     }

@@ -6,8 +6,8 @@ module.exports = {
    * @Author: Philippe Goffin 
    * @Email: artcomputer123@gmail.com
    * @Date: 2024-01-30
- * @Last Modified by: 
-   * @Last Modified time: 2024-10-04 13:11:57
+ * @Last Modified by: Someone
+   * @Last Modified time: 2026-03-12 07:39:14
    * @Description: All the database services available for the API function
    */
 
@@ -19,8 +19,10 @@ module.exports = {
     return new Promise((resolve, reject) => {
       mysql.query(
         `insert into testfunction(functionName, rulefunction, comment, tip1, parameter1, defaultValue1, natural1, tip2, parameter2, defaultValue2, natural2, 
-          tip3, parameter3, defaultValue3, natural3, tip4, parameter4, defaultValue4, natural4, position, active) 
-                  values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+          tip3, parameter3, defaultValue3, natural3, tip4, parameter4, defaultValue4, natural4,
+          tip5, parameter5, defaultValue5, natural5, tip6, parameter6, defaultValue6, natural6, 
+          tip7, parameter7, defaultValue7, natural7, tip8, parameter8, defaultValue8, natural8, position, active) 
+          values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
         [
           data.functionName,
           data.rulefunction,
@@ -41,6 +43,22 @@ module.exports = {
           data.parameter4,
           data.defaultValue4,
           data.natural4,
+          data.tip5,
+          data.parameter5,
+          data.defaultValue5,
+          data.natural5,
+          data.tip6,
+          data.parameter6,
+          data.defaultValue6,
+          data.natural6,
+          data.tip7,
+          data.parameter7,
+          data.defaultValue7,
+          data.natural7,
+          data.tip8,
+          data.parameter8,
+          data.defaultValue8,
+          data.natural8,
           data.position,
           (data.active != undefined ? data.active : 1)
         ],
@@ -63,7 +81,9 @@ module.exports = {
     return new Promise((resolve, reject) => {
       mysql.query(
         `SELECT functionID, functionName, rulefunction, comment, tip1, parameter1, defaultValue1, natural1, tip2, parameter2, defaultValue2, natural2, 
-        tip3, parameter3, defaultValue3, natural3, tip4, parameter4, defaultValue4, natural4, active, position 
+        tip3, parameter3, defaultValue3, natural3, tip4, parameter4, defaultValue4, natural4,
+        tip5, parameter5, defaultValue5, natural5, tip6, parameter6, defaultValue6, natural6, 
+        tip7, parameter7, defaultValue7, natural7, tip8, parameter8, defaultValue8, natural8, active, position 
         FROM testfunction 
         WHERE functionID=?`,
         [functionID],
@@ -85,7 +105,9 @@ module.exports = {
     return new Promise((resolve, reject) => {
       mysql.query(
         `SELECT functionID, functionName, rulefunction, comment, tip1, parameter1, defaultValue1, natural1, tip2, parameter2, defaultValue2, natural2, 
-        tip3, parameter3, defaultValue3, natural3, tip4, parameter4, defaultValue4, natural4, active, position 
+        tip3, parameter3, defaultValue3, natural3, tip4, parameter4, defaultValue4, natural4,
+        tip5, parameter5, defaultValue5, natural5, tip6, parameter6, defaultValue6, natural6, 
+        tip7, parameter7, defaultValue7, natural7, tip8, parameter8, defaultValue8, natural8, active, position 
         FROM testfunction 
         WHERE functionName=?`,
         [data.functionName],
@@ -108,10 +130,12 @@ module.exports = {
     return new Promise((resolve, reject) => {
       mysql.query(
         `SELECT functionID, functionName, rulefunction, comment, tip1, parameter1, defaultValue1, natural1, tip2, parameter2, defaultValue2, natural2, 
-        tip3, parameter3, defaultValue3, natural1, tip4, parameter4, defaultValue4, natural4, active, position 
+        tip3, parameter3, defaultValue3, natural3, tip4, parameter4, defaultValue4, natural4,
+        tip5, parameter5, defaultValue5, natural5, tip6, parameter6, defaultValue6, natural6, 
+        tip7, parameter7, defaultValue7, natural7, tip8, parameter8, defaultValue8, natural8, active, position 
         FROM testfunction 
         ORDER BY LPAD(LOWER(position), 10, 0)`,
-        [  ],
+        [],
         (error, results, fields) => {
           if (error) {
             return reject(error);
@@ -132,7 +156,9 @@ module.exports = {
     return new Promise((resolve, reject) => {
       mysql.query(
         `UPDATE testfunction SET functionName=?, rulefunction=?, comment=?, tip1=?, parameter1=?, defaultValue1=?, natural1=?, tip2=?, parameter2=?, defaultValue2=?, natural2=?, 
-         tip3=?, parameter3=?, defaultValue3=?, natural3=?, tip4=?, parameter4=?, defaultValue4=?, natural4=?, active=?
+         tip3=?, parameter3=?, defaultValue3=?, natural3=?, tip4=?, parameter4=?, defaultValue4=?, natural4=?, 
+         tip5=?, parameter5=?, defaultValue5=?, natural5=?, tip6=?, parameter6=?, defaultValue6=?, natural6=?, 
+         tip7=?, parameter7=?, defaultValue7=?, natural7=?, tip8=?, parameter8=?, defaultValue8=?, natural8=?, active=?
          WHERE functionID = ?`,
         [
           data.functionName,
@@ -154,6 +180,22 @@ module.exports = {
           data.parameter4,
           data.defaultValue4,
           data.natural4,
+          data.tip5,
+          data.parameter5,
+          data.defaultValue5,
+          data.natural5,
+          data.tip6,
+          data.parameter6,
+          data.defaultValue6,
+          data.natural6,
+          data.tip7,
+          data.parameter7,
+          data.defaultValue7,
+          data.natural7,
+          data.tip8,
+          data.parameter8,
+          data.defaultValue8,
+          data.natural8,
           (data.active != undefined ? data.active : 1),
           data.functionID
         ],
@@ -186,7 +228,7 @@ module.exports = {
         }
       );
     });
-  },  
+  },
 
   // -----------------------------------------------------------
   // reorder all Functions
@@ -202,7 +244,7 @@ module.exports = {
           ORDER BY pos6, pos3) AS T2 
         SET T1.position=T2.newposition
         WHERE T1.functionID = T2.functionID`,
-        [  ],
+        [],
         (error, results) => {
           if (error) {
             return reject(error);
@@ -211,7 +253,7 @@ module.exports = {
         }
       );
     });
-  },  
+  },
 
   // -----------------------------------------------------------
   // Copy a Function record
@@ -221,10 +263,14 @@ module.exports = {
     return new Promise((resolve, reject) => {
       mysql.query(
         `INSERT INTO testfunction ( functionName, rulefunction, comment, tip1, parameter1, defaultValue1, natural1, 
-         tip2, parameter2, defaultValue2, natural2, tip3, parameter3, defaultValue3, natural3, tip4, parameter4, defaultValue4, natural4, active, position )
+         tip2, parameter2, defaultValue2, natural2, tip3, parameter3, defaultValue3, natural3, tip4, parameter4, defaultValue4, natural4,
+         tip5, parameter5, defaultValue5, natural5, tip6, parameter6, defaultValue6, natural6, tip7, parameter7, defaultValue7, natural7,
+         tip8, parameter8, defaultValue8, natural8, active, position )
          SELECT t1.functionName, t1.rulefunction, t1.comment, t1.tip1, t1.parameter1, t1.defaultValue1, t1.natural1, 
          t1.tip2, t1.parameter2, t1.defaultValue2, t1.natural2, t1.tip3, t1.parameter3, t1.defaultValue3, t1.natural3,
-         t1.tip4, t1.parameter4, t1.defaultValue4, t1.natural4, t1.active, ? 
+         t1.tip4, t1.parameter4, t1.defaultValue4, t1.natural4, t1.tip5, t1.parameter5, t1.defaultValue5, t1.natural5, 
+         t1.tip6, t1.parameter6, t1.defaultValue6, t1.natural6, t1.tip7, t1.parameter7, t1.defaultValue7, t1.natural7, 
+         t1.tip8, t1.parameter8, t1.defaultValue8, t1.natural8, t1.active, ? 
          FROM testfunction t1 WHERE t1.functionID = ?`,
         [
           data.position,
