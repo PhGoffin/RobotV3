@@ -14,7 +14,7 @@
         <i class="fa-solid fa-circle-info" title="Just for your information" style="color: blue;"
           v-if="reference.inputoutput == '0'"></i>
           &nbsp;
-        {{ reference.code }} - {{ reference.label }}
+        {{ reference.code }} - {{ shortLabel }}
       </h3>
 
       <div class="actions">
@@ -128,6 +128,11 @@ export default {
 
     if (reference.value.inputoutput == '0') actionAllowed.value = false
     if (reference.value.inputoutput == '0' || reference.value.inputoutput == '1') display.value = false
+
+    let shortLabel = reference.value.label
+    if (shortLabel.length > 40) {
+      shortLabel = reference.value.label.slice(0, 40) + '...'
+    }    
 
     if (location.value.includes('parameter=')) {
       let data = location.value.split("=");
@@ -256,7 +261,7 @@ export default {
 
     return {
       showDetails, projectID, userID, currentUser, reference, referenceID, actionAllowed,
-      showPopup, recordSelected, importData, parameterID, testID, display,
+      showPopup, recordSelected, importData, parameterID, testID, display, shortLabel,
       handleConfirmation, handelDelete, handleCancelDelete, handleConfirmDelete,
       handleSelect, handleInsert, handleCopy, handleMove, handleImport, handleImportTest
     }

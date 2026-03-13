@@ -54,9 +54,14 @@ async function nameVariable(variables, myName) {
     // Regex is used to capture the name after the $$
     const regex = /\$\$([a-zA-Z0-9]+)/g;
 
+    if (myName == undefined) return myName
+    if (!myName.includes("$$")) return myName
+
+
     return myName.replace(regex, (match) => {
         // 'match' contains the string (ex: "$$Loop")
         // On passe ce match directement à votre fonction existante
+        //console.log(`Variable:  ${match}`);
         const newName = variables.evaluateVariable(match.replace("$$", "$"), true);
         //console.log(`Replace of ${match} par ${newName}`);
         return newName;
@@ -84,7 +89,7 @@ async function dictionary(variables, data, code, language, variable) {
     let value = '<N/A>'
 
     // replace $$name by the value of the variable $name
-    variable = await nameVariable (variables, variable)    
+    variable = await nameVariable(variables, variable)
 
     if (code == undefined) {
         return { success: 0, message: 'code is undefined in the function dictionary!', stop: 1 }
@@ -1281,7 +1286,7 @@ async function getUrl(page, variables, myVariable) {
     const { Left } = require("./string.library.js")
 
     // replace $$name by the value of the variable $name
-    myVariable = await nameVariable (variables, myVariable)    
+    myVariable = await nameVariable(variables, myVariable)
 
 
     try {
@@ -1602,7 +1607,7 @@ async function dummyLogin(page, variables, data, dummyUser, variable) {
     let dummyLogin = ''
 
     // replace $$name by the value of the variable $name
-    variable = await nameVariable (variables, variable)    
+    variable = await nameVariable(variables, variable)
 
 
     //console.log('Data: ', data)
@@ -1660,7 +1665,7 @@ async function dummyExtraInfo(page, variables, data, dummyUser, variable) {
     let extraInfo = ''
 
     // replace $$name by the value of the variable $name
-    variable = await nameVariable (variables, variable)    
+    variable = await nameVariable(variables, variable)
 
 
     //console.log('Data: ', data)
@@ -2258,7 +2263,7 @@ async function selectCount(page, data, variables, tag, variable) {
     if (!ret.success) return { success: 0, message: 'Fatal Error: ' + ret.message, stop: 1 }
 
     // replace $$name by the value of the variable $name
-    variable = await nameVariable (variables, variable)    
+    variable = await nameVariable(variables, variable)
 
 
     try {
@@ -2570,7 +2575,7 @@ async function getTableData(page, data, variables, tagElement, row, column, vari
     //variables.displayLog(1, 1,'----- getTableData')
 
     // replace $$name by the value of the variable $name
-    variable = await nameVariable (variables, variable)    
+    variable = await nameVariable(variables, variable)
 
 
     // Check if the tag is in the dictionary
@@ -2642,7 +2647,7 @@ async function getTableHeader(page, data, variables, tagElement, row, column, va
     //variables.displayLog(1, 1,'----- getTableData')
 
     // replace $$name by the value of the variable $name
-    variable = await nameVariable (variables, variable)    
+    variable = await nameVariable(variables, variable)
 
 
     // Check if the tag is in the dictionary
@@ -2819,7 +2824,7 @@ async function countTableRow(page, data, variables, tagElement, variable) {
     let ret
 
     // replace $$name by the value of the variable $name
-    variable = await nameVariable (variables, variable)    
+    variable = await nameVariable(variables, variable)
 
 
     // Check if the tag is not on the dictionary
@@ -4053,7 +4058,7 @@ async function getReference(variables, projectID, userID, code, variableName) {
     const { getReferenceByCode } = require("../../reference/reference.service.js");
 
     try {
-        //console.log ('getReference - projectID: ' +  projectID + ', userID: ' + userID + ', code: ' +  code + ', variable: ' +  variable)
+        //console.log ('getReference - projectID: ' +  projectID + ', userID: ' + userID + ', code: ' +  code + ', variable: ' +  variableName)
         //console.log('debug: getReference')
         code = variables.evaluateVariable(code)
         if (code.length > 0) {
@@ -4078,6 +4083,7 @@ async function getReference(variables, projectID, userID, code, variableName) {
             let label = result[0].label
             let referenceID = result[0].referenceID
             // store the label into the variable
+            //console.log ('variableName', variableName)
             if (variableName != undefined) {
                 // store the label into the variable
                 variables.setVariable(variableName, label)
@@ -4087,8 +4093,8 @@ async function getReference(variables, projectID, userID, code, variableName) {
         }
     }
     catch (err) {
-        variables.displayLog(1, 1, 'getReference: Fatal error: Browser not responding!')
-        return { success: 0, message: ret.message, stop: 1 }
+        variables.displayLog(1, 1, 'getReference: Fatal error: ' + err.message)
+        return { success: 0, message: err.message, stop: 1 }
     }
 
 }
@@ -4196,7 +4202,7 @@ async function getData(data, variables, code, variable) {
     }
 
     // replace $$name by the value of the variable $name
-    variable = await nameVariable (variables, variable)    
+    variable = await nameVariable(variables, variable)
 
 
     code = variables.evaluateVariable(code, true)
@@ -4422,7 +4428,7 @@ async function epoch(variables, myDate, myFormat, variable) {
     const { timeEpoch } = require("./time.library.js")
 
     // replace $$name by the value of the variable $name
-    variable = await nameVariable (variables, variable)    
+    variable = await nameVariable(variables, variable)
 
     myDate = variables.evaluateVariable(myDate)
     myDate = myDate.replace(/'/g, "");
@@ -4449,7 +4455,7 @@ async function epochDate(variables, myEpoch, myFormat, variable) {
     const { timeEpochDate } = require("./time.library.js")
 
     // replace $$name by the value of the variable $name
-    variable = await nameVariable (variables, variable)    
+    variable = await nameVariable(variables, variable)
 
     myEpoch = variables.evaluateVariable(myEpoch)
     myEpoch = myEpoch.replace(/'/g, "");
@@ -4477,7 +4483,7 @@ async function epochAddHour(variables, myDate, myFormat, myValue, variable) {
     const { timeEpochAdd } = require("./time.library.js")
 
     // replace $$name by the value of the variable $name
-    variable = await nameVariable (variables, variable)    
+    variable = await nameVariable(variables, variable)
 
 
     myDate = variables.evaluateVariable(myDate, true)
@@ -4506,7 +4512,7 @@ async function epochAddMinute(variables, myDate, myFormat, myValue, variable) {
     const { timeEpochAdd } = require("./time.library.js")
 
     // replace $$name by the value of the variable $name
-    variable = await nameVariable (variables, variable)    
+    variable = await nameVariable(variables, variable)
 
     myDate = variables.evaluateVariable(myDate, true)
 
@@ -4534,8 +4540,8 @@ async function epochAddSecond(variables, myDate, myFormat, myValue, variable) {
     const { timeEpochAdd } = require("./time.library.js")
 
     // replace $$name by the value of the variable $name
-    variable = await nameVariable (variables, variable)    
-    
+    variable = await nameVariable(variables, variable)
+
     myDate = variables.evaluateVariable(myDate, true)
 
     let myUnit = 's'
@@ -5281,7 +5287,7 @@ async function httpData(data, variables, expression, variable) {
     expression = variables.evaluateVariable(expression)
 
     // replace $$name by the value of the variable $name
-    variable = await nameVariable (variables, variable)    
+    variable = await nameVariable(variables, variable)
 
     try {
         // retrieve the record of the user id
@@ -5552,6 +5558,14 @@ async function SAML_Assertion(page, data, variables, certificateDataName, assert
     let certificateKey = '<N/A>';
     let requestID = null;
 
+    certificateDataName = variables.evaluateVariable(certificateDataName, true)
+    assertionUrl = variables.evaluateVariable(assertionUrl, true)
+    assertionDataName = variables.evaluateVariable(assertionDataName, true)
+
+    console.log('certificateDataName', certificateDataName)
+    console.log('assertionUrl', assertionUrl)
+    console.log('assertionDataName', assertionDataName)
+
     try {
         // --- STEP 1: SETUP CONTEXT ---
         const contextData = await getSAMLContext(data, certificateDataName);
@@ -5622,7 +5636,12 @@ async function SAML_Assertion(page, data, variables, certificateDataName, assert
 
     } catch (error) {
         console.error("Error during SAML Assertion execution:", error.message);
-        return { success: 0, message: "SAML: Error during API execution! " + error.message, stop: 1 };
+        if (error.message.includes("<title>401 Unauthorized</title>")) {
+            return { success: 0, message: "SAML Error:  This server could not verify that you are authorized to access the document requested! ", stop: 1 };
+
+        } else {
+            return { success: 0, message: "SAML: Error during API execution! " + error.message, stop: 1 };
+        }
     } finally {
         // Ensure the Playwright context is always closed
         if (apiContext) {
@@ -5650,24 +5669,43 @@ async function SAML_Transaction(page, data, variables, certificateDataName, asse
     const { getCertificateByCode } = require("../../certificate/certificate.service.js");
     const { getDatasetByHeaderCode } = require("../../dataset/dataset.service.js");
 
+    certificateDataName = variables.evaluateVariable(certificateDataName, true)
+    assertionDataName = variables.evaluateVariable(assertionDataName, true)
+    transactionUrl = variables.evaluateVariable(transactionUrl, true)
+    transactionDataName = variables.evaluateVariable(transactionDataName, true)
+
+    console.log('certificateDataName', certificateDataName)
+    console.log('assertionDataName', assertionDataName)
+    console.log('transactionUrl', transactionUrl)
+    console.log('transactionDataName', "*" + transactionDataName + "*")
 
     let apiContext;
 
     try {
         // Use the new helper
+        console.log('getSAMLContext')
         const contextData = await getSAMLContext(data, certificateDataName);
         apiContext = contextData.apiContext;
 
         // Get the samlToken
+        console.log('getCertificateByCode')
         const tokenResult = await getCertificateByCode({ subprojectID: data.subprojectID, code: assertionDataName });
-        if (!tokenResult.length) return { success: 0, message: `SAML: Token not found for ${assertionDataName}`, stop: 1 };
+        if (!tokenResult.length) {
+            console.log("SAML: Token not found: " + assertionDataName)
+            return { success: 0, message: `SAML: Token not found for ${assertionDataName}`, stop: 1 };
+        }
 
         const token = tokenResult[0].token;
 
         // Get the transaction dataset
+        console.log('getDatasetByHeaderCode')
         const result2 = await getDatasetByHeaderCode({ subprojectID: data.subprojectID, datasetheaderCode: transactionDataName });
-        if (!result2.length) return { success: 0, message: `SAML: Dataset not found: ${transactionDataName}`, stop: 1 };
+        if (!result2.length) {
+            console.log("SAML: Dataset not found: *" + transactionDataName + "*")
+            return { success: 0, message: `SAML: Dataset not found: ${transactionDataName}`, stop: 1 };
+        }
 
+        console.log('buildAssertionPayload')
         const dynamicData = await buildAssertionPayload(result2, '<N/A>', null);
 
         // Execute Transaction
@@ -5678,8 +5716,8 @@ async function SAML_Transaction(page, data, variables, certificateDataName, asse
         });
 
         const txResult = await txResponse.json();
-        console.log("Transaction Result:", txResult);
-        let ret = await Store_HttpData(data, assertionDataName, txResult)
+        console.log("Transaction Result:", txResult.transactionResponse);
+        let ret = await Store_HttpData(data, assertionDataName, txResult.transactionResponse)
 
         // --- STEP 4: STORE OR UPDATE the txResult ---
         if (ret.success == 1) {
@@ -6000,7 +6038,7 @@ async function httpKeyCount(page, data, variables, assertionDataName, searchKey,
     if (parentKey == '<N/A>') parentKey = null
 
     // replace $$name by the value of the variable $name
-    variableName = await nameVariable (variables, variableName)    
+    variableName = await nameVariable(variables, variableName)
 
     // Get the http data
     const dataAPI1 = { subprojectID: data.subprojectID, code: assertionDataName };
@@ -6282,7 +6320,7 @@ async function imageDifference(page, data, baselineName, printscreenSlot, baseli
 async function imageDifferenceData(variables, parameter, variable) {
 
     // replace $$name by the value of the variable $name
-    variable = await nameVariable (variables, variable)    
+    variable = await nameVariable(variables, variable)
 
     switch (parameter) {
 

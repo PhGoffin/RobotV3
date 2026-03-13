@@ -6,8 +6,8 @@ module.exports = {
    * @Author: Philippe Goffin 
    * @Email: artcomputer123@gmail.com
    * @Date: 2024-02-21
- * @Last Modified by: 
-   * @Last Modified time: 2024-11-08 07:20:12
+ * @Last Modified by: Someone
+   * @Last Modified time: 2026-03-13 12:20:52
    * @Description: All the database services available for the API Story
    */
 
@@ -229,7 +229,7 @@ module.exports = {
     return new Promise((resolve, reject) => {
       mysql.query(
         `INSERT INTO story ( storyheaderID, scenarioID, suiteID, comment, story, graphlabel, active, position )
-        SELECT ?, t1.scenarioID, t1.suiteID, t1.comment, t1.story, t1.graphlabel, t1.active, t.position FROM story t1 WHERE t1.storyheaderID = ?`,
+        SELECT ?, t1.scenarioID, t1.suiteID, t1.comment, t1.story, t1.graphlabel, t1.active, t1.position FROM story t1 WHERE t1.storyheaderID = ?`,
         [
           data.storyheaderIDCopy,
           data.storyheaderIDOrigin

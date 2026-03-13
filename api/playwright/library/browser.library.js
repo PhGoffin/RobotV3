@@ -480,8 +480,9 @@ class BrowserUtility {
         this.browserName = browserName
         this.device = device
 
-        ret = { success: 1, message: "Browser started!", page: page, browser: browser, headless: headless, browserName: browserName, device: device, context: context }
+        console.log ('Browser started!')
 
+        ret = { success: 1, message: "Browser started!", page: page, browser: browser, headless: headless, browserName: browserName, device: device, context: context }
         return (ret)
 
     }
