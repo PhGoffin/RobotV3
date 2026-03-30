@@ -4844,7 +4844,8 @@ async function postData(data, variables, url, parameters, token, key) {
     try {
 
         // Get the file extension
-        const fileExtension = token.split('.').pop().toLowerCase();
+        let fileExtension = '<N/A>'
+        if (token != null) fileExtension = token.split('.').pop().toLowerCase();        
 
         if (fileExtension == 'p12') {
             // Use .p12 certificate (it must be uploaded on the server)
@@ -5207,7 +5208,8 @@ async function fetchData(data, variables, url, token, key) {
     try {
 
         // Get the file extension
-        const fileExtension = token.split('.').pop().toLowerCase();
+        let fileExtension = '<N/A>'
+        if (token != null) fileExtension = token.split('.').pop().toLowerCase();
 
 
         if (fileExtension == 'pem') {
@@ -5287,6 +5289,7 @@ async function fetchData(data, variables, url, token, key) {
             const agent = new https.Agent({
                 pfx: fs.readFileSync(certificatePath),
                 passphrase: key,
+                //insecureHTTPParser: true,
                 rejectUnauthorized: false,
 
                 // Server only supports TLS 1.2
@@ -5310,6 +5313,7 @@ async function fetchData(data, variables, url, token, key) {
         } else {
             // No certificate used
             // -------------------
+            console.log('No certificate')
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
