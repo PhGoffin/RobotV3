@@ -1,6 +1,57 @@
 const mysql = require("../../config/database");
 const { chromium } = require('playwright');
 
+
+// Helper function OUTSIDE module.exports
+function findElementByCoordinates(tree, tapX, tapY) {
+  let result = null;
+
+  function traverse(node) {
+    if (!node || !node.node) return;
+
+    for (const child of node.node) {
+      const a = child.$;
+      if (!a || !a.bounds) continue;
+
+      // Parse Android bounds: [x1,y1][x2,y2]
+      const match = a.bounds.match(/\[(\d+),(\d+)\]\[(\d+),(\d+)\]/);
+      if (!match) continue;
+
+      const x1 = Number(match[1]),
+        y1 = Number(match[2]),
+        x2 = Number(match[3]),
+        y2 = Number(match[4]);
+
+      const inside =
+        tapX >= x1 &&
+        tapX <= x2 &&
+        tapY >= y1 &&
+        tapY <= y2;
+
+      if (inside) {
+        result = {
+          class: a.class || "N/A",
+          text: a.text || "N/A",
+          resourceId: a["resource-id"] || "N/A",
+          contentDesc: a["content-desc"] || "N/A",
+          package: a.package || "N/A",
+          clickable: a.clickable || "N/A",
+          enabled: a.enabled || "N/A",
+          bounds: a.bounds
+        };
+      }
+
+      // Descend into children
+      traverse(child);
+    }
+  }
+
+  traverse(tree.hierarchy);
+  return result;
+}
+
+
+
 module.exports = {
 
   /*
@@ -8,7 +59,7 @@ module.exports = {
    * @Email: artcomputer123@gmail.com
    * @Date: 2024-02-01
  * @Last Modified by: Someone
-   * @Last Modified time: 2026-03-05 08:08:24
+   * @Last Modified time: 2026-03-30 12:54:41
    * @Description: All the database services available for the API dictionary
    */
 
@@ -345,6 +396,9 @@ module.exports = {
   },
 
 
+
+
+
   // ---------------------------------------------------------------------------
   // Scan a web browser to facilitate the creation of a dictionary record
   // ---------------------------------------------------------------------------
@@ -353,15 +407,101 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       console.log('Url: ' + data.myUrl)
       console.log('Delay: ' + data.myDelay)
+      console.log('Device: ' + data.myDevice)
+      // '1': 'Web browser', '0': 'Phone', '2': 'Phone browser'
 
-      // 1. Launch the browser (headless: false is required so the user can interact)
-      const browser = await chromium.launch({ headless: false });
-      //const context = await browser.newContext();
-      // Create a context that ignores SSL errors
-      const context = await browser.newContext({
-        ignoreHTTPSErrors: true
-      });
-      const page = await context.newPage();
+      let page
+      const say = require('say');
+
+      if (data.myDevice == 1) {
+        // Web browser
+        // -----------
+        // 1. Launch the browser (headless: false is required so the user can interact)
+        const browser = await chromium.launch({ headless: false });
+        //const context = await browser.newContext();
+        // Create a context that ignores SSL errors
+        const context = await browser.newContext({
+          ignoreHTTPSErrors: true
+        });
+        page = await context.newPage();
+
+      } else if (data.myDevice == 2) {
+        // Phone browser
+        // -----------
+        const { _android: android } = require('playwright');
+        const [device] = await android.devices();
+        if (!device) return resolve({ success: 0, attributes: null, message: 'Scan KO: no device!' })
+
+        console.log("Launching Chrome...");
+        const context = await device.launchBrowser({
+          // Explicitly target the Chrome package to ensure no confusion
+          pkg: 'com.android.chrome',
+          // Increase timeout in case Android 16 is slow to bridge the socket
+          timeout: 30000
+        });
+
+        console.log("Context created, requesting page...");
+
+        // If newPage() hangs, try using the existing first page often created by default
+        const pages = context.pages();
+        page = pages.length > 0 ? pages[0] : await context.newPage();
+
+        console.log("Phone web page ready!");
+
+
+
+      } else if (data.myDevice == 0) {
+        // NATIVE ANDROID (Tap -> Get Element)
+        // ----------------------------------
+        const { _android: android } = require('playwright');
+        const [device] = await android.devices();
+
+        if (!device)
+          return resolve({ success: 0, message: "No Android device detected!" });
+
+        console.log("Android connected.");
+
+        // Instruct the user to tap
+        console.log("Please tap on the Android screen...");
+        say.speak("Please tap on the phone screen");
+
+        // Listen for tap coordinates
+        device.on("touchscreen", async (event) => {
+          if (event.action !== "tap") return;
+
+          const { x, y } = event;
+          console.log(`Tap detected at: ${x}, ${y}`);
+
+          // STEP 1 — Dump UI hierarchy
+          const xmlPath = "/sdcard/window_dump.xml";
+          await device.shell(`uiautomator dump ${xmlPath}`);
+
+          const raw = await device.shell(`cat ${xmlPath}`);
+          const decoder = new TextDecoder();
+          const xmlString = decoder.decode(await raw.arrayBuffer());
+
+          // STEP 2 — Parse XML
+          const xml2js = require("xml2js");
+          const parser = new xml2js.Parser();
+          const uiTree = await parser.parseStringPromise(xmlString);
+
+          // STEP 3 — Find element containing the tap
+          const element = findElementByCoordinates(uiTree, x, y);
+
+          console.log("Element selected:", element);
+
+          return resolve({
+            success: element ? 1 : 0,
+            attributes: element,
+            message: element ? "Native element selected" : "No element found at tap"
+          });
+        });
+
+
+      }
+
+
+
       let theAttributes
 
       try {
@@ -374,7 +514,7 @@ module.exports = {
         //   console.log("Warning: Invalid certificate: ERR_CERT_AUTHORITY_INVALID");
         //   //await page.waitForTimeout(2000);
         // } else {
-          console.log('Scan Url error', err.message)
+        console.log('Scan Url error', err.message)
         //   return resolve({ success: 0, message: 'Scan: URL error!' })
         // }
       }
@@ -382,7 +522,6 @@ module.exports = {
       // Wait before starting the scan
       await page.waitForTimeout(data.myDelay * 1000);
 
-      const say = require('say');
       say.speak("Scanning in progress...", '', 1.0, async () => {
         console.log('speaking...')
       });

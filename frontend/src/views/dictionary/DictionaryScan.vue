@@ -36,7 +36,18 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td></td>
+                                <td>
+                                    <div class="input-container focus" v-if="myURL != ''">
+                                        <select id="device" class="input" @focus="handleFocus($event)"
+                                            @blur="handleBlur($event)" @change="handleDeviceChange()"
+                                            v-model="selectedDevice">
+                                            <option v-for="device in devices" :key="device.deviceID"
+                                                v-bind:value="{ id: device.deviceID }">{{ device.device }}</option>
+                                        </select>
+                                        <label>Device</label>
+                                        <span>Device</span>
+                                    </div>
+                                </td>
                                 <td>
                                     <span v-if="myURL == ''">Please enter the URL in order to scan!</span>
                                     <div class="input-container focus" v-else>
@@ -45,7 +56,7 @@
                                             title="Delay (in seconds) before the beginning of the scan" />
                                         <label>Delay</label>
                                         <span>Delay</span>
-                                    </div>                                      
+                                    </div>
                                 </td>
                             </tr>
 
@@ -353,6 +364,13 @@ export default {
         const actives = ref([{ activeID: '1', active: 'Active' }, { activeID: '0', active: 'Not Active' }, { activeID: '2', active: 'Comment' }])
         const selectedActive = ref({ id: active.value })
 
+
+        const device = ref(1)
+        // const devices = ref([{ deviceID: '1', device: 'Web browser' }, { deviceID: '0', device: 'Phone' }, { deviceID: '2', device: 'Phone browser' }])
+        const devices = ref([{ deviceID: '1', device: 'Web browser' }, { deviceID: '2', device: 'Phone browser' }])
+        const selectedDevice = ref({ id: device.value })
+
+
         const userName = ref(props.currentuser)
         const currentDate = new Date();
         const day = currentDate.getDate();
@@ -386,7 +404,7 @@ export default {
             errorMessage.value = myMessage
             styleMessage.value = myStyle.toLowerCase()
             consoleLog('DictionaryScan.vue/DisplayError', 2, 'Message: ' + errorMessage.value + ', Style: ' + styleMessage.value, trace.value)
-            if (myStyle != 'Alert') {
+            if (myStyle != 'Alert' && myCallback != null) {
                 setTimeout(() => displayErrorFunction(myCallback), 3000)
             }
         }
@@ -483,15 +501,23 @@ export default {
             router.push({ name: 'DictionaryEdit', params: { id: dictionaryID.value } })
         }
 
+        // --------------------------------------------------------------------------
+        // User selects another active value, store the current ID
+        // --------------------------------------------------------------------------
+        const handleDeviceChange = () => {
+            consoleLog('DictionaryScan.vue/handleDeviceChange', 2, 'User changed the device value: ' + selectedDevice.value.id, trace.value)
+            device.value = selectedDevice.value.id
+        }
 
         // --------------------------------------------------------------------------
         // User wants to scan a web page
         // --------------------------------------------------------------------------        
         const handleScan = () => {
             consoleLog('DictionaryScan.vue/handleScan', 2, 'User scan a website: ' + myURL.value, trace.value)
+            DisplayError("Close the external window to stop the scan", 'Info', null)
 
             // code, label, comment, language, active, projectID, dictionaryID
-            const { error, scanForTheDictionary } = scanDictionary(projectID.value, dictionaryID.value, myURL.value, myDelay.value)
+            const { error, scanForTheDictionary } = scanDictionary(projectID.value, dictionaryID.value, myURL.value, myDelay.value, device.value)
             scanForTheDictionary(dictionary, trace.value)
                 .then(function () {
                     consoleLog('DictionaryScan.vue/handleScan', 2, '------ Scan the dictionary - projectID: ' + projectID.value + ', dictionaryID: ' + dictionaryID.value + ', myURL: ' + myURL.value, trace.value)
@@ -587,8 +613,8 @@ export default {
         return {
             errorMessage, styleMessage, dictionary, projectName, projectID, subprojectName, subprojectID, userID, selSource, source, excludeTag, selTagType, tagType,
             myURL, tagName, selTagName, id, selId, name, selName, className, selClassName, innerText, selInnerText, placeholder, selPlaceholder, xPath, selXpath, scanning,
-            code, codeHeader, label, language, comment, actives, selectedActive, createdBy, updatedBy, myDelay,
-            handleCancel, handleSubmit, handleFocus, handleBlur, handleScan
+            code, codeHeader, label, language, comment, actives, selectedActive, devices, selectedDevice, createdBy, updatedBy, myDelay,
+            handleCancel, handleSubmit, handleFocus, handleBlur, handleScan, handleDeviceChange
         }
 
     }

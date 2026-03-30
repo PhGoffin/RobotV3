@@ -4,7 +4,7 @@
  * @Email: artcomputer123@gmail.com
  * @Date: 2026-01-28
  * @Last Modified by: Someone
- * @Last Modified time: 2026-03-05 07:13:01
+ * @Last Modified time: 2026-03-30 09:01:55
  * @Description: Scan a web page
  */
 
@@ -12,7 +12,7 @@ import { ref } from 'vue'
 import { consoleLog}  from '../../util/debug';
 
 
-const scanDictionary = (projectID, dictionaryheaderID, myurl, mydelay) => {
+const scanDictionary = (projectID, dictionaryheaderID, myurl, mydelay, myDevice) => {
 
     const error = ref(null)
 
@@ -26,7 +26,7 @@ const scanDictionary = (projectID, dictionaryheaderID, myurl, mydelay) => {
                 let data = await fetch(url + 'dictionary/scan', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 'projectID': projectID, 'dictionaryheaderID': dictionaryheaderID, 'myUrl': myurl, 'myDelay': mydelay })
+                    body: JSON.stringify({ 'projectID': projectID, 'dictionaryheaderID': dictionaryheaderID, 'myUrl': myurl, 'myDelay': mydelay, 'myDevice': myDevice })
                 })
                 if (!data.ok) {
                     throw Error('Error during the scan for the dictionary')

@@ -4397,15 +4397,18 @@ async function JSinput(page, data, variables, tag, value) {
  * @param {object} page:        playwright page
  * @param {object} data:        all the parameters
  * @param {string} slotID:      slot number = 0: Error, 1 --> 5 User print screen 
+ * @param {boolean} fullPage:   1 = true or 0 = false
  *  
  */
-async function printScreen(page, data, slotID) {
-    let fs = require("fs")
+async function printScreen(page, data, slotID, fullPage) {
 
     try {
         let picture = './printscreen/' + data.userID + '_image' + slotID + '.png'
         //console.log('printScreen', picture)
-        await page.screenshot({ path: picture })
+        if (fullPage == undefined || fullPage == 0) fullPage = false
+        else fullPage = true
+        //console.log ('full page:', fullPage)
+        await page.screenshot({ path: picture, fullPage: fullPage })
         return { success: 1, message: 'Printscreen OK', slot: slotID, stop: 0 }
     } catch (err) {
         return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
@@ -4818,47 +4821,109 @@ async function stopTimer(data, page, variables, space, topic) {
 * @param {string} url           The URL of the REST API endpoint.
 * @param {string} parameters    A string containing the parameters to be sent in the request body.
 *                               The string should contain a valid JSON object as it will be parsed.
+* @param {string} key:          (only for certificate) private key.* 
+*
 * @returns {Promise<any>}       A Promise that resolves with the response data (parsed as JSON) if successful,
 *                               or rejects with an error if the request fails.
 * @throws {Error}               If the parameters string is not a valid JSON object.
 * 
 */
-async function postData(data, variables, url, parameters, token) {
+async function postData(data, variables, url, parameters, token, key) {
+
+    const { getProjectById } = require("../../project/project.service.js");
+    const { fileExist } = require("./file.library");
+    const path = require('path');
+    const fs = require('fs');
+    const https = require('https');
+    const axios = require("axios");
 
     console.log('postData', url)
     console.log('postData', parameters)
     console.log('token', token)
 
     try {
-        // Attempt to parse the parameters string into a JSON object.
-        let parsedParameters;
-        try {
-            parsedParameters = JSON.parse(parameters);
-        } catch (parseError) {
-            throw new Error("Invalid parameters format.  Must be a valid JSON string."); // Throw error if parsing fails
+
+        // Get the file extension
+        const fileExtension = token.split('.').pop().toLowerCase();
+
+        if (fileExtension == 'p12') {
+            // Use .p12 certificate (it must be uploaded on the server)
+            // ---------------------------------------------------------
+            console.log('Working with a certificate .p12')
+
+            //Resolve Project Path
+            const projectResult = await getProjectById(data.projectID);
+            if (!projectResult.length) throw new Error(`postData: Cannot find project: ${data.projectID}`);
+
+            const projectName = projectResult[0].project;
+            const pathName = `../../../uploads/${data.projectID}_${projectName}/`;
+            const certificatePath = path.join(__dirname, pathName + token);
+
+            if (!(await fileExist(certificatePath))) {
+                throw new Error(`postData: Certificate file not found: ${certificatePath}`);
+            }
+
+
+            const agent = new https.Agent({
+                pfx: fs.readFileSync(certificatePath),
+                passphrase: key,
+                rejectUnauthorized: false,
+                // Server only supports TLS 1.2
+                minVersion: "TLSv1.2",
+                maxVersion: "TLSv1.2",
+                // ECDSA cipher used by the server
+                ciphers: "ECDHE-ECDSA-AES256-GCM-SHA384",
+                honorCipherOrder: true,
+            });
+
+            const response = await axios.post(url,
+                JSON.stringify(parsedParameters), // Body of the POST
+                {
+                    httpsAgent: agent,
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                }
+            );
+
+            console.log("STATUS:", response.status);
+            console.log("BODY:", response.data);
+            return response.data;
+
+        } else {
+            // No certificate used
+            // -------------------            
+            // Attempt to parse the parameters string into a JSON object.
+            let parsedParameters;
+            try {
+                parsedParameters = JSON.parse(parameters);
+            } catch (parseError) {
+                throw new Error("Invalid parameters format.  Must be a valid JSON string."); // Throw error if parsing fails
+            }
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json', // Specify that we're sending JSON
+                    ...(token && { 'Authorization': `Bearer ${token}` })
+                },
+                body: JSON.stringify(parsedParameters) // Convert the parameters to a JSON string
+            });
+
+            if (!response.ok) {
+                // Handle HTTP errors (e.g., 404, 500)
+                throw new Error(`HTTP httpPost error! Status: ${response.status}`);
+            }
+
+            console.log('status', response.status)
+            await logfile(data.userID, 'Info', 'status: ' + response.status)
+            variables.setVariable('$HttpStatus', response.status)
+
+
+            const httpData = await response.json(); // Parse the response body as JSON
+            return httpData;
         }
 
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json', // Specify that we're sending JSON
-                ...(token && { 'Authorization': `Bearer ${token}` })
-            },
-            body: JSON.stringify(parsedParameters) // Convert the parameters to a JSON string
-        });
-
-        if (!response.ok) {
-            // Handle HTTP errors (e.g., 404, 500)
-            throw new Error(`HTTP httpPost error! Status: ${response.status}`);
-        }
-
-        console.log('status', response.status)
-        await logfile(data.userID, 'Info', 'status: ' + response.status)
-        variables.setVariable('$HttpStatus', response.status)
-
-
-        const httpData = await response.json(); // Parse the response body as JSON
-        return httpData;
 
     } catch (error) {
         // Handle any errors that occurred during the fetch or parsing process
@@ -4878,12 +4943,15 @@ async function postData(data, variables, url, parameters, token) {
 * @param {object} variables:    array of all the variables
 * @param {string} apiUrl        The URL of the REST API endpoint.
 * @param {string} paramsString  A string containing the parameters to be sent in the request body.
-*                               The string should contain a valid JSON object as it will be parsed.
+*                               The string should contain a valid JSON object as it will be parsed or the name of a dataset header.
+* @param {string} key:          (only for certificate) private key.
+*
 * @returns {object} httpResult  A global variable to store the http result
 *
 */
-async function httpPost(data, variables, apiUrl, paramsString, token) {
+async function httpPost(data, variables, apiUrl, paramsString, token, key) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    const { getDatasetByCode } = require("../../dataset/dataset.service.js");
 
     // Reset httpResult
     httpResult = null
@@ -4913,6 +4981,38 @@ async function httpPost(data, variables, apiUrl, paramsString, token) {
     console.log('Token: ' + token)
 
 
+    if (key != undefined && key != 'N/A' && key != '<N/A>') {
+        key = variables.evaluateVariable(key, true)
+
+        if (key[0] == '#') {
+            // Get the private key of the certificate ---        
+            const dataAPI = { subprojectID: data.subprojectID, code: key, language: '*', active: 1 }
+            const result = await getDatasetByCode(dataAPI);
+            if (result.length) {
+                key = result[0].label
+            } else {
+                variables.displayLog(1, 1, 'Data not found in the dataset for: ' + key + "!")
+                return { success: 0, message: "Cannot find the code: " + key + " in the dataset!", stop: 1 }
+            }
+        }
+    } else key = null
+
+
+
+    // Search the text in the dataset 
+    if (paramsString[0] == '#') {
+        paramsString = variables.evaluateVariable(paramsString, true)
+        dataAPI = { subprojectID: data.subprojectID, code: paramsString, language: '*', active: 1 }
+        const result = await getDatasetByCode(dataAPI);
+        if (result.length) {
+            paramsString = result[0].label
+        } else {
+            variables.displayLog(1, 1, 'Data not found in the dataset! - ' + paramsString)
+            return { success: 0, message: "Cannot find the code: " + paramsString + " in the dataset!", stop: 1 }
+        }
+    }
+
+
     paramsString = variables.evaluateVariable(paramsString)
     // remove the first and the last character if it's a quote
     if (paramsString[0] == "'") {
@@ -4921,12 +5021,14 @@ async function httpPost(data, variables, apiUrl, paramsString, token) {
     if (paramsString.substring(paramsString.length, paramsString.length - 1) == "'") {
         paramsString = paramsString.substring(0, paramsString.length - 1)
     }
-
+    paramsString = paramsString.replace(/'/g, '"')
+    paramsString = paramsString.replace(/<br>/g, '')
+    console.log('paramsString', paramsString)
 
 
 
     try {
-        httpResult = await postData(data, variables, apiUrl, paramsString, token);
+        httpResult = await postData(data, variables, apiUrl, paramsString, token, key);
         console.log("Success:", httpResult);
         // --- STEP 4: STORE OR UPDATE the txResult ---
         let ret = await Store_HttpData(data, "httpost", httpResult)
@@ -5087,31 +5189,148 @@ async function httpPut(data, variables, apiUrl, paramsString, token) {
  * @param {object} data:         all the parameters
  * @param {object} variables:    array of all the variables
  * @param {string} url:          The URL of the REST API endpoint.
+ * @param {string} token:        The token to use for the security.
+ * @param {string} key:          (only for certificate) private key.* 
+ * 
  * @returns {Promise<any>} A promise that resolves with the fetched data (parsed as JSON) or rejects with an error.
  *
  */
-async function fetchData(data, variables, url, token) {
+async function fetchData(data, variables, url, token, key) {
+    const { getProjectById } = require("../../project/project.service.js");
+    const { fileExist } = require("./file.library");
+    const path = require('path');
+    const fs = require('fs');
+    const https = require('https');
+    const axios = require("axios");
+
+
     try {
-        //const response = await fetch(url);
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json', // Specify that we're sending JSON
-                ...(token && { 'Authorization': `Bearer ${token}` })
+
+        // Get the file extension
+        const fileExtension = token.split('.').pop().toLowerCase();
+
+
+        if (fileExtension == 'pem') {
+            console.log('Working with a certificate .pem')
+            // Use .pem certificate (it must be uploaded on the server)
+            // ---------------------------------------------------------
+            //Resolve Project Path
+            const projectResult = await getProjectById(data.projectID);
+            if (!projectResult.length) throw new Error(`SAML: Cannot find project: ${data.projectID}`);
+
+            const projectName = projectResult[0].project;
+            const pathName = `../../../uploads/${data.projectID}_${projectName}/`;
+            const certificatePath = path.join(__dirname, pathName + token);
+
+            if (!(await fileExist(certificatePath))) {
+                throw new Error(`fetchData: Certificate file not found: ${certificatePath}`);
             }
-        });
 
-        console.log('status', response.status)
-        await logfile(data.userID, 'Info', 'status: ' + response.status)
-        variables.setVariable('$HttpStatus', response.status)
+            const certificateKeyPath = certificatePath.replace('-cert', '-key');
+            if (!(await fileExist(certificateKeyPath))) {
+                throw new Error(`fetchData: Key file not found: ${certificateKeyPath}`);
+            }
 
-        // Check if the response was successful (status code in the 200-299 range)
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
+
+            const tls = require("tls");
+
+            const agent = new https.Agent({
+                cert: fs.readFileSync(certificatePath),
+                key: fs.readFileSync(certificateKeyPath),
+                rejectUnauthorized: false,
+                // Force exact TLS version the server supports
+                minVersion: "TLSv1.2",
+                maxVersion: "TLSv1.2",
+                // Force ECDSA signature algorithms (server requires this)
+                sigalgs: "ecdsa_secp256r1_sha256",
+                // Force cipher suite used by the server
+                ciphers: "ECDHE-ECDSA-AES256-GCM-SHA384",
+                // Required for compatibility with older servers
+                honorCipherOrder: true
+            })
+
+            const response = await axios.get(url,
+                { httpsAgent: agent }
+            );
+
+            console.log("STATUS:", response.status);
+            console.log("BODY:", response.data);
+
+            await logfile(data.userID, 'Info', 'status: ' + response.status)
+            variables.setVariable('$HttpStatus', response.status)
+
+            // Check if the response was successful (status code in the 200-299 range)
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            return response.data;
+
+        } else if (fileExtension == 'p12') {
+            // Use .p12 certificate (it must be uploaded on the server)
+            // ---------------------------------------------------------
+            console.log('Working with a certificate .p12')
+
+            //Resolve Project Path
+            const projectResult = await getProjectById(data.projectID);
+            if (!projectResult.length) throw new Error(`fetchData: Cannot find project: ${data.projectID}`);
+
+            const projectName = projectResult[0].project;
+            const pathName = `../../../uploads/${data.projectID}_${projectName}/`;
+            const certificatePath = path.join(__dirname, pathName + token);
+
+            if (!(await fileExist(certificatePath))) {
+                throw new Error(`fetchData: Certificate file not found: ${certificatePath}`);
+            }
+
+
+            const agent = new https.Agent({
+                pfx: fs.readFileSync(certificatePath),
+                passphrase: key,
+                rejectUnauthorized: false,
+
+                // Server only supports TLS 1.2
+                minVersion: "TLSv1.2",
+                maxVersion: "TLSv1.2",
+
+                // ECDSA cipher used by the server
+                ciphers: "ECDHE-ECDSA-AES256-GCM-SHA384",
+                honorCipherOrder: true,
+            });
+
+            const response = await axios.get(url,
+                { httpsAgent: agent }
+            );
+
+            console.log("STATUS:", response.status);
+            console.log("BODY:", response.data);
+            return response.data;
+
+
+        } else {
+            // No certificate used
+            // -------------------
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json', // Specify that we're sending JSON
+                    ...(token && { 'Authorization': `Bearer ${token}` })
+                }
+            });
+
+            console.log('status', response.status)
+            await logfile(data.userID, 'Info', 'status: ' + response.status)
+            variables.setVariable('$HttpStatus', response.status)
+
+            // Check if the response was successful (status code in the 200-299 range)
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const responseData = await response.json(); // Parse the response body as JSON
+            return responseData;
+
         }
-
-        const responseData = await response.json(); // Parse the response body as JSON
-        return responseData;
 
     } catch (error) {
         // Handle any errors that occurred during the fetch operation or JSON parsing
@@ -5129,10 +5348,13 @@ async function fetchData(data, variables, url, token) {
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
 * @param {string} url           The URL of the REST API endpoint.
+* @param {string} token:        The token to use for the security.
+* @param {string} key:          (only for certificate) private key.
 * 
 */
-async function httpGet(data, variables, url, token) {
+async function httpGet(data, variables, url, token, key) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    const { getDatasetByCode } = require("../../dataset/dataset.service.js");
 
     // Reset httpResult
     httpResult = null
@@ -5150,13 +5372,48 @@ async function httpGet(data, variables, url, token) {
 
     url = variables.evaluateVariable(url, true)
 
-    if (token != undefined && token != 'N/A') {
+
+    if (token != undefined && token != 'N/A' && token != '<N/A>') {
         token = variables.evaluateVariable(token, true)
+
+        if (token[0] == '#') {
+            // Get the public key of the certificate ---        
+            const dataAPI = { subprojectID: data.subprojectID, code: token, language: '*', active: 1 }
+            const result = await getDatasetByCode(dataAPI);
+            if (result.length) {
+                token = result[0].label
+            } else {
+                variables.displayLog(1, 1, 'Data not found in the dataset for: ' + token + "!")
+                return { success: 0, message: "Cannot find the code: " + token + " in the dataset!", stop: 1 }
+            }
+        }
     } else token = null
 
+
+    if (key != undefined && key != 'N/A' && key != '<N/A>') {
+        key = variables.evaluateVariable(key, true)
+
+        if (key[0] == '#') {
+            // Get the private key of the certificate ---        
+            const dataAPI = { subprojectID: data.subprojectID, code: key, language: '*', active: 1 }
+            const result = await getDatasetByCode(dataAPI);
+            if (result.length) {
+                key = result[0].label
+            } else {
+                variables.displayLog(1, 1, 'Data not found in the dataset for: ' + key + "!")
+                return { success: 0, message: "Cannot find the code: " + key + " in the dataset!", stop: 1 }
+            }
+        }
+    } else key = null
+
+
+
     console.log('httpGet', url)
+    console.log('token', token)
+    console.log('key', key)
+
     try {
-        httpResult = await fetchData(data, variables, url, token);
+        httpResult = await fetchData(data, variables, url, token, key);
 
         // --- STEP 4: STORE OR UPDATE the txResult ---
         let ret = await Store_HttpData(data, "httpGet", httpResult)
@@ -5168,8 +5425,9 @@ async function httpGet(data, variables, url, token) {
 
 
     } catch (error) {
-        console.error("Error:", error);
-        return { success: 0, message: "Error in httpGet", stop: 1 }
+        console.error("Error Status:", error.status);
+        if (error.status == "404") return { success: 0, message: "Error in httpGet: url not found! - 404 - " + url, stop: 1 }
+        else return { success: 0, message: "Error in httpGet", stop: 1 }
     }
 }
 
@@ -5250,7 +5508,7 @@ async function httpDelete(data, variables, url, token) {
         token = token.replace(/'/g, "");
     } else token = null
 
-    console.log('httpGet', url)
+    console.log('httpDelete', url)
     try {
         httpResult = await deleteData(data, variables, url, token);
 
@@ -5270,42 +5528,42 @@ async function httpDelete(data, variables, url, token) {
 
 
 
-/**
-* ---------------------------------------------------------------------------- 
-* @function
-*  httpData:  Get data from a http request (get or post)
-* 
-* @param {object} data:         all the parameters
-* @param {object} variables:    array of all the variables
-* @param {string} expression    Expression to access the structure of the data stored in httpResult 
-* @param {string} variable      Name of the variable to store the result of the expression
-*
-*/
-async function httpData(data, variables, expression, variable) {
+// /**
+// * ---------------------------------------------------------------------------- 
+// * @function
+// *  httpData:  Get data from a http request (get or post)
+// * 
+// * @param {object} data:         all the parameters
+// * @param {object} variables:    array of all the variables
+// * @param {string} expression    Expression to access the structure of the data stored in httpResult 
+// * @param {string} variable      Name of the variable to store the result of the expression
+// *
+// */
+// async function httpData(data, variables, expression, variable) {
 
-    console.log('Expression', expression)
-    expression = variables.evaluateVariable(expression)
+//     console.log('Expression', expression)
+//     expression = variables.evaluateVariable(expression)
 
-    // replace $$name by the value of the variable $name
-    variable = await nameVariable(variables, variable)
+//     // replace $$name by the value of the variable $name
+//     variable = await nameVariable(variables, variable)
 
-    try {
-        // retrieve the record of the user id
-        const record = httpResultUser.findLast(item => item.id === data.userID)
-        //console.log(record)
-        expression = 'record.result' + expression
-        // process the expression
-        //console.log('Expression', expression)
-        let result = await eval(expression)
-        console.log("result", result)
-        variables.setVariable(variable, result)
-        return { success: 1, message: "httpData: OK", value: result, stop: 0 }
+//     try {
+//         // retrieve the record of the user id
+//         const record = httpResultUser.findLast(item => item.id === data.userID)
+//         //console.log(record)
+//         expression = 'record.result' + expression
+//         // process the expression
+//         //console.log('Expression', expression)
+//         let result = await eval(expression)
+//         console.log("result", result)
+//         variables.setVariable(variable, result)
+//         return { success: 1, message: "httpData: OK", value: result, stop: 0 }
 
-    } catch (error) {
-        console.error("Error:", error);
-        return { success: 0, message: "Error in httpData", stop: 1 }
-    }
-}
+//     } catch (error) {
+//         console.error("Error:", error);
+//         return { success: 0, message: "Error in httpData", stop: 1 }
+//     }
+// }
 
 
 /**
@@ -5383,14 +5641,14 @@ async function PublicKey(certificatePath, password) {
         // Another method
         // --------------
         const { execSync } = require('child_process');        
-
+ 
         try {
             // Commande pour extraire le certificat en PEM sans la clé privée
             const cmd = `openssl pkcs12 -in "${certificatePath}" -nokeys -nodes -passin pass:${password}`;
             const output = execSync(cmd).toString();
-
+ 
             console.log('PublicKey: ', output)
-
+ 
             return output
                 .replace(/-----BEGIN CERTIFICATE-----/g, '')
                 .replace(/-----END CERTIFICATE-----/g, '')
@@ -5428,18 +5686,22 @@ async function buildAssertionPayload(dataset, certificateKey, requestID) {
         let finalValue = item.label;
 
         // 2. Handle Placeholders
-        if (finalValue.toLowerCase() === '<publickey>') {
+        if (finalValue.toLowerCase() === '<getpublickey>') {
             // ---------------------------------------------------------------------------------------------
-            // The public key is not workinbg with the RRN certificate, it must be hardcoded in the dataset
+            // The public key is not working with the RRN certificate, it must be hardcoded in the dataset
             // ---------------------------------------------------------------------------------------------
             // Decode the public key of the certificate
-            certificateKey = await PublicKey(certificatePath, certificateData.key)
+            certificateKey = await PublicKey(certificatePath, certificateData.privatekey)
 
             if (certificateKey == '<ERROR>') {
                 return ("Public Key Error")
             }
 
             finalValue = certificateKey;
+        }
+        else if (finalValue.toLowerCase() === '<publickey>') {
+            // Use the public key passed in parameter
+            finalValue = certificateKey
         }
         else if (finalValue.toLowerCase() === '<requestid>') {
             // Generate a fresh UUID
@@ -5479,9 +5741,9 @@ async function getSAMLContext(data, certificateDataName) {
     // Assuming buildAssertionPayload is available in scope
     const certificateData = await buildAssertionPayload(result1, '<N/A>', '<N/A>');
 
-    if (!certificateData.Url || certificateData.Url === '<N/A>' ||
-        !certificateData.Name || certificateData.Name === '<N/A>' ||
-        !certificateData.Key || certificateData.Key === '<N/A>') {
+    if (!certificateData.url || certificateData.url === '<N/A>' ||
+        !certificateData.name || certificateData.name === '<N/A>' ||
+        !certificateData.privatekey || certificateData.privatekey === '<N/A>') {
         throw new Error("SAML Assertion: Certificate data not ok!");
     }
 
@@ -5491,22 +5753,22 @@ async function getSAMLContext(data, certificateDataName) {
 
     const projectName = projectResult[0].project;
     const pathName = `../../../uploads/${data.projectID}_${projectName}/`;
-    const certificatePath = path.join(__dirname, pathName + certificateData.Name);
+    const certificatePath = path.join(__dirname, pathName + certificateData.name);
 
     if (!(await fileExist(certificatePath))) {
         throw new Error(`SAML: Certificate file not found: ${certificatePath}`);
     }
 
     // 3. Configure Client Certificate
-    const isPfx = /\.(p12|pfx)$/i.test(certificateData.Name);
-    const isCrt = /\.crt$/i.test(certificateData.Name);
+    const isPfx = /\.(p12|pfx)$/i.test(certificateData.name);
+    const isCrt = /\.crt$/i.test(certificateData.name);
     let clientCert;
 
     if (isPfx) {
         clientCert = {
-            origin: certificateData.Url,
+            origin: certificateData.url,
             pfxPath: certificatePath,
-            passphrase: certificateData.Key
+            passphrase: certificateData.privatekey
         };
     } else if (isCrt) {
         const certificateKeyPath = certificatePath.replace('.crt', '.key');
@@ -5514,10 +5776,10 @@ async function getSAMLContext(data, certificateDataName) {
             throw new Error(`SAML: Key file not found: ${certificateKeyPath}`);
         }
         clientCert = {
-            origin: certificateData.Url,
+            origin: certificateData.url,
             certPath: certificatePath,
             keyPath: certificateKeyPath,
-            ...(certificateData.Key !== '<N/A>' && { passphrase: certificateData.Key })
+            ...(certificateData.privatekey !== '<N/A>' && { passphrase: certificateData.privatekey })
         };
     } else {
         throw new Error("SAML: Invalid certificate extension. Use .p12, .pfx or .crt");
@@ -5525,7 +5787,7 @@ async function getSAMLContext(data, certificateDataName) {
 
     // 4. Create the Playwright Context
     const apiContext = await request.newContext({
-        baseURL: certificateData.Url,
+        baseURL: certificateData.url,
         extraHTTPHeaders: {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
@@ -5553,6 +5815,7 @@ async function getSAMLContext(data, certificateDataName) {
 async function SAML_Assertion(page, data, variables, certificateDataName, assertionUrl, assertionDataName) {
     const { getCertificateByCode, createCertificate, updateCertificate } = require("../../certificate/certificate.service.js");
     const { getDatasetByHeaderCode } = require("../../dataset/dataset.service.js");
+    const { getDatasetByCode } = require("../../dataset/dataset.service.js");
 
     let apiContext;
     let certificateKey = '<N/A>';
@@ -5567,12 +5830,23 @@ async function SAML_Assertion(page, data, variables, certificateDataName, assert
     console.log('assertionDataName', assertionDataName)
 
     try {
-        // --- STEP 1: SETUP CONTEXT ---
+
+        // --- STEP 1: Get the public key of the certificate ---        
+        const dataAPI = { subprojectID: data.subprojectID, code: certificateDataName + "_publickey", language: '*', active: 1 }
+        const result = await getDatasetByCode(dataAPI);
+        if (result.length) {
+            certificateKey = result[0].label
+        } else {
+            variables.displayLog(1, 1, 'Data not found in the dataset for: ' + certificateDataName + "_publickey" + "!")
+            return { success: 0, message: "Cannot find the code: " + certificateDataName + "_publickey" + " in the dataset!", stop: 1 }
+        }
+
+        // --- STEP 2: SETUP CONTEXT ---
         const contextData = await getSAMLContext(data, certificateDataName);
         apiContext = contextData.apiContext;
         // Note: we can access contextData.certificateData if needed
 
-        // --- STEP 2: GET ASSERTION DATASET ---
+        // --- STEP 3: GET ASSERTION DATASET ---
         console.log("SAML: Get Assertion Dataset");
         let dynamicData;
         const dataAPI2 = { subprojectID: data.subprojectID, datasetheaderCode: assertionDataName };
@@ -5586,7 +5860,7 @@ async function SAML_Assertion(page, data, variables, certificateDataName, assert
             return { success: 0, message: `SAML: Cannot find the dataset: ${assertionDataName}!`, stop: 1 };
         }
 
-        // --- STEP 3: REQUEST ASSERTION ---
+        // --- STEP 4: REQUEST ASSERTION ---
         console.log("SAML: Requesting Assertion...");
         const assertionResponse = await apiContext.post(assertionUrl, {
             data: dynamicData
@@ -5601,7 +5875,7 @@ async function SAML_Assertion(page, data, variables, certificateDataName, assert
         const samlToken = assertionResult.assertion;
         console.log("Assertion Received.");
 
-        // --- STEP 4: STORE OR UPDATE TOKEN ---
+        // --- STEP 5: STORE OR UPDATE TOKEN ---
         const dataAPI3 = { subprojectID: data.subprojectID, code: assertionDataName };
         const result3 = await getCertificateByCode(dataAPI3);
 
@@ -5635,11 +5909,16 @@ async function SAML_Assertion(page, data, variables, certificateDataName, assert
         return { success: 1, message: "SAML Assertion: OK!", stop: 0 };
 
     } catch (error) {
+
         console.error("Error during SAML Assertion execution:", error.message);
         if (error.message.includes("<title>401 Unauthorized</title>")) {
             return { success: 0, message: "SAML Error:  This server could not verify that you are authorized to access the document requested! ", stop: 1 };
 
-        } else {
+        } else if (error.message.includes("getaddrinfo ENOTFOUND")) {
+            console.error("SAML Error: Network issue - Are you connected to a VPN?", error.message);
+            return { success: 0, message: "SAML Error: Network issue - Are you connected to a VPN?", stop: 1 };
+        }
+        else {
             return { success: 0, message: "SAML: Error during API execution! " + error.message, stop: 1 };
         }
     } finally {
@@ -5677,18 +5956,17 @@ async function SAML_Transaction(page, data, variables, certificateDataName, asse
     console.log('certificateDataName', certificateDataName)
     console.log('assertionDataName', assertionDataName)
     console.log('transactionUrl', transactionUrl)
-    console.log('transactionDataName', "*" + transactionDataName + "*")
+    console.log('transactionDataName', transactionDataName)
 
     let apiContext;
 
     try {
-        // Use the new helper
-        console.log('getSAMLContext')
+        //console.log('getSAMLContext')
         const contextData = await getSAMLContext(data, certificateDataName);
         apiContext = contextData.apiContext;
 
         // Get the samlToken
-        console.log('getCertificateByCode')
+        //console.log('getCertificateByCode')
         const tokenResult = await getCertificateByCode({ subprojectID: data.subprojectID, code: assertionDataName });
         if (!tokenResult.length) {
             console.log("SAML: Token not found: " + assertionDataName)
@@ -5696,17 +5974,19 @@ async function SAML_Transaction(page, data, variables, certificateDataName, asse
         }
 
         const token = tokenResult[0].token;
+        //console.log ('token', token)
 
         // Get the transaction dataset
-        console.log('getDatasetByHeaderCode')
+        //console.log('getDatasetByHeaderCode')
         const result2 = await getDatasetByHeaderCode({ subprojectID: data.subprojectID, datasetheaderCode: transactionDataName });
         if (!result2.length) {
             console.log("SAML: Dataset not found: *" + transactionDataName + "*")
             return { success: 0, message: `SAML: Dataset not found: ${transactionDataName}`, stop: 1 };
         }
 
-        console.log('buildAssertionPayload')
+        //console.log('buildAssertionPayload')
         const dynamicData = await buildAssertionPayload(result2, '<N/A>', null);
+        console.log('dynamicData', dynamicData)
 
         // Execute Transaction
         console.log("Executing Transaction...");
@@ -5716,8 +5996,18 @@ async function SAML_Transaction(page, data, variables, certificateDataName, asse
         });
 
         const txResult = await txResponse.json();
-        console.log("Transaction Result:", txResult.transactionResponse);
-        let ret = await Store_HttpData(data, assertionDataName, txResult.transactionResponse)
+        console.log("Transaction Result:", txResult);
+        console.log("Transaction Response:", txResult.transactionResponse);
+
+        if (txResult.transactionResponse == undefined) {
+            if (txResult.reason != undefined) {
+                return { success: 0, message: "SAML: Error -  No result! - " + txResult.reason + " : " + txResult.message, stop: 1 };
+            } else {
+                return { success: 0, message: "SAML: Error -  No result!", stop: 1 };
+            }
+        }
+
+        let ret = await Store_HttpData(data, transactionDataName, txResult.transactionResponse)
 
         // --- STEP 4: STORE OR UPDATE the txResult ---
         if (ret.success == 1) {
@@ -5727,12 +6017,150 @@ async function SAML_Transaction(page, data, variables, certificateDataName, asse
         }
 
     } catch (error) {
-        console.error("SAML Error:", error.message);
-        return { success: 0, message: error.message, stop: 1 };
+        if (error.message.includes("getaddrinfo ENOTFOUND")) {
+            console.error("SAML Error: Network issue - Are you connected to a VPN?", error.message);
+            return { success: 0, message: "SAML Error: Network issue - Are you connected to a VPN?", stop: 1 };
+        } else {
+            console.error("SAML Error:", error.message);
+            return { success: 0, message: error.message, stop: 1 };
+        }
     } finally {
         if (apiContext) await apiContext.dispose();
     }
 }
+
+
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  SOAP_postData:  Fetches data from a SOAP using the POST method. 
+* 
+* @param {object} data:                 all the parameters
+* @param {object} variables:            array of all the variables
+* @param {string} certificateDataName:  name of the dataset for the certificate 
+* @param {string} assertionDataName:    name of the dataset for the assertion (to get the token created by SAML assertion)
+* @param {string} url                   The URL of the SOAP endpoint.
+* @param {string} soapDataset           Dataset with the definition of the SOAP.
+* @param {string} endpointDataset       name of the dataset for the endpoint
+* 
+*/
+async function SOAP_postData(data, variables, certificateDataName, assertionDataName, url, soapDataset, endpointDataset) {
+    const { getDatasetByHeaderCode } = require("../../dataset/dataset.service.js");
+    const { getCertificateByCode } = require("../../certificate/certificate.service.js");
+
+    let certificateKey = '<N/A>';
+
+    certificateDataName = variables.evaluateVariable(certificateDataName, true)
+    assertionDataName = variables.evaluateVariable(assertionDataName, true)
+    url = variables.evaluateVariable(url, true)
+    soapDataset = variables.evaluateVariable(soapDataset, true)
+    endpointDataset = variables.evaluateVariable(endpointDataset, true)
+
+    console.log('certificateDataName', certificateDataName)
+    console.log('assertionDataName', assertionDataName)
+    console.log('Url', url)
+    console.log('soapDataset', soapDataset)
+    console.log('endpointDataset', endpointDataset)
+
+
+    try {
+
+        // Get the Soap dataset (generic information concerning the Soap environment)
+        console.log('get Soap info')
+        const resultSoap = await getDatasetByHeaderCode({ subprojectID: data.subprojectID, datasetheaderCode: soapDataset });
+        if (!resultSoap.length) {
+            console.log("SOAP: Dataset not found: *" + soapDataset + "*")
+            return { success: 0, message: `SOAP: Dataset not found: ${soapDataset}`, stop: 1 };
+        }
+        const soapData = await buildAssertionPayload(resultSoap, '<N/A>', null);
+
+
+        // Get the endpointDataset dataset (replace variables by values)
+        console.log('get Endpoint info')
+        const resultEndpoint = await getDatasetByHeaderCode({ subprojectID: data.subprojectID, datasetheaderCode: endpointDataset });
+        if (!resultEndpoint.length) {
+            console.log("SOAP: Dataset not found: *" + endpointDataset + "*")
+            return { success: 0, message: `SOAP: Dataset not found: ${endpointDataset}`, stop: 1 };
+        }
+        const endpointData = await buildAssertionPayload(resultEndpoint, '<N/A>', null);
+        endpointData.header = variables.evaluateVariable(endpointData.header, true)
+        endpointData.body = variables.evaluateVariable(endpointData.body, true)
+        endpointData.header = endpointData.header.replace(/<br>/g, "\n")
+        endpointData.body = endpointData.body.replace(/<br>/g, "\n")
+        //console.log('SOAP dataset', endpointData)
+
+
+        // Get the samlToken
+        console.log('getCertificateByCode Token')
+        const tokenResult = await getCertificateByCode({ subprojectID: data.subprojectID, code: assertionDataName });
+        if (!tokenResult.length) {
+            console.log("SOAP: Token not found: " + assertionDataName)
+            return { success: 0, message: `SOAP: Token not found for ${assertionDataName}`, stop: 1 };
+        }
+        const token = tokenResult[0].token;
+
+
+        const soapEnvelope = `
+            <soapenv:Envelope xmlns:soapenv="${soapData.soapenv}"
+                            xmlns:head="${soapData.head}"
+                            xmlns:core="${soapData.core}">
+            <soapenv:Header>
+                <head:dabsHeader>
+                    ${endpointData.header}
+                    <samlToken>${token}</samlToken>
+                </head:dabsHeader>
+            </soapenv:Header>
+            <soapenv:Body>
+                    ${endpointData.body}
+            </soapenv:Body>
+            </soapenv:Envelope>`;
+
+        console.log('soapEnvelope', soapEnvelope)
+
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                "Content-Type": "text/xml;charset=UTF-8",
+                "SOAPAction": endpointData.action
+            },
+            body: soapEnvelope
+        });
+
+
+        if (!response.ok) {
+            // Handle HTTP errors (e.g., 404, 500)
+            return { success: 0, message: "SOAP_postData: error! Status: " + response.status, stop: 1 };
+        }
+
+        console.log('status', response.status)
+        await logfile(data.userID, 'Info', 'status: ' + response.status)
+        variables.setVariable('$HttpStatus', response.status)
+
+        // Store the result in httpdata table
+        console.log('Store the result in httpdata')
+        const httpData = await response.text(); // Parse the response body as text
+
+        let ret = await Store_HttpData(data, 'SoapPost', httpData)
+
+        return { success: 1, message: "SOAP_postData: OK!", stop: 0 };
+
+
+    } catch (error) {
+        // Handle any errors that occurred during the fetch or parsing process
+        console.error("Error during SOAP POST request:", error);
+        if (error instanceof TypeError) {
+            console.error("This indicates a network issue (DNS, CORS, refused connection, timeout, offline...).");
+            return { success: 0, message: "SOAP_postData: error: a network issue occurs (DNS, CORS, refused connection, timeout, offline...).", stop: 1 };
+        }
+
+        return { success: 0, message: "SOAP_postData: error: " + error.message, stop: 1 };
+    }
+}
+
+
 
 
 /**
@@ -5802,7 +6230,7 @@ function findValueByKey(obj, targetKey, position, tracker = { count: 0 }) {
         // If the current object has the key
         if (Object.prototype.hasOwnProperty.call(obj, targetKey)) {
             const value = obj[targetKey];
-            console.log('Object targetKey: ' + targetKey, value)
+            //console.log('Object targetKey: ' + targetKey, value)
 
             // If it's an array (multiple sibling tags), we need to check if our 
             // desired position falls within this array
@@ -5848,7 +6276,7 @@ function findValueByKey(obj, targetKey, position, tracker = { count: 0 }) {
 * @param {object} page:                 playwright page
 * @param {object} data:                 all the parameters
 * @param {object} variables:            array of all the variables
-* @param {string} assertionDataName:    name of the dataset for the assertion 
+* @param {string} code:                 code of the httpdata 
 * @param {string} searchKey:            the key in the json structure 
 * @param {string} searchPosition:       occurrence of the key (1 by default) 
 * @param {string} scopeKey:             (optional) "Grandparent" (e.g., "FamilyMember")
@@ -5856,17 +6284,18 @@ function findValueByKey(obj, targetKey, position, tracker = { count: 0 }) {
 * @param {string} variableName:         name of the variable to store the result 
 *
 */
-async function httpSearchKeyValue(page, data, variables, assertionDataName, searchKey, searchPosition = 1, scopeKey = null, scopePosition = 1, variableName) {
+async function httpSearchKeyValue(page, data, variables, code, searchKey, searchPosition = 1, scopeKey = null, scopePosition = 1, variableName) {
     const { getHttpdataByCode } = require("../../httpdata/httpdata.service.js");
 
     if (scopeKey == '<N/A>') scopeKey = null
     searchPosition = variables.evaluateVariable(searchPosition, true)
     scopePosition = variables.evaluateVariable(scopePosition, true)
+    code = variables.evaluateVariable(code, true)
 
     // replace $$name by the value of the variable $name
     variableName = await nameVariable(variables, variableName)
 
-    // console.log('assertionDataName', assertionDataName)
+    // console.log('code', code)
     // console.log('searchKey', searchKey)
     // console.log('searchPosition', searchPosition)
     // console.log('scopeKey', scopeKey)
@@ -5875,14 +6304,14 @@ async function httpSearchKeyValue(page, data, variables, assertionDataName, sear
 
 
     // Get the http data
-    const dataAPI1 = { subprojectID: data.subprojectID, code: assertionDataName };
+    const dataAPI1 = { subprojectID: data.subprojectID, code: code };
     const result1 = await getHttpdataByCode(dataAPI1);
     variables.setVariable("$Error", "0");
     if (result1.length == 0) {
-        console.log("httpdata not found! : " + assertionDataName)
+        console.log("httpdata not found! : " + code)
         variables.setVariable("$Error", "1");
         variables.setVariable(variableName, "-1")
-        return { success: 0, message: "httpdata not found! : " + assertionDataName, value: -1, stop: 1 };
+        return { success: 0, message: "httpdata not found! : " + code, value: -1, stop: 1 };
     }
 
     const dataResult = result1[0]
@@ -5931,22 +6360,23 @@ async function httpSearchKeyValue(page, data, variables, assertionDataName, sear
         if (scopeKey) {
             console.log('Search for the Grandparent: ' + scopeKey + " (" + scopePosition + ")")
             searchRoot = findValueByKey(jsonObj, scopeKey, scopePosition);
-            console.log('Grandparent search result', searchRoot)
+            //console.log('Grandparent search result', searchRoot)
             if (!searchRoot) {
                 // No scope found!
                 console.log("httpSearchKeyValue: No scope found! : " + scopeKey);
                 variables.setVariable("$Error", "1");
                 variables.setVariable(variableName, "-1")
-                return { success: 0, message: "httpSearchKeyValue: No scope found! : " + scopeKey, value: -1, stop: 1 };
+                return { success: 1, message: "httpSearchKeyValue: No scope found! : " + scopeKey, value: -1, stop: 0 };
             }
 
             // Check if the searchKey is a direct property of the scope we just found.
             // If it is, return it directly instead of searching deeper.
-            console.log('typeof searchRoot', typeof searchRoot)
-            console.log('SearchRoot[searchKey]', searchRoot[searchKey])
+            //console.log('typeof searchRoot', typeof searchRoot)
+            //console.log('SearchRoot[searchKey]', searchRoot[searchKey])
             if (searchRoot && typeof searchRoot !== 'object' && searchRoot[searchKey] === undefined) {
                 // Data found!
                 console.log("httpSearchKeyValue: Data found! : " + (scopeKey == null ? '' : scopeKey + ' / ') + searchKey + " = " + searchRoot);
+                console.log('type ', typeof searchRoot)
                 variables.setVariable(variableName, searchRoot)
                 return { success: 1, message: "httpSearchKeyValue: Data found!" + (scopeKey == null ? '' : scopeKey + ' / ') + searchKey + " = " + searchRoot, value: searchRoot, stop: 0 };
             }
@@ -5965,10 +6395,11 @@ async function httpSearchKeyValue(page, data, variables, assertionDataName, sear
             console.log("httpSearchKeyValue: No data found! : " + (scopeKey == null ? '' : scopeKey + ' / ') + searchKey);
             variables.setVariable("$Error", "1");
             variables.setVariable(variableName, "-1")
-            return { success: 0, message: "httpSearchKeyValue: No data found! : " + (scopeKey == null ? '' : scopeKey + ' / ') + searchKey, value: -1, stop: 1 };
+            return { success: 1, message: "httpSearchKeyValue: No data found! : " + (scopeKey == null ? '' : scopeKey + ' / ') + searchKey, value: -1, stop: 0 };
         } else {
             // Data found!
             console.log("httpSearchKeyValue: Data found! : " + (scopeKey == null ? '' : scopeKey + ' / ') + searchKey + " = " + keyValue);
+            if (typeof keyValue == 'object') keyValue = "<Object>"
             variables.setVariable(variableName, keyValue)
             return { success: 1, message: "httpSearchKeyValue: Data found! " + (scopeKey == null ? '' : scopeKey + ' / ') + searchKey + " = " + keyValue, value: keyValue, stop: 0 };
         }
@@ -6025,13 +6456,13 @@ function countKeysRecursive(obj, targetKey) {
 * @param {object} page:                 playwright page
 * @param {object} data:                 all the parameters
 * @param {object} variables:            array of all the variables
-* @param {string} assertionDataName:    name of the dataset for the assertion 
+* @param {string} code:                 code of the httpdata 
 * @param {string} searchKey:            the key in the json structure 
 * @param {string} parentKey:            the key in the parent in the json structure 
 * @param {string} variableName:         name of the variable 
 *
 */
-async function httpKeyCount(page, data, variables, assertionDataName, searchKey, parentKey = null, variableName) {
+async function httpKeyCount(page, data, variables, code, searchKey, parentKey = null, variableName) {
 
     const { getHttpdataByCode } = require("../../httpdata/httpdata.service.js");
 
@@ -6041,14 +6472,14 @@ async function httpKeyCount(page, data, variables, assertionDataName, searchKey,
     variableName = await nameVariable(variables, variableName)
 
     // Get the http data
-    const dataAPI1 = { subprojectID: data.subprojectID, code: assertionDataName };
+    const dataAPI1 = { subprojectID: data.subprojectID, code: code };
     const result1 = await getHttpdataByCode(dataAPI1);
     variables.setVariable("$Error", "0");
     if (result1.length == 0) {
-        console.log("httpdata not found! : " + assertionDataName)
+        console.log("httpdata not found! : " + code)
         variables.setVariable("$Error", "1");
         variables.setVariable(variableName, "-1")
-        return { success: 0, message: "httpdata not found! : " + assertionDataName, value: -1, stop: 1 };
+        return { success: 0, message: "httpdata not found! : " + code, value: -1, stop: 1 };
     }
 
     const dataResult = result1[0]
@@ -6417,6 +6848,331 @@ async function clickXY(variables, xPosition, yPosition) {
     }
 }
 
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  phoneConnect:  Establish a connection with Android Studio (we will see later if we need a parameter to specify "Android" or "Phone on USB")
+* 
+* @param {object} variables:            array of all the variables
+*
+*/
+async function phoneConnect(variables) {
+    let device = null
+    device = await variables.setPhoneDevice() // Create a device for Android Phone
+    if (!device) {
+        ret = { success: 0, message: 'phoneConnect KO!', stop: 1 }
+    } else {
+
+        ret = { success: 1, message: "phoneConnect to " + device.model(), stop: 0 }
+    }
+    return ret
+}
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  phoneTap:  Simulate the tap on the phone
+* 
+* @param {object} data:                 all the parameters
+* @param {object} variables:            array of all the variables
+* @param {string} tapType:              text or element
+* @param {string} tapValue:             element to tap
+*
+*/
+async function phoneTap(data, variables, tapType, tapValue) {
+
+    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+
+    let device = await variables.getPhoneDevice() // get a device for Android Phone
+    if (!device) { device = await variables.setPhoneDevice() } // Reset a device for Android Phone
+    if (!device) {
+        return { success: 0, message: 'phoneTap KO!', stop: 1 }
+    }
+
+    tapType = variables.evaluateVariable(tapType, true)
+    tapValue = variables.evaluateVariable(tapValue, false)
+
+    // Check if the phoneElement is a dictionary format
+    if (tapValue[0] == '@') {
+        variables.displayLog(1, 1, 'dictionary(' + tapValue + ')')
+        const dataAPI = { projectID: data.projectID, code: tapValue, language: '*', active: 1 }
+        const result = await getDictionaryByCode(dataAPI);
+        if (result.length) {
+            tapValue = result[0].label
+        } else {
+            variables.displayLog(1, 1, 'Dictionary: ' + tapValue + ' not found in the dictionary!')
+            return { success: 0, message: "Cannot find the code: " + tapValue + " in the dictionary!", stop: 1 }
+        }
+    }
+
+    try {
+        if (tapType == "text") {
+            // ---- TEXT ------
+            console.log("Tap with a text")
+            const tapElt = { text: tapValue };
+            await device.tap(tapElt);
+        } else if (tapType == "element") {
+            // ---- ELEMENT ------
+            console.log("Tap with an element")
+            const tapElt = { res: tapValue };
+            await device.tap(tapElt);
+        } else if (tapType == "web") {
+            // ---- WEB ------
+            const page = await variables.getPhonePage();
+            const tapElt = page.locator(tapValue);
+            await tapElt.waitFor({ state: 'visible', timeout: 10000 });
+            await tapElt.click();
+        } else {
+            return { success: 0, message: 'phoneTap KO! - Invalid type: ' + tapType, stop: 1 }
+        }
+
+        return { success: 1, message: 'phoneTap OK!', stop: 0 }
+    } catch (err) {
+        if (err.message.includes('Timed out waiting for selector')) {
+            return { success: 0, message: 'phoneTap KO! - Timed out waiting for selector', stop: 1 }
+        } else {
+            return { success: 0, message: 'phoneTap KO! ' + err.message, stop: 1 }
+        }
+    }
+
+
+}
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  phoneFill:  Simulate the fill of an element on the phone
+* 
+* @param {object} data:                 all the parameters
+* @param {object} variables:            array of all the variables
+* @param {string} phoneType:            type of element: "phone" or "web"
+* @param {string} phoneElement:         element to fill
+* @param {string} phoneValue:           Value to use to fill
+*
+*/
+async function phoneFill(data, variables, phoneType, phoneElement, phoneValue) {
+
+    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+
+    let device = await variables.getPhoneDevice() // get a device for Android Phone
+    if (!device) { device = await variables.setPhoneDevice() } // Reset a device for Android Phone
+    if (!device) {
+        return { success: 0, message: 'phoneFill KO!', stop: 1 }
+    }
+
+    phoneType = variables.evaluateVariable(phoneType, true)
+    phoneElement = variables.evaluateVariable(phoneElement, true)
+    phoneValue = variables.evaluateVariable(phoneValue, false)
+
+    // Check if the phoneElement is a dictionary format
+    if (phoneElement[0] == '@') {
+        variables.displayLog(1, 1, 'dictionary(' + phoneElement + ')')
+        const dataAPI = { projectID: data.projectID, code: phoneElement, language: '*', active: 1 }
+        const result = await getDictionaryByCode(dataAPI);
+        if (result.length) {
+            phoneElement = result[0].label
+        } else {
+            variables.displayLog(1, 1, 'Dictionary: ' + phoneElement + ' not found in the dictionary!')
+            return { success: 0, message: "Cannot find the code: " + phoneElement + " in the dictionary!", stop: 1 }
+        }
+    }
+
+    try {
+        if (phoneType == 'phone') {
+            // ---- PHONE -----
+            const tapElt = { res: phoneElement };
+            await device.fill(tapElt, phoneValue);
+            return { success: 1, message: 'phoneFill OK!', stop: 0 }
+        } else if (phoneType == 'web') {
+            // ---- WEB ------
+            const page = await variables.getPhonePage();
+            // Use wait ForSelector to ensure the page is interactive
+            const tapElt = page.locator(phoneElement);
+            await tapElt.waitFor({ state: 'visible', timeout: 10000 });
+            await tapElt.fill(phoneValue);
+            return { success: 1, message: 'phoneFill OK!', stop: 0 }
+        } else {
+            return { success: 0, message: 'phoneFill KO! - Invalid type: ' + phoneType, stop: 1 }
+        }
+
+    } catch (err) {
+        if (err.message.includes('Timed out waiting for selector')) {
+            return { success: 0, message: 'phoneFill KO! - Timed out waiting for selector', stop: 1 }
+        } else {
+            return { success: 0, message: 'phoneFill KO! ' + err.message, stop: 1 }
+        }
+    }
+
+
+}
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  phonePress:  Simulate the press of a key on the phone
+* 
+* @param {object} data:                 all the parameters
+* @param {object} variables:            array of all the variables
+* @param {string} phoneType:            type of element: "phone" or "web"
+* @param {string} phoneElement:         element to use
+* @param {string} phoneKey:             Key to press
+*
+*/
+async function phonePress(data, variables, phoneType, phoneElement, phoneKey) {
+    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+
+    let device = await variables.getPhoneDevice() // get a device for Android Phone
+    if (!device) { device = await variables.setPhoneDevice() } // Reset a device for Android Phone
+    if (!device) {
+        return { success: 0, message: 'phonePress KO!', stop: 1 }
+    }
+
+    phoneType = variables.evaluateVariable(phoneType, true)
+    phoneElement = variables.evaluateVariable(phoneElement, false)
+    phoneKey = variables.evaluateVariable(phoneKey, true)
+
+    // Check if the phoneElement is a dictionary format
+    if (phoneElement[0] == '@') {
+        variables.displayLog(1, 1, 'dictionary(' + phoneElement + ')')
+        const dataAPI = { projectID: data.projectID, code: phoneElement, language: '*', active: 1 }
+        const result = await getDictionaryByCode(dataAPI);
+        if (result.length) {
+            phoneElement = result[0].label
+        } else {
+            variables.displayLog(1, 1, 'Dictionary: ' + phoneElement + ' not found in the dictionary!')
+            return { success: 0, message: "Cannot find the code: " + phoneElement + " in the dictionary!", stop: 1 }
+        }
+    }
+
+    try {
+        if (phoneType == 'phone') {
+            // ---- PHONE ------
+            if (phoneKey == 'Home') {
+                console.log('Home key')
+                // Keycode 3 is the Android Home Button
+                await device.shell('input keyevent 3');
+                console.log('Home key OK')
+                // Sometimes a second press is needed if an app is in a deep sub-menu
+                // or if the software keyboard is open.
+                await device.shell('input keyevent 3');
+                //await wait(1000); // Give the OS a moment to animate back to home
+            } else {
+                const tapElt = { res: phoneElement };
+                await device.press(tapElt, phoneKey);
+            }
+
+            return { success: 1, message: 'phonePress OK!', stop: 0 }
+        } else if (phoneType == 'web') {
+            // ---- WEB ------
+            const page = await variables.getPhonePage();
+            await page.keyboard.press(phoneKey);
+            await page.waitForLoadState("networkidle");
+            return { success: 1, message: 'phonePress OK!', stop: 0 }
+        } else {
+            return { success: 0, message: 'phonePress KO! - Invalid type: ' + phoneType, stop: 1 }
+        }
+
+
+    } catch (err) {
+        if (err.message.includes('Timed out waiting for selector')) {
+            return { success: 0, message: 'phonePress KO! - Timed out waiting for selector', stop: 1 }
+        } else {
+            return { success: 0, message: 'phonePress KO! ' + err.message, stop: 1 }
+        }
+    }
+
+}
+
+
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  phoneUrl:  Launch the Chrome browser and go to a webpage
+* 
+* @param {object} data:                 all the parameters
+* @param {object} variables:            array of all the variables
+* @param {string} link:                 link to the wepage
+*
+*/
+async function phoneUrl(data, variables, link) {
+    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+
+    // evaluate the link
+    link = variables.evaluateVariable(link, true)
+
+    // Search the text in the dictionary 
+    if (link[0] == '@') {
+        const dataAPI = { projectID: data.projectID, code: link, language: '*', active: 1 }
+        const result = await getDictionaryByCode(dataAPI);
+        if (result.length) {
+            link = result[0].label
+            //console.log (link)
+        } else {
+            variables.displayLog(1, 1, 'Data not found in the dictionary!')
+            return { success: 0, message: "Cannot find the code: " + link + " in the dictionary!", stop: 1 }
+        }
+    }
+
+
+    let device = await variables.getPhoneDevice() // get a device for Android Phone
+    if (!device) { device = await variables.setPhoneDevice() } // Reset a device for Android Phone
+    if (!device) {
+        return { success: 0, message: 'phonePress KO!', stop: 1 }
+    }
+
+
+    console.log("Launching Chrome...");
+    const context = await device.launchBrowser({
+        // Explicitly target the Chrome package to ensure no confusion
+        pkg: 'com.android.chrome',
+        // Increase timeout in case Android 16 is slow to bridge the socket
+        timeout: 30000
+    });
+
+    console.log("Context created, requesting page...");
+
+    // If newPage() hangs, try using the existing first page often created by default
+    const pages = context.pages();
+    const page = pages.length > 0 ? pages[0] : await context.newPage();
+
+    console.log("Page ready!");
+    variables.setPhonePage(page)
+    await page.goto(link, { waitUntil: 'domcontentloaded' });
+    return { success: 1, message: 'phoneUrl OK!', stop: 0 }
+}
+
+
+
+/**
+ * ---------------------------------------------------------------------------- 
+ * @function <OK>
+ *  phoneCapture:  take a print screen of the phone
+ * 
+ * @param {object} data:        all the parameters
+ * @param {object} variables:            array of all the variables
+ * @param {string} slotID:      slot number = 0: Error, 1 --> 5 User print screen 
+ *  
+ */
+async function phoneCapture(data, variables, slotID, fullPage) {
+
+    try {
+        let picture = './printscreen/' + data.userID + '_image' + slotID + '.png'
+        if (fullPage == undefined || fullPage == 0) fullPage = false
+        else fullPage = true
+
+        console.log('full page:', fullPage)
+
+        console.log('printScreen', picture)
+        const page = await variables.getPhonePage();
+        await page.screenshot({ path: picture, fullPage: fullPage });
+        return { success: 1, message: 'phoneCapture OK', slot: slotID, stop: 0 }
+    } catch (err) {
+        return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
+    }
+}
 
 
 
@@ -6743,7 +7499,7 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 return ret
 
             case 'printScreen':
-                ret = await printScreen(page, data, param1)
+                ret = await printScreen(page, data, param1, param2)
                 if (ret.success == 1) await logfile(data.userID, 'Info', '... Print screen is in the slot: ' + ret.slot)
                 return ret
 
@@ -6873,7 +7629,7 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 return ret
 
             case 'httpPost':
-                ret = await httpPost(data, variables, param1, param2, param3)
+                ret = await httpPost(data, variables, param1, param2, param3, param4)
                 //if (ret.success == 1) await logfile(data.userID, 'Info', '... httpPost OK')
                 return ret
 
@@ -6883,7 +7639,7 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 return ret
 
             case 'httpGet':
-                ret = await httpGet(data, variables, param1, param2)
+                ret = await httpGet(data, variables, param1, param2, param3)
                 //if (ret.success == 1) await logfile(data.userID, 'Info', '... httpGet OK')
                 return ret
 
@@ -6892,17 +7648,6 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 //if (ret.success == 1) await logfile(data.userID, 'Info', '... httpDelete OK')
                 return ret
 
-
-            case 'httpData':
-                ret = await httpData(data, variables, param1, param2)
-                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
-                return ret
-
-            // case 'httpSearchData':
-            //     ret = await httpSearchData(data, variables, param1, param2, param3, param4)
-            //     if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + param4 + ' = ' + ret.value)
-            //     return ret
-
             case 'SAML_Assertion':
                 ret = await SAML_Assertion(page, data, variables, param1, param2, param3, param4)
                 if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.message)
@@ -6910,6 +7655,11 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
 
             case 'SAML_Transaction':
                 ret = await SAML_Transaction(page, data, variables, param1, param2, param3, param4)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.message)
+                return ret
+
+            case 'SOAP_postData':
+                ret = await SOAP_postData(data, variables, param1, param2, param3, param4, param5)
                 if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.message)
                 return ret
 
@@ -6942,6 +7692,37 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 ret = await clickXY(variables, param1, param2)
                 if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
+
+            case 'phoneConnect':
+                ret = await phoneConnect(variables)
+                if (ret.success == 1) {
+                    await logfile(data.userID, 'Info', ret.message)
+                }
+                else await logfile(data.userID, 'Info', '... no way to connect to the Phone!')
+                return ret
+
+            case 'phoneTap':
+                ret = await phoneTap(data, variables, param1, param2)
+                return ret
+
+            case 'phoneFill':
+                ret = await phoneFill(data, variables, param1, param2, param3)
+                return ret
+
+            case 'phonePress':
+                ret = await phonePress(data, variables, param1, param2, param3)
+                return ret
+
+            case 'phoneUrl':
+                ret = await phoneUrl(data, variables, param1)
+                return ret
+
+            case 'phoneCapture':
+                ret = await phoneCapture(data, variables, param1, param2)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... Print screen is in the slot: ' + ret.slot)
+                return ret
+
+
 
             default:
                 variables.displayLog(1, 1, 'No function with the name: ' + name)
@@ -7271,7 +8052,6 @@ async function executeScenario(data, page, tests) {
 
         for (let index = 0; index < tests.length && !stopTest; index++) {
 
-
             // get the reference Emergency Stop
             ret = await getReference(variables, data.projectID, data.userID, 'Emergency Stop', '$EmergencyStop')
             if (ret.success == 1 && ret.value == 1) {
@@ -7516,6 +8296,7 @@ async function executeScenario(data, page, tests) {
                             }
                             // Check if we can process the test (depending of the condition)
                             if (process == 1) {
+                                // Here, we execute the function defined by the Tester
                                 ret = await robot.evaluateFunction(page, variables, item.functionName, data, item.parameter1, item.parameter2, item.parameter3, item.parameter4, item.parameter5, item.parameter6, item.parameter7, item.parameter8)
 
                             } else if (process == 0) {
@@ -7759,15 +8540,21 @@ module.exports = {
     setBrowserMiddelware: setBrowserMiddelware,
     httpGet: httpGet,
     httpPost: httpPost,
-    httpData: httpData,
     SAML_Assertion: SAML_Assertion,
     SAML_Transaction: SAML_Transaction,
+    SOAP_postData: SOAP_postData,
     httpSearchKeyValue: httpSearchKeyValue,
     httpKeyCount: httpKeyCount,
     imageDifference: imageDifference,
     imageBaseline: imageBaseline,
     imageDifferenceData: imageDifferenceData,
     popupKeys: popupKeys,
-    showAllPopups: showAllPopups
+    showAllPopups: showAllPopups,
+    phoneConnect: phoneConnect,
+    phoneTap: phoneTap,
+    phoneFill: phoneFill,
+    phonePress: phonePress,
+    phoneUrl: phoneUrl,
+    phoneCapture: phoneCapture
 
 };

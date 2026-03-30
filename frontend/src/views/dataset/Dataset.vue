@@ -181,9 +181,12 @@ export default {
         if (location.value.includes('test=') || location.value.includes('rulewizard=')) {
             // split the location to find the keyword
             let data = location.value.split("=");
+             //console.log ('location.value', location.value)
+             //console.log ('data', data)
             if (data[3] != undefined) {
                 let i = data[3] * 1
                 filterValue.value = data[3 + i]
+                //console.log ('filtervalue - data[' + (3 + i) +']', filterValue.value)
                 if (filterValue.value == undefined) filterValue.value = ""
             }
             if (data[2] == '0') {

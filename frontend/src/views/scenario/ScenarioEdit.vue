@@ -245,6 +245,16 @@ export default {
             router.push({ name: 'Scenarios' })
         }
 
+        // --------------------------------------------------------------------------
+        // User selects another active value, store the current ID
+        // --------------------------------------------------------------------------
+        const handleActiveChange = () => {
+            consoleLog('ScenarioEdit.vue/handleActiveChange', 2, 'User changed the active value: ' + selectedActive.value.id, trace.value)
+            active.value = selectedActive.value.id
+        }        
+
+
+
         // -----------------------------------------------------------------------------------
         // leave the screen and go to the projects screen (used by the function DisplayError)
         // -----------------------------------------------------------------------------------
@@ -278,7 +288,7 @@ export default {
         return {
             errorMessage, styleMessage, scenario, scenarioName, workspaceID, workspace, projectName, subprojectName, subprojects, selectedSubproject, 
             comment, actives, selectedActive, createdBy, updatedBy, 
-            handleSubprojectChange, handleCancel, handleSubmit, handleFocus, handleBlur
+            handleSubprojectChange, handleCancel, handleSubmit, handleFocus, handleBlur, handleActiveChange
         }
 
     }

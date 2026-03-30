@@ -213,11 +213,13 @@ export default {
                 "application/vnd.openxmlformats-officedocument.presentationml.presentation", // .pptx
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",         // .xlsx
                 "application/octet-stream",    // Often used for .key files
+                "application/x-pem-file",      // .pem 
+                "application/x-x509-ca-cert",  // .pem              
                 "text/plain"                   // Sometimes .key files are treated as plain text           
             ]
 
             // 2. Define allowed extensions (as a fallback)
-            const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'pptx', 'xlsx', 'crt', 'p12', 'key'];
+            const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'pptx', 'xlsx', 'crt', 'p12', 'key', 'pem'];
 
             // Get the file extension
             const fileExtension = file.name.split('.').pop().toLowerCase();
@@ -233,7 +235,7 @@ export default {
             const isAllowedExtension = allowedExtensions.includes(fileExtension);
 
             if (!isAllowedType && !isAllowedExtension) {
-                return 'Only pdf, PowerPoint, Excel, Images, .p12, .pfx, .crt and .key files are allowed!';
+                return 'Only pdf, PowerPoint, Excel, Images, .p12, .pfx, .crt, .pem and .key files are allowed! - here: ' + file.type;
             }
 
             return ""; // File is valid

@@ -110,7 +110,7 @@ export default {
     const showDetails = ref(false)
     const showPopup = ref(false)
     const dataset = ref(props.dataset)
-    
+
     let shortLabel = dataset.value.label
     if (shortLabel.length > 40) {
       shortLabel = dataset.value.label.slice(0, 40) + '...'
@@ -130,6 +130,10 @@ export default {
     const testParam2 = ref('')
     const testParam3 = ref('')
     const testParam4 = ref('')
+    const testParam5 = ref('')
+    const testParam6 = ref('')
+    const testParam7 = ref('')
+    const testParam8 = ref('')
     const single = ref(null)
     const position = ref(dataset.value.position)
     const dataPosition = ref(0)
@@ -161,6 +165,10 @@ export default {
         testParam2.value = data[5]
         testParam3.value = data[6]
         testParam4.value = data[7]
+        testParam5.value = data[8]
+        testParam6.value = data[9]
+        testParam7.value = data[10]
+        testParam8.value = data[11]
         importData.value = false
         importWizard.value = false
         importRule.value = false
@@ -207,16 +215,28 @@ export default {
         case '4':
           testParam4.value = dataset.value.fullcode
           break
+        case '5':
+          testParam5.value = dataset.value.fullcode
+          break
+        case '6':
+          testParam6.value = dataset.value.fullcode
+          break
+        case '7':
+          testParam7.value = dataset.value.fullcode
+          break
+        case '8':
+          testParam8.value = dataset.value.fullcode
+          break
       }
       //consoleLog('DatasetSingle.vue/handleImport', 2, 'parameter ID: ' + testParamID.value + ', P1' + testParam1.value + ', P2' + testParam2.value + ', P3' + testParam3.value, trace.value)
 
       if (includeId) {
         // Syntax is: dataset=<testID>=<parameterID>=<param1>=<param2>=<param3>
-        context.emit('storelocation', 'dataset=' + testID.value + "=" + testParamID.value + '=' + testParam1.value + '=' + testParam2.value + '=' + testParam3.value + '=' + testParam4.value)
+        context.emit('storelocation', 'dataset=' + testID.value + "=" + testParamID.value + '=' + testParam1.value + '=' + testParam2.value + '=' + testParam3.value + '=' + testParam4.value + '=' + testParam5.value + '=' + testParam6.value + '=' + testParam7.value + '=' + testParam8.value)
 
       } else {
         // Syntax is: dataset=<parameterID>=<param1>=<param2>=<param3>
-        context.emit('storelocation', 'dataset=' + testParamID.value + '=' + testParam1.value + '=' + testParam2.value + '=' + testParam3.value + '=' + testParam4.value)
+        context.emit('storelocation', 'dataset=' + testParamID.value + '=' + testParam1.value + '=' + testParam2.value + '=' + testParam3.value + '=' + testParam4.value + '=' + testParam5.value + '=' + testParam6.value + '=' + testParam7.value + '=' + testParam8.value)
       }
 
     }

@@ -1250,8 +1250,6 @@ export default {
                         label8.value = test.value[0].label8
                         tip8.value = test.value[0].tip8
 
-
-
                         active.value = test.value[0].active
                         selectedActive.value = ({ id: active.value })
 
@@ -1281,6 +1279,7 @@ export default {
                                 parameter6.value = data[8]
                                 parameter7.value = data[9]
                                 parameter8.value = data[10]
+
                             }
                         }
                         return (1)
@@ -1577,28 +1576,28 @@ export default {
             if (ret) {
                 switch (position) {
                     case 1:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=1=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=1=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 2:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=2=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=2=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 3:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=3=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=3=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 4:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=4=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=4=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 5:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=5=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=5=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 6:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=6=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=6=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 7:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=7=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=7=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 8:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=8=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=8=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                 }
                 router.push({ name: 'Dictionary' })
@@ -1619,28 +1618,28 @@ export default {
             if (ret) {
                 switch (position) {
                     case 1:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=1=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=1=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 2:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=2=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=2=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 3:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=3=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=3=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 4:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=4=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=4=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 5:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=5=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=5=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 6:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=6=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=6=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 7:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=7=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=7=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 8:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=8=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=8=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                 }
                 router.push({ name: 'References' })
@@ -1658,31 +1657,32 @@ export default {
             consoleLog('TestEdit.vue/handleDataset', 2, 'User ask to go to dataset - Parameter: ' + position, trace.value)
             let ret = await saveData()
             if (ret) {
-                //console.log ('test=' + testID.value + '=0=2=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value)
+                //console.log ('***** test=' + testID.value + '=0=' + position + '=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                 switch (position) {
                     case 1:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=1=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=1=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 2:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=2=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=2=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 3:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=3=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=3=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 4:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=4=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=4=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 5:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=5=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=5=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        //console.log('***** Emit storelocation', 'test=' + testID.value + '=0=5=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '='  + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 6:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=6=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=6=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 7:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=7=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=7=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 8:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=8=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=8=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                 }
                 router.push({ name: 'Data' })
@@ -1704,28 +1704,28 @@ export default {
             if (ret) {
                 switch (position) {
                     case 1:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=1=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=1=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 2:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=2=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=2=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 3:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=3=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=3=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 4:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=4=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=4=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 5:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=5=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=5=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 6:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=6=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=6=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 7:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=7=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=7=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 8:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=8=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=8=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                 }
                 router.push({ name: 'Dummy Users' })
@@ -1746,28 +1746,28 @@ export default {
             if (ret) {
                 switch (position) {
                     case 1:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=1=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=1=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 2:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=2=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=2=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 3:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=3=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=3=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 4:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=4=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=4=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 5:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=5=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=5=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 6:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=6=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=6=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 7:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=7=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=7=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                     case 8:
-                        context.emit('storelocation', 'test=' + testID.value + '=0=8=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
+                        context.emit('storelocation', 'test=' + testID.value + '=0=8=' + parameter1.value + '=' + parameter2.value + '=' + parameter3.value + '=' + parameter4.value + '=' + parameter5.value + '=' + parameter6.value + '=' + parameter7.value + '=' + parameter8.value)
                         break
                 }
                 router.push({ name: 'Rules Set' })
@@ -2829,7 +2829,7 @@ export default {
             if (label7.value) await displayConsole("parameter 7: ", parameter7.value)
             if (label8.value) parameter8.value = (await functionParameter(8))
             if (label8.value) await selectValue(8, parameter8.value)
-            if (label8.value) await displayConsole("parameter 8: ", parameter8.value)            
+            if (label8.value) await displayConsole("parameter 8: ", parameter8.value)
         }
 
 
@@ -2839,12 +2839,12 @@ export default {
             parameter1, label1, tip1, data1, dict1, rule1, dummy1, ref1, parameter2, label2, tip2, data2, dict2, rule2, dummy2, ref2,
             parameter3, label3, tip3, data3, dict3, rule3, dummy3, ref3, parameter4, label4, tip4, data4, dict4, rule4, dummy4, ref4,
             parameter5, label5, tip5, data5, dict5, rule5, dummy5, ref5, parameter6, label6, tip6, data6, dict6, rule6, dummy6, ref6,
-            parameter7, label7, tip7, data7, dict7, rule7, dummy7, ref7, parameter8, label8, tip8, data8, dict8, rule8, dummy8, ref8,            
-            defVal1, defVal2, defVal3, defVal4, defVal5, defVal6, defVal7, defVal8, 
-            defLists1, defLists2, defLists3, defLists4, defLists5, defLists6, defLists7, defLists8, 
+            parameter7, label7, tip7, data7, dict7, rule7, dummy7, ref7, parameter8, label8, tip8, data8, dict8, rule8, dummy8, ref8,
+            defVal1, defVal2, defVal3, defVal4, defVal5, defVal6, defVal7, defVal8,
+            defLists1, defLists2, defLists3, defLists4, defLists5, defLists6, defLists7, defLists8,
             selectVal1, selectVal2, selectVal3, selectVal4, selectVal5, selectVal6, selectVal7, selectVal8,
             handleCancel, handleSubmit, handleFocus, handleBlur, handleFunctionChange, handleActionChange, handleFilter, handleTranscribe,
-            handleListValue1Change, handleListValue2Change, handleListValue3Change, handleListValue4Change, handleListValue5Change, handleListValue6Change, handleListValue7Change, handleListValue8Change, 
+            handleListValue1Change, handleListValue2Change, handleListValue3Change, handleListValue4Change, handleListValue5Change, handleListValue6Change, handleListValue7Change, handleListValue8Change,
             handleDictionary, handleDataset, handleRule, handleDummy, handleReference
         }
 

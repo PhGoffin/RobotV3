@@ -22,11 +22,13 @@ class Variables {
     constructor(myFilename) {
 
         // Definition of the global variables
-        this.myVariables = [];  // storage for the rules variables
-        this.myMessage = '';    // A global error message
-        this.verbose = 1;       // verbose mode: 0 - Normal, 1 - Full
-        this.startingTime = 0;  // start date
+        this.myVariables = [];      // storage for the rules variables
+        this.myMessage = '';        // A global error message
+        this.verbose = 1;           // verbose mode: 0 - Normal, 1 - Full
+        this.startingTime = 0;      // start date
         this.userStartingTime = 0;  // User start date
+        this.phoneDevice = null;    // Phone device (initialized by phoneConnect)
+        this.phonePage = null;      // Phone Chrome page (initialized by phoneURL)
         // clean previous variables
         this.cleanVariable();
 
@@ -819,6 +821,55 @@ class Variables {
         }
 
         return 1;
+    };
+
+
+
+    /**
+     * @function
+     *  getPhoneDevice: get the Phone device
+     *
+     */
+    getPhoneDevice() {
+        return this.phoneDevice;
+    };
+
+
+    /**
+     * @function
+     *  setPhoneDevice: store the Phone device
+     *
+     *
+     */
+    async setPhoneDevice() {
+        const { _android: android } = require('playwright');
+        const [device] = await android.devices();
+        this.phoneDevice = device;
+        //return this.phoneDevice
+        return device
+    };
+
+
+    /**
+     * @function
+     *  getPhonePage: get the playwright Phone Chrome Page
+     *
+     */
+    getPhonePage() {
+        return this.phonePage;
+    };
+
+
+    /**
+     * @function
+     *  setPhonePage: store the playwright Phone Chrome page
+     *
+     * @param {object} page:                 playwright phone page 
+     *
+     */
+    async setPhonePage(page) {
+        this.phonePage = page;
+        return this.phonePage;
     };
 
 
