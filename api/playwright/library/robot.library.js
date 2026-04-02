@@ -1241,12 +1241,13 @@ function startPromises() {
 *
 * @param {object} page:         playwright page (overwritten by the array of tab page)
 * @param {object} variables:    array of all the variables
-* @param {number} projectID:    project ID
+* @param {object} data:         all the parameters
 * @param {string} link:         link to the wepage
 *
 */
-async function url(page, variables, projectID, link) {
+async function url(page, variables, data, link) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+    const { getDatasetByCode } = require("../../dataset/dataset.service.js");
     let ret
 
     // evaluate the link
@@ -1254,10 +1255,21 @@ async function url(page, variables, projectID, link) {
     if (link.length > 0) {
         link = link.replace(/'/g, "");
     }
-
+    if (link[0] == '#') {
+        console.log('Data set used')
+        dataAPI = { subprojectID: data.subprojectID, code: link, language: '*', active: 1 }
+        const result = await getDatasetByCode(dataAPI);
+        if (result.length) {
+            link = result[0].label
+        } else {
+            variables.displayLog(1, 1, 'Data not found in the dataset!')
+            return { success: 0, message: "Cannot find the code: " + link + " in the dataset!", stop: 1 }
+        }
+    }
     // Search the text in the dictionary 
     if (link[0] == '@') {
-        const dataAPI = { projectID: projectID, code: link, language: '*', active: 1 }
+        console.log('Dictionary set used')
+        const dataAPI = { projectID: data.projectID, code: link, language: '*', active: 1 }
         const result = await getDictionaryByCode(dataAPI);
         if (result.length) {
             link = result[0].label
@@ -1271,9 +1283,11 @@ async function url(page, variables, projectID, link) {
     try {
         //page = tabPage[tabPageCurrent]
         //variables.displayLog(1, 1, 'Driver: ', driver)
+        console.log('*******' + link + '*********')
+
         await page.goto(link)
         variables.setVariable("$URLError", "0");
-        return { success: 1, message: 'Url OK', stop: 0 }
+        return { success: 1, message: 'Url OK', value: link, stop: 0 }
     } catch (err) {
         //console.log (err)
         if (err.message.includes('ERR_CERT_AUTHORITY_INVALID')) {
@@ -1282,7 +1296,7 @@ async function url(page, variables, projectID, link) {
             variables.displayLog(1, 1, "----- **** URL = Error: ERR_CERT_AUTHORITY_INVALID")
             variables.displayLog(1, 1, err.message)
             variables.setVariable("$URLError", "1");
-            return { success: 1, message: "ERR_CERT_AUTHORITY_INVALID", stop: 0 }
+            return { success: 1, message: "ERR_CERT_AUTHORITY_INVALID", value: link, stop: 0 }
         } else {
             variables.displayLog(1, 1, "----- **** URL = Error: ", err.message)
             variables.displayLog(1, 1, err.message)
@@ -7326,7 +7340,8 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 return ret
 
             case 'url':
-                ret = await url(page, variables, data.projectID, param1)
+                ret = await url(page, variables, data, param1)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
             case 'getUrl':

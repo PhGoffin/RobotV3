@@ -115,7 +115,7 @@ async function specialFunction(page, variables, data, rulePosition, functionName
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + ret.message)
             return ret
         case '#url':
-            ret = await url(page, variables, data.projectID, param1)
+            ret = await url(page, variables, data, param1)
             //page.manage().window().maximize();
             await logfile(data.userID, 'Info', '... ' + functionName + ' : ' + param1)
             return ret
