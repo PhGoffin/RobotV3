@@ -555,6 +555,7 @@ async function switchToFrame(page, variables, data, frameId) {
 async function getElement(page, variables, data, tag, functionName) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     const { getReferenceByCode } = require("../../reference/reference.service.js");
+    const { getDatasetByCode } = require("../../dataset/dataset.service.js");
     const { Left } = require("./string.library.js");
 
     console.log('getElement', functionName)
@@ -571,23 +572,44 @@ async function getElement(page, variables, data, tag, functionName) {
     }
     page.setDefaultTimeout(timeout * 1000)
 
+
     if (tag == undefined) {
         console.log(functionName + "::getElement: tag cannot be empty!")
         return { success: 0, message: functionName + "::getElement: tag cannot be empty!", stop: 1 }
     }
     else if (tag == '$GUI') tag = await variables.getVariable('$GUI')
-    else if (tag[0] == '@') {
-        // Search the tag in the dictionary
-        dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
-        const result = await getDictionaryByCode(dataAPI);
-        if (result.length) {
-            tag = result[0].label
-            tag = variables.evaluateVariable(tag)
-            //console.log("Find the code: " + tag)
-        } else {
-            console.log(functionName + "::getElement: Cannot find the code: " + tag)
-            variables.displayLog(1, 1, 'Data not found in the dictionary!')
-            return { success: 0, message: functionName + "::getElement: Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
+    else {
+
+        if (tag[0] == '#') {
+            console.log('Data set used')
+            tag = variables.evaluateVariable(tag, true)
+            dataAPI = { subprojectID: data.subprojectID, code: tag, language: '*', active: 1 }
+            const result = await getDatasetByCode(dataAPI);
+            if (result.length) {
+                tag = result[0].label
+            } else {
+                variables.displayLog(1, 1, 'Data not found in the dataset!')
+                return { success: 0, message: "Cannot find the code: " + tag + " in the dataset!", stop: 1 }
+            }
+        }
+
+        console.log('*******' + tag + '*********')
+
+        if (tag[0] == '@') {
+            console.log('Dictionary set used')
+            // Search the tag in the dictionary
+            tag = variables.evaluateVariable(tag, true)
+            dataAPI = { projectID: data.projectID, code: tag, language: '*', active: 1 }
+            const result = await getDictionaryByCode(dataAPI);
+            if (result.length) {
+                tag = result[0].label
+                tag = variables.evaluateVariable(tag)
+                console.log("Find the code: " + tag)
+            } else {
+                console.log(functionName + "::getElement: Cannot find the code: " + tag)
+                variables.displayLog(1, 1, 'Data not found in the dictionary!')
+                return { success: 0, message: functionName + "::getElement: Cannot find the code: " + tag + " in the dictionary!", stop: 1 }
+            }
         }
     }
 
@@ -614,7 +636,7 @@ async function getElement(page, variables, data, tag, functionName) {
         tag = tag.substring(0, tag.length - 1)
     }
 
-    console.log('******* ' + tag + '*********')
+    console.log('*******' + tag + '*********')
 
     // Check if the element is found in the current page
     let locator = null
@@ -1306,6 +1328,34 @@ async function getUrl(page, variables, myVariable) {
 }
 
 
+
+/**
+* ---------------------------------------------------------------------------- 
+* @function <OK>
+*  getUrlTitle:  Get the title of current URL and store it into the variable
+* 
+* @param {object} page:         playwright page
+* @param {object} variables:    array of all the variables
+* @param {string} myVariable:   name of the variable  
+*
+*/
+async function getUrlTitle(page, variables, myVariable) {
+    console.log('getUrlTitle...................')
+
+    // replace $$name by the value of the variable $name
+    myVariable = await nameVariable(variables, myVariable)
+
+    try {
+        const title = await page.title();
+        variables.setVariable(myVariable, title)
+        return { success: 1, message: "getUrlTitle Ok!", value: title, stop: 0 }
+    } catch (err) {
+        return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
+    }
+
+}
+
+
 /**
 * ---------------------------------------------------------------------------- 
 * @function <TBR>
@@ -1449,9 +1499,11 @@ async function closeTab() {
 */
 async function loginUser(page, variables, data, dummyUser, tagUser, tagSubmit) {
     const { getDummyuserByUser } = require("../../dummyuser/dummyuser.service.js");
+    const { getDatasetByCode } = require("../../dataset/dataset.service.js");
     let ret
     let user = ''
     let delay = 0
+
 
     variables.displayLog(1, 2, 'Dummy user: ' + dummyUser)
 
@@ -1460,15 +1512,23 @@ async function loginUser(page, variables, data, dummyUser, tagUser, tagSubmit) {
     if (dummyUser == undefined) {
         return { success: 0, message: "LoginUser: dummyUser cannot be empty!", stop: 1 }
     } else {
-        dummyUser = variables.evaluateVariable(dummyUser)
-        if (dummyUser.length > 0) {
-            dummyUser = dummyUser.replace(/'/g, "");
-        }
+        dummyUser = variables.evaluateVariable(dummyUser, true)
     }
 
     if (dummyUser == '<ME>') {
         dummyUser = data.userName
         variables.displayLog(1, 3, 'ME Dummy user: ' + dummyUser)
+
+    } else if (dummyUser[0] == '#') {
+        // Evaluate the dataset (if any)
+        const dataAPI = { subprojectID: data.subprojectID, code: dummyUser, language: '*', active: 1 }
+        const result = await getDatasetByCode(dataAPI);
+        if (result.length) {
+            dummyUser = result[0].label
+        } else {
+            variables.displayLog(1, 1, 'Data not found in the dataset! - dummyUser: ' + dummyUser)
+            return { success: 0, message: "Cannot find the code: " + dummyUser + " in the dataset!", stop: 1 }
+        }
     }
 
     variables.displayLog(1, 1, '***** Dummy user: ' + dummyUser)
@@ -1522,6 +1582,7 @@ async function loginUser(page, variables, data, dummyUser, tagUser, tagSubmit) {
 */
 async function loginPassword(page, variables, data, dummyUser, tagPassword, tagSubmit) {
     const { getDummyuserByUser } = require("../../dummyuser/dummyuser.service.js");
+    const { getDatasetByCode } = require("../../dataset/dataset.service.js");
     const { decryptPassword } = require("./password.library.js")
 
     // Enter the password in the field
@@ -1543,9 +1604,18 @@ async function loginPassword(page, variables, data, dummyUser, tagPassword, tagS
         if (dummyUser == '<ME>') {
             dummyUser = data.userName
             variables.displayLog(1, 3, 'ME Dummy user: ' + dummyUser)
+        } else if (dummyUser[0] == '#') {
+            // Evaluate the dataset (if any)
+            const dataAPI = { subprojectID: data.subprojectID, code: dummyUser, language: '*', active: 1 }
+            const result = await getDatasetByCode(dataAPI);
+            if (result.length) {
+                dummyUser = result[0].label
+            } else {
+                variables.displayLog(1, 1, 'Data not found in the dataset! - dummyUser: ' + dummyUser)
+                return { success: 0, message: "Cannot find the code: " + dummyUser + " in the dataset!", stop: 1 }
+            }
         }
         //console.log ('***** Dummy user: ' +  dummyUser)
-
 
         // get the active dummy user data
         const dataAPI = { projectID: data.projectID, dummy: dummyUser, active: 1 }
@@ -2185,6 +2255,7 @@ async function getValue(page, data, variables, tag, variableName) {
 */
 async function select(page, data, variables, tag, value, delay) {
     let ret
+    const { getDatasetByCode } = require("../../dataset/dataset.service.js");
 
     // Evaluate the value
     if (value == undefined) {
@@ -2237,7 +2308,6 @@ async function select(page, data, variables, tag, value, delay) {
     } catch (err) {
         return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
     }
-
 
 }
 
@@ -4845,7 +4915,7 @@ async function postData(data, variables, url, parameters, token, key) {
 
         // Get the file extension
         let fileExtension = '<N/A>'
-        if (token != null) fileExtension = token.split('.').pop().toLowerCase();        
+        if (token != null) fileExtension = token.split('.').pop().toLowerCase();
 
         if (fileExtension == 'p12') {
             // Use .p12 certificate (it must be uploaded on the server)
@@ -4946,11 +5016,12 @@ async function postData(data, variables, url, parameters, token, key) {
 * @param {string} paramsString  A string containing the parameters to be sent in the request body.
 *                               The string should contain a valid JSON object as it will be parsed or the name of a dataset header.
 * @param {string} key:          (only for certificate) private key.
+* @param {string} code:         (optional) code to store httpdata.
 *
 * @returns {object} httpResult  A global variable to store the http result
 *
 */
-async function httpPost(data, variables, apiUrl, paramsString, token, key) {
+async function httpPost(data, variables, apiUrl, paramsString, token, key, code) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     const { getDatasetByCode } = require("../../dataset/dataset.service.js");
 
@@ -5032,7 +5103,10 @@ async function httpPost(data, variables, apiUrl, paramsString, token, key) {
         httpResult = await postData(data, variables, apiUrl, paramsString, token, key);
         console.log("Success:", httpResult);
         // --- STEP 4: STORE OR UPDATE the txResult ---
-        let ret = await Store_HttpData(data, "httpost", httpResult)
+        code = variables.evaluateVariable(code, true)
+        if (code == undefined || code == '<N/A>') code = 'httpPost'
+
+        let ret = await Store_HttpData(data, code, httpResult)
         if (ret.success == 1) {
             return { success: 1, message: "httpPost: OK!", stop: 0 };
         } else {
@@ -5118,10 +5192,12 @@ async function putData(data, variables, url, parameters, token) {
 * @param {string} apiUrl        The URL of the REST API endpoint.
 * @param {string} paramsString  A string containing the parameters to be sent in the request body.
 *                               The string should contain a valid JSON object as it will be parsed.
+* @param {string} code:         (optional) code to store httpdata.
+*
 * @returns {object} httpResult  A global variable to store the http result
 *
 */
-async function httpPut(data, variables, apiUrl, paramsString, token) {
+async function httpPut(data, variables, apiUrl, paramsString, token, code) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
     // Reset httpResult
@@ -5161,12 +5237,14 @@ async function httpPut(data, variables, apiUrl, paramsString, token) {
         paramsString = paramsString.substring(0, paramsString.length - 1)
     }
 
+    code = variables.evaluateVariable(code, true)
+    if (code == undefined || code == '<N/A>') code = 'httpPut'
 
     try {
         httpResult = await putData(data, variables, apiUrl, paramsString, token);
         console.log("Success:", httpResult);
         // --- STEP 4: STORE OR UPDATE the txResult ---
-        let ret = await Store_HttpData(data, "httput", httpResult)
+        let ret = await Store_HttpData(data, code, httpResult)
         if (ret.success == 1) {
             return { success: 1, message: "httpPut: OK!", stop: 0 };
         } else {
@@ -5354,9 +5432,10 @@ async function fetchData(data, variables, url, token, key) {
 * @param {string} url           The URL of the REST API endpoint.
 * @param {string} token:        The token to use for the security.
 * @param {string} key:          (only for certificate) private key.
+* @param {string} code:         (optional) code to store httpdata.
 * 
 */
-async function httpGet(data, variables, url, token, key) {
+async function httpGet(data, variables, url, token, key, code) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
     const { getDatasetByCode } = require("../../dataset/dataset.service.js");
 
@@ -5411,16 +5490,19 @@ async function httpGet(data, variables, url, token, key) {
     } else key = null
 
 
+    code = variables.evaluateVariable(code, true)
+    if (code == undefined || code == '<N/A>') code = 'httpGet'
 
     console.log('httpGet', url)
     console.log('token', token)
     console.log('key', key)
+    console.log('code', code)
 
     try {
         httpResult = await fetchData(data, variables, url, token, key);
 
         // --- STEP 4: STORE OR UPDATE the txResult ---
-        let ret = await Store_HttpData(data, "httpGet", httpResult)
+        let ret = await Store_HttpData(data, code, httpResult)
         if (ret.success == 1) {
             return { success: 1, message: "httpGet: OK!", stop: 0 };
         } else {
@@ -5485,9 +5567,10 @@ async function deleteData(data, variables, url, token) {
 * @param {object} data:         all the parameters
 * @param {object} variables:    array of all the variables
 * @param {string} url           The URL of the REST API endpoint.
+* @param {string} code:         (optional) code to store httpdata.
 * 
 */
-async function httpDelete(data, variables, url, token) {
+async function httpDelete(data, variables, url, token, code) {
     const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
 
     // Reset httpResult
@@ -5517,7 +5600,9 @@ async function httpDelete(data, variables, url, token) {
         httpResult = await deleteData(data, variables, url, token);
 
         // --- STEP 4: STORE OR UPDATE the txResult ---
-        let ret = await Store_HttpData(data, "httpDelete", httpResult)
+        code = variables.evaluateVariable(code, true)
+        if (code == undefined || code == '<N/A>') code = 'httpDelete'
+        let ret = await Store_HttpData(data, code, httpResult)
         if (ret.success == 1) {
             return { success: 1, message: "httpDelete: OK!", stop: 0 };
         } else {
@@ -5662,8 +5747,6 @@ async function PublicKey(certificatePath, password) {
             return "<ERROR>";
         }
 */
-
-
 
 }
 
@@ -6210,7 +6293,7 @@ async function Store_HttpData(data, code, txResult) {
         }
         console.log('Httpdata created!');
     }
-
+    await logfile(data.userID, 'Info', '.... hhtp data stored with the code: ' + code)
     return { success: 1, message: "Store_HttpDatan: Store http data OK!", stop: 0 };
 
 
@@ -6281,7 +6364,7 @@ function findValueByKey(obj, targetKey, position, tracker = { count: 0 }) {
 * @param {object} data:                 all the parameters
 * @param {object} variables:            array of all the variables
 * @param {string} code:                 code of the httpdata 
-* @param {string} searchKey:            the key in the json structure 
+* @param {string} searchKey:            the key in the json structure or <ALL> to display
 * @param {string} searchPosition:       occurrence of the key (1 by default) 
 * @param {string} scopeKey:             (optional) "Grandparent" (e.g., "FamilyMember")
 * @param {string} scopePosition:        occurrence of the "Grandparent": 1 by default (e.g., 3 for the 3rd family member)
@@ -6327,6 +6410,22 @@ async function httpSearchKeyValue(page, data, variables, code, searchKey, search
             variables.setVariable("$Error", "1");
             variables.setVariable(variableName, "-1")
             return { success: 0, message: "httpSearchKeyValue: transactionResponse is empty!", value: -1, stop: 1 };
+        }
+
+        if (searchKey == '<ALL>') {
+
+            xmlData = xmlData.replace(/\\n/g, "");
+            xmlData = xmlData.replace(/\\t/g, "");
+            // the logfile is limited to 500 chars, split the message
+            // into small parts of text
+            const size = 250;
+            for (let i = 0; i < xmlData.length; i += size) {
+                const part = xmlData.substring(i, i + size);
+                await logfile(data.userID, 'Info', part)
+            }
+
+            return { success: 1, message: "httpSearchKeyValue: dump", value: 99, stop: 0 };
+
         }
 
         const parser = new XMLParser({
@@ -7234,6 +7333,11 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 ret = await getUrl(page, variables, param1)
                 return ret
 
+            case 'getUrlTitle':
+                ret = await getUrlTitle(page, variables, param1)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... Title: ' + ret.value)
+                return ret
+
             case 'loginUser':
                 ret = await loginUser(page, variables, data, param1, param2, param3)
                 return ret
@@ -7633,22 +7737,22 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 return ret
 
             case 'httpPost':
-                ret = await httpPost(data, variables, param1, param2, param3, param4)
+                ret = await httpPost(data, variables, param1, param2, param3, param4, param5)
                 //if (ret.success == 1) await logfile(data.userID, 'Info', '... httpPost OK')
                 return ret
 
             case 'httpPut':
-                ret = await httpPut(data, variables, param1, param2, param3)
+                ret = await httpPut(data, variables, param1, param2, param3, param4)
                 //if (ret.success == 1) await logfile(data.userID, 'Info', '... httpPut OK')
                 return ret
 
             case 'httpGet':
-                ret = await httpGet(data, variables, param1, param2, param3)
+                ret = await httpGet(data, variables, param1, param2, param3, param4)
                 //if (ret.success == 1) await logfile(data.userID, 'Info', '... httpGet OK')
                 return ret
 
             case 'httpDelete':
-                ret = await httpDelete(data, variables, param1, param2)
+                ret = await httpDelete(data, variables, param1, param2, param3)
                 //if (ret.success == 1) await logfile(data.userID, 'Info', '... httpDelete OK')
                 return ret
 
@@ -8501,6 +8605,7 @@ module.exports = {
     doubleClick: doubleClick,
     detectGUI: detectGUI,
     getUrl: getUrl,
+    getUrlTitle: getUrlTitle,
     countElement: countElement,
     isExist: isExist,
     isCheck: isCheck,

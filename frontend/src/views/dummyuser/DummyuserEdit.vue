@@ -68,7 +68,7 @@
                             <label>Password</label>
                             <span>Password</span>
                         </div>
-                        <i class="fa-regular fa-pen-to-square" title="crypt the password" @click="handleCrypt"></i>
+                        <i class="fa-regular fa-pen-to-square" title="encrypt the password" @click="handleCrypt"></i>
                     </div>
 
                     <div class="input-container focus">
