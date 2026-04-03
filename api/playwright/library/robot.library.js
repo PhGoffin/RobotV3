@@ -6383,15 +6383,18 @@ function findValueByKey(obj, targetKey, position, tracker = { count: 0 }) {
 * @param {string} scopeKey:             (optional) "Grandparent" (e.g., "FamilyMember")
 * @param {string} scopePosition:        occurrence of the "Grandparent": 1 by default (e.g., 3 for the 3rd family member)
 * @param {string} variableName:         name of the variable to store the result 
+* @param {string} operator:             Contains or Equal 
+* @param {string} searchValue:          (optional) search a value in the result - the variablename will contain true or false 
 *
 */
-async function httpSearchKeyValue(page, data, variables, code, searchKey, searchPosition = 1, scopeKey = null, scopePosition = 1, variableName) {
+async function httpSearchKeyValue(page, data, variables, code, searchKey, searchPosition = 1, scopeKey = null, scopePosition = 1, variableName, operator, searchValue) {
     const { getHttpdataByCode } = require("../../httpdata/httpdata.service.js");
 
     if (scopeKey == '<N/A>') scopeKey = null
     searchPosition = variables.evaluateVariable(searchPosition, true)
     scopePosition = variables.evaluateVariable(scopePosition, true)
     code = variables.evaluateVariable(code, true)
+    searchValue = variables.evaluateVariable(searchValue, true)
 
     // replace $$name by the value of the variable $name
     variableName = await nameVariable(variables, variableName)
@@ -6430,15 +6433,32 @@ async function httpSearchKeyValue(page, data, variables, code, searchKey, search
 
             xmlData = xmlData.replace(/\\n/g, "");
             xmlData = xmlData.replace(/\\t/g, "");
+            xmlData = xmlData.replace(/\\r/g, "");
             // the logfile is limited to 500 chars, split the message
             // into small parts of text
-            const size = 250;
-            for (let i = 0; i < xmlData.length; i += size) {
-                const part = xmlData.substring(i, i + size);
-                await logfile(data.userID, 'Info', part)
+
+            if (searchValue == '<N/A>') {
+                const size = 250;
+                for (let i = 0; i < xmlData.length; i += size) {
+                    const part = xmlData.substring(i, i + size);
+                    await logfile(data.userID, 'Info', part)
+                }
+                return { success: 1, message: "httpSearchKeyValue: dump", value: 99, stop: 0 };
+
+            } else {
+                if (operator == 'Equal') {
+                    let op = (xmlData == searchValue)
+                    variables.setVariable(variableName, op)
+                    return { success: 1, message: "httpSearchKeyValue: dump Search", value: op, stop: 0 };
+                } else {
+                    let op = xmlData.includes(searchValue)
+                    variables.setVariable(variableName, op)
+                    return { success: 1, message: "httpSearchKeyValue: dump Search", value: op, stop: 0 };
+
+                }
             }
 
-            return { success: 1, message: "httpSearchKeyValue: dump", value: 99, stop: 0 };
+
 
         }
 
@@ -6494,10 +6514,22 @@ async function httpSearchKeyValue(page, data, variables, code, searchKey, search
                 // Data found!
                 console.log("httpSearchKeyValue: Data found! : " + (scopeKey == null ? '' : scopeKey + ' / ') + searchKey + " = " + searchRoot);
                 console.log('type ', typeof searchRoot)
-                variables.setVariable(variableName, searchRoot)
-                return { success: 1, message: "httpSearchKeyValue: Data found!" + (scopeKey == null ? '' : scopeKey + ' / ') + searchKey + " = " + searchRoot, value: searchRoot, stop: 0 };
-            }
 
+                if (searchValue == '<N/A>') {
+                    variables.setVariable(variableName, searchRoot)
+                    return { success: 1, message: "httpSearchKeyValue: Data found!" + (scopeKey == null ? '' : scopeKey + ' / ') + searchKey + " = " + searchRoot, value: searchRoot, stop: 0 };
+                } else {
+                    if (operator == 'Equal') {
+                        let op = (searchRoot == searchValue)
+                        variables.setVariable(variableName, op)
+                        return { success: 1, message: "httpSearchKeyValue: Data Search", value: op, stop: 0 };
+                    } else {
+                        let op = searchRoot.includes(searchValue)
+                        variables.setVariable(variableName, op)
+                        return { success: 1, message: "httpSearchKeyValue: Data Search", value: op, stop: 0 };
+                    }
+                }
+            }
         }
 
 
@@ -6517,8 +6549,20 @@ async function httpSearchKeyValue(page, data, variables, code, searchKey, search
             // Data found!
             console.log("httpSearchKeyValue: Data found! : " + (scopeKey == null ? '' : scopeKey + ' / ') + searchKey + " = " + keyValue);
             if (typeof keyValue == 'object') keyValue = "<Object>"
-            variables.setVariable(variableName, keyValue)
-            return { success: 1, message: "httpSearchKeyValue: Data found! " + (scopeKey == null ? '' : scopeKey + ' / ') + searchKey + " = " + keyValue, value: keyValue, stop: 0 };
+            if (searchValue == '<N/A>') {
+                variables.setVariable(variableName, keyValue)
+                return { success: 1, message: "httpSearchKeyValue: Data found! " + (scopeKey == null ? '' : scopeKey + ' / ') + searchKey + " = " + keyValue, value: keyValue, stop: 0 };
+            } else {
+                if (operator == 'Equal') {
+                    let op = (keyValue == searchValue)
+                    variables.setVariable(variableName, op)
+                    return { success: 1, message: "httpSearchKeyValue: Data Search", value: op, stop: 0 };
+                } else {
+                    let op = keyValue.includes(searchValue)
+                    variables.setVariable(variableName, op)
+                    return { success: 1, message: "httpSearchKeyValue: Data Search", value: op, stop: 0 };
+                }
+            }
         }
 
     } catch (error) {
@@ -7787,7 +7831,7 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 return ret
 
             case 'httpSearchKeyValue':
-                ret = await httpSearchKeyValue(page, data, variables, param1, param2, param3, param4, param5, param6)
+                ret = await httpSearchKeyValue(page, data, variables, param1, param2, param3, param4, param5, param6, param7, param8)
                 if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
