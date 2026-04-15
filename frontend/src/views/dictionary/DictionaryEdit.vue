@@ -17,24 +17,30 @@
 
                     <div class="actions">
                         <div class="input-container focus">
-                            <input type="text" name="createdby" class="input disabled info" v-model="createdBy" disabled />
+                            <input type="text" name="createdby" class="input disabled info" v-model="createdBy"
+                                disabled />
                             <label>Created By</label>
                             <span>Created By</span>
                         </div>
                         <div class="input-container focus">
-                            <input type="text" name="updatedby" class="input disabled info" v-model="updatedBy" disabled />
+                            <input type="text" name="updatedby" class="input disabled info" v-model="updatedBy"
+                                disabled />
                             <label>Updated By</label>
                             <span>Updated By</span>
                         </div>
                     </div>
 
-
-
                     <div class="input-container">
-                        <button @click="handleScan">
-                            <i class="fa-solid fa-circle-check"></i>
-                            Scanning</button>
+                        <button @click="handleScan" style="background-color: #4AB3E2;">
+                            <i class="fa fa-globe"></i>
+                            Web Scanning</button>
+
+                        <button @click="handlePhoneScan" style="background-color: #4AB3E2;">
+                            <i class="fa fa-mobile"></i>
+                            Phone Scanning</button>
                     </div>
+
+
 
                     <div class="input-container focus">
                         <input type="text" name="subproject" class="input disabled" v-model="projectName" disabled />
@@ -43,21 +49,23 @@
                     </div>
 
                     <div class="input-container focus">
-                        <input type="text" name="codeheader" class="input disabled"  v-model="codeHeader" disabled title="The full code is equal to the dictionary set code + this code"/>
+                        <input type="text" name="codeheader" class="input disabled" v-model="codeHeader" disabled
+                            title="The full code is equal to the dictionary set code + this code" />
                         <label>Header Code</label>
                         <span>Header Code</span>
                     </div>
 
                     <div class="input-container focus">
-                        <input type="text" name="code" class="input" @focus="handleFocus($event)" @blur="handleBlur($event)"
-                            maxlength="80" v-model="code" />
+                        <input type="text" name="code" class="input" @focus="handleFocus($event)"
+                            @blur="handleBlur($event)" maxlength="80" v-model="code" />
                         <label>Code</label>
                         <span>Code</span>
                     </div>
 
                     <div class="input-container focus">
-                        <input type="text" name="language" class="input" @focus="handleFocus($event)" @blur="handleBlur($event)"
-                            maxlength="2" title="* by default or the code of the language in 2 characters"  v-model="language" />
+                        <input type="text" name="language" class="input" @focus="handleFocus($event)"
+                            @blur="handleBlur($event)" maxlength="2"
+                            title="* by default or the code of the language in 2 characters" v-model="language" />
                         <label>Language</label>
                         <span>Language</span>
                     </div>
@@ -71,8 +79,8 @@
 
 
                     <div class="input-container textarea focus">
-                        <textarea name="comment" class="input" maxlength="80" v-model="comment" @focus="handleFocus($event)"
-                            @blur="handleBlur($event)"></textarea>
+                        <textarea name="comment" class="input" maxlength="80" v-model="comment"
+                            @focus="handleFocus($event)" @blur="handleBlur($event)"></textarea>
                         <label>Comment</label>
                         <span>Comment</span>
                     </div>
@@ -80,9 +88,10 @@
                     <div class="input-container focus">
                         <select id="active" class="input" @focus="handleFocus($event)" @blur="handleBlur($event)"
                             v-model="selectedActive">
-                            <option v-for="active in actives" :key="active.activeID" v-bind:value="{ id: active.activeID }">
+                            <option v-for="active in actives" :key="active.activeID"
+                                v-bind:value="{ id: active.activeID }">
                                 {{ active.active }}</option>
-                        </select> 
+                        </select>
                         <label>Status</label>
                         <span>Status</span>
                     </div>
@@ -134,7 +143,7 @@ export default {
         if (!props.connected) {
             router.push({ name: 'Login' })
             return
-        }        
+        }
 
 
         const dictionary = ref([])
@@ -213,7 +222,7 @@ export default {
                     codeHeader.value = dictionary.value[0].headercode
                     language.value = dictionary.value[0].language
                     label.value = dictionary.value[0].label
-                    comment.value = dictionary.value[0].comment 
+                    comment.value = dictionary.value[0].comment
                     createdBy.value = dictionary.value[0].createdby + ' on: ' + dictionary.value[0].created
                     updatedBy.value = dictionary.value[0].updatedby + ' on: ' + dictionary.value[0].updated
                     selectedActive.value = ({ id: dictionary.value[0].active })
@@ -258,6 +267,15 @@ export default {
             router.push({ name: 'DictionaryScan', params: { id: dictionaryID.value } })
         }
 
+        // --------------------------------------------------------------------------
+        // User wants to scan the Android phone to detect web element
+        // --------------------------------------------------------------------------
+        const handlePhoneScan = () => {
+            consoleLog('DictionaryEdit.vue/handlePhoneScan', 2, 'User moves to the phone scan screen', trace.value)
+            router.push({ name: 'Android', params: { id: dictionaryID.value } })
+        }
+
+
         // -----------------------------------------------------------------------------------
         // leave the screen and go to the Dictionary screen (used by the function DisplayError)
         // -----------------------------------------------------------------------------------
@@ -270,7 +288,7 @@ export default {
         // --------------------------------------------------------------------------
         const handleSubmit = () => {
             consoleLog('DictionaryEdit.vue/handleSubmit', 2, 'User Submit the action - projectID: ' + projectID.value, trace.value)
-            
+
             // code, label, comment, language, active, projectID, dictionaryID
             const { error, updateTheDictionary } = updateDictionary(code.value, label.value, comment.value, language.value, selectedActive.value.id, projectID.value, dictionaryID.value, userName.value, today)
             updateTheDictionary(dictionary, trace.value)
@@ -291,9 +309,9 @@ export default {
 
 
         return {
-            errorMessage, styleMessage, dictionary, projectName, projectID, subprojectName, subprojectID, userID, 
+            errorMessage, styleMessage, dictionary, projectName, projectID, subprojectName, subprojectID, userID,
             code, codeHeader, label, language, comment, actives, selectedActive, createdBy, updatedBy,
-            handleCancel, handleSubmit, handleFocus, handleBlur, handleScan
+            handleCancel, handleSubmit, handleFocus, handleBlur, handleScan, handlePhoneScan
         }
 
     }

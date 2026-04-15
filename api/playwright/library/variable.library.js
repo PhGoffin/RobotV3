@@ -10,6 +10,8 @@
 * V1.00 PGO	30/01/2024	Initial version
 *
 */
+const net = require('net');
+
 class Variables {
 
     /**
@@ -824,6 +826,31 @@ class Variables {
     };
 
 
+    /**
+     * @function
+     *  isAdbRunning: Check if ADB server is running on localhost:5037
+     *
+     */
+    isAdbRunning(timeoutMs = 1000) {
+        return new Promise(resolve => {
+            const socket = new net.Socket();
+
+            const onFail = () => {
+                socket.destroy();
+                resolve(false);
+            };
+
+            socket.setTimeout(timeoutMs);
+            socket.once('error', onFail);
+            socket.once('timeout', onFail);
+
+            socket.connect(5037, '127.0.0.1', () => {
+                socket.end();
+                resolve(true);
+            });
+        });
+    }
+
 
     /**
      * @function
@@ -842,11 +869,27 @@ class Variables {
      *
      */
     async setPhoneDevice() {
-        const { _android: android } = require('playwright');
-        const [device] = await android.devices();
-        this.phoneDevice = device;
-        //return this.phoneDevice
-        return device
+
+        //console.log('setPhoneDevice starting....')
+
+        // ✅ Guard: prevent Playwright from touching Android if ADB is down
+        const adbAvailable = await this.isAdbRunning();
+        if (!adbAvailable) {
+            console.log('ADB server not running (Android Studio / adb not launched)');
+            return null;
+        }
+
+        try {
+            const { _android: android } = require('playwright');
+            const [device] = await android.devices();
+            this.phoneDevice = device || null;
+            return this.phoneDevice
+            //return device
+
+        } catch (error) {
+            console.log('setPhoneDevice Error', error.message)
+            return null
+        }
     };
 
 

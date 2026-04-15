@@ -96,6 +96,7 @@ import AITraining from '../views/ai_training/AITraining.vue'
 import AITrainingEdit from '../views/ai_training/AITrainingEdit.vue'
 import AIDashboard from '../views/ai_dashboard/AIDashboard.vue'
 import Performance from '../views/performance/Performance.vue'
+import Android from '../views/android/AndroidInspector.vue'
 
 
 
@@ -315,7 +316,7 @@ const routes = [
     name: 'RuleheaderEdit',
     component: RuleheaderEdit,
     props: true
-  },  
+  },
   {
     path: '/ruleset/Import',
     name: 'RuleImport',
@@ -352,10 +353,16 @@ const routes = [
     component: DictionaryRename,
     props: true
   },
-    {
+  {
     path: '/dictionary/Scan/:id',
     name: 'DictionaryScan',
     component: DictionaryScan,
+    props: true
+  },
+  {
+    path: '/android/:id',
+    name: 'Android',
+    component: Android,
     props: true
   },
   {
@@ -363,7 +370,7 @@ const routes = [
     name: 'Natural Proto',
     component: NaturalProto,
     props: true
-  },  
+  },
   {
     path: '/naturalheader',
     name: 'Natural Set',
@@ -519,7 +526,7 @@ const routes = [
     name: 'DatasetheaderImport',
     component: DatasetheaderImport,
     props: true
-  },  
+  },
   {
     path: '/data/:id',
     name: 'Data',
@@ -645,7 +652,7 @@ const routes = [
     name: 'AITagElement',
     component: AITagElement,
     props: true
-  },  
+  },
   {
     path: '/aitagattribute/:id',
     name: 'AITagAttribute',
@@ -682,6 +689,7 @@ const routes = [
     component: Performance,
     props: true
   }
+
 
 
 ]

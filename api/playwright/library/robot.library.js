@@ -7313,23 +7313,45 @@ async function phoneUrl(data, variables, link) {
  *  phoneCapture:  take a print screen of the phone
  * 
  * @param {object} data:        all the parameters
- * @param {object} variables:            array of all the variables
+ * @param {object} variables:   array of all the variables
+ * @param {string} phoneType:   type of element: "phone" or "web" 
  * @param {string} slotID:      slot number = 0: Error, 1 --> 5 User print screen 
+ * @param {string} fullPage:    0 (default): Normal capture, 1: full page (work only for web page, not for phone) 
  *  
  */
-async function phoneCapture(data, variables, slotID, fullPage) {
+async function phoneCapture(data, variables, phoneType, slotID, fullPage) {
+    const fs = require('fs');
 
     try {
+
+        let device = await variables.getPhoneDevice() // get a device for Android Phone
+        if (!device) { device = await variables.setPhoneDevice() } // Reset a device for Android Phone
+        if (!device) {
+            return { success: 0, message: 'phoneCapture KO - No device connected!', stop: 1 }
+        }
+
+        phoneType = variables.evaluateVariable(phoneType, true)
+
         let picture = './printscreen/' + data.userID + '_image' + slotID + '.png'
         if (fullPage == undefined || fullPage == 0) fullPage = false
         else fullPage = true
 
-        console.log('full page:', fullPage)
+        if (phoneType == 'phone') {
+            // ---- PHONE -----
+            console.log('printScreen: Phone', picture)
+            const buffer = await device.screenshot();
+            fs.writeFileSync(picture, buffer);
+            return { success: 1, message: 'phoneCapture OK', slot: slotID, stop: 0 }
+        } else if (phoneType == 'web') {
+            // ---- WEB ------
+            console.log('printScreen: Web', picture)
+            const page = await variables.getPhonePage();
+            await page.screenshot({ path: picture, fullPage: fullPage });
+            return { success: 1, message: 'phoneCapture OK', slot: slotID, stop: 0 }
+        } else {
+            return { success: 0, message: 'phoneCapture KO! - Invalid type: ' + phoneType, stop: 1 }
+        }
 
-        console.log('printScreen', picture)
-        const page = await variables.getPhonePage();
-        await page.screenshot({ path: picture, fullPage: fullPage });
-        return { success: 1, message: 'phoneCapture OK', slot: slotID, stop: 0 }
     } catch (err) {
         return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
     }
@@ -7885,7 +7907,7 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 return ret
 
             case 'phoneCapture':
-                ret = await phoneCapture(data, variables, param1, param2)
+                ret = await phoneCapture(data, variables, param1, param2, param3)
                 if (ret.success == 1) await logfile(data.userID, 'Info', '... Print screen is in the slot: ' + ret.slot)
                 return ret
 

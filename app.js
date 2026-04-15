@@ -76,6 +76,9 @@ const playwrightRouter = require("./api/playwright/robot/robot.router");
 // Upload
 const uploadRouter = require("./api/upload/upload.router");
 
+// Android
+const androidRouter = require("./api/android/android.router");
+
 
 app.use(express.json());
 app.use(express.urlencoded( {extended: true}));
@@ -142,9 +145,9 @@ app.use("/api/playwright/robot", playwrightRouter);
 app.use("/api/certificate", certificateRouter);
 app.use("/api/httpdata", httpdataRouter);
 
-
-
 app.use("/api/upload", uploadRouter);
+
+app.use("/api/android", androidRouter);
 
 
 // Error Exception
