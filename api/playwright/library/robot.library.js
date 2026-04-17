@@ -5764,6 +5764,47 @@ async function PublicKey(certificatePath, password) {
 
 }
 
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  generateRequestId:  Generate a random request ID based on the date time
+* 
+* @param {string} template:         template of the RequestId: a text with some keywords like <KEYnn> where nn is the lenght of the key
+* Example: 12345678-AUTO-<KEY4>-PHIL-<KEY4>-<KEY12>
+*/
+function generateRequestId(template) {
+    const now = new Date();
+
+    // Create a long numeric base using date + milliseconds
+    const base = (
+        now.getFullYear().toString() +
+        String(now.getMonth() + 1).padStart(2, "0") +
+        String(now.getDate()).padStart(2, "0") +
+        String(now.getHours()).padStart(2, "0") +
+        String(now.getMinutes()).padStart(2, "0") +
+        String(now.getSeconds()).padStart(2, "0") +
+        String(now.getMilliseconds()).padStart(3, "0")
+    );
+
+    let offset = 0;
+
+    return template.replace(/<KEY(\d+)>/g, (_, length) => {
+        const len = Number(length);
+
+        // Ensure enough digits are available
+        if (offset + len > base.length) {
+            offset = 0;
+        }
+
+        const chunk = base.substr(offset, len);
+        offset += len;
+
+        return chunk;
+    });
+}
+
+
+
 
 /**
 * ---------------------------------------------------------------------------- 
@@ -5804,10 +5845,11 @@ async function buildAssertionPayload(dataset, certificateKey, requestID) {
             // Use the public key passed in parameter
             finalValue = certificateKey
         }
-        else if (finalValue.toLowerCase() === '<requestid>') {
+        else if (finalValue.toLowerCase().includes('<key')) {
             // Generate a fresh UUID
             //finalValue = crypto.randomUUID();
-            finalValue = requestID || `REQ-${Date.now()}` // Auto-generate ID if not provided
+            //finalValue = requestID || `REQ-${Date.now()}` // Auto-generate ID if not provided
+            finalValue = generateRequestId(finalValue)
         }
 
         // Otherwise, it uses the literal value from 'label' (e.g., 'CN_POLICY')
@@ -5848,7 +5890,7 @@ async function getSAMLContext(data, certificateDataName) {
         throw new Error("SAML Assertion: Certificate data not ok!");
     }
 
-    // 2. Resolve Project Path
+    // 2. Resolve Certificate Path
     const projectResult = await getProjectById(data.projectID);
     if (!projectResult.length) throw new Error(`SAML: Cannot find project: ${data.projectID}`);
 
@@ -5896,6 +5938,8 @@ async function getSAMLContext(data, certificateDataName) {
         clientCertificates: [clientCert]
     });
 
+    console.log('clientCert', clientCert)
+
     return { apiContext, certificateData };
 }
 
@@ -5917,6 +5961,7 @@ async function SAML_Assertion(page, data, variables, certificateDataName, assert
     const { getCertificateByCode, createCertificate, updateCertificate } = require("../../certificate/certificate.service.js");
     const { getDatasetByHeaderCode } = require("../../dataset/dataset.service.js");
     const { getDatasetByCode } = require("../../dataset/dataset.service.js");
+    const robot = require("./robot.library.js")
 
     let apiContext;
     let certificateKey = '<N/A>';
@@ -5960,6 +6005,10 @@ async function SAML_Assertion(page, data, variables, certificateDataName, assert
         } else {
             return { success: 0, message: `SAML: Cannot find the dataset: ${assertionDataName}!`, stop: 1 };
         }
+
+        // Store the requestID in the reference
+        await robot.evaluateFunction(page, variables, 'setReference', data, 'RequestID', dynamicData.requestId, 'RequestID')
+
 
         // --- STEP 4: REQUEST ASSERTION ---
         console.log("SAML: Requesting Assertion...");
@@ -6006,6 +6055,7 @@ async function SAML_Assertion(page, data, variables, certificateDataName, assert
             }
             console.log('Certificate token created!');
         }
+
 
         return { success: 1, message: "SAML Assertion: OK!", stop: 0 };
 
@@ -6382,7 +6432,7 @@ function findValueByKey(obj, targetKey, position, tracker = { count: 0 }) {
 * @param {string} searchPosition:       occurrence of the key (1 by default) 
 * @param {string} scopeKey:             (optional) "Grandparent" (e.g., "FamilyMember")
 * @param {string} scopePosition:        occurrence of the "Grandparent": 1 by default (e.g., 3 for the 3rd family member)
-* @param {string} variableName:         name of the variable to store the result 
+* @param {string} variableName:         name of the variable to store the result (not used when searchKey = <ALL>)
 * @param {string} operator:             Contains or Equal 
 * @param {string} searchValue:          (optional) search a value in the result - the variablename will contain true or false 
 *
@@ -7854,7 +7904,7 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
 
             case 'httpSearchKeyValue':
                 ret = await httpSearchKeyValue(page, data, variables, param1, param2, param3, param4, param5, param6, param7, param8)
-                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
+                if (ret.success == 1 && ret.value != 99) await logfile(data.userID, 'Info', '... ' + ret.value)
                 return ret
 
             case 'httpKeyCount':

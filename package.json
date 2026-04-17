@@ -4,8 +4,10 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "start": "nodemon app.js",
-    "start2": "pm2 start app.js",
+    "start": "nodemon --exec \"node --use-system-ca\" app.js",
+    "start0": "nodemon app.js",
+    "start2": "--use-system-ca app.js",
+    "start3": "pm2 start app.js",
     "monitor": "pm2 monitor",
     "stop": "pm2 stop all",
     "watch": "pm2 set pm2:sysmonit true",
