@@ -1,5 +1,6 @@
 const mysql = require("../../config/database");
 const { chromium } = require('playwright');
+const StateScanner = require("./StateScanner")
 
 
 // Helper function OUTSIDE module.exports
@@ -58,8 +59,8 @@ module.exports = {
    * @Author: Philippe Goffin 
    * @Email: artcomputer123@gmail.com
    * @Date: 2024-02-01
- * @Last Modified by: Someone
-   * @Last Modified time: 2026-03-30 12:54:41
+   * @Last Modified by: Someone
+   * @Last Modified time: 2026-04-20 10:46:08
    * @Description: All the database services available for the API dictionary
    */
 
@@ -398,226 +399,243 @@ module.exports = {
 
 
 
+  // -------------------------------------------------------------------------------------
+  // Scan a web browser/Phone browser to facilitate the creation of a dictionary record
+  // -------------------------------------------------------------------------------------
+  scanDictionary: async (data) => {
+    const scanner = new StateScanner(data)
+    return await scanner.run()
+  }
 
-  // ---------------------------------------------------------------------------
-  // Scan a web browser to facilitate the creation of a dictionary record
-  // ---------------------------------------------------------------------------
 
-  scanDictionary: (data) => {
-    return new Promise(async (resolve, reject) => {
-      console.log('Url: ' + data.myUrl)
-      console.log('Delay: ' + data.myDelay)
-      console.log('Device: ' + data.myDevice)
-      // '1': 'Web browser', '0': 'Phone', '2': 'Phone browser'
-
-      let page
-      const say = require('say');
-
-      if (data.myDevice == 1) {
-        // Web browser
-        // -----------
-        // 1. Launch the browser (headless: false is required so the user can interact)
-        const browser = await chromium.launch({ headless: false });
-        //const context = await browser.newContext();
-        // Create a context that ignores SSL errors
-        const context = await browser.newContext({
-          ignoreHTTPSErrors: true
+  // -------------------------------------------------------------------------------------
+  // Scan a web browser/Phone browser to facilitate the creation of a dictionary record
+  // -------------------------------------------------------------------------------------
+  /*
+    scanDictionary_OLD: (data) => {
+      return new Promise(async (resolve, reject) => {
+        console.log('Url: ' + data.myUrl)
+        console.log('Delay: ' + data.myDelay)
+        console.log('Device: ' + data.myDevice)
+        // '1': 'Web browser', '0': 'Phone', '2': 'Phone browser'
+  
+        let page
+        let browser
+        let context
+        let device
+        const say = require('say');
+  
+        if (data.myDevice == 1) {
+          // Web browser
+          // -----------
+          // 1. Launch the browser (headless: false is required so the user can interact)
+          browser = await chromium.launch({ headless: false });
+          // Create a context that ignores SSL errors
+          context = await browser.newContext({
+            ignoreHTTPSErrors: true
+          });
+          page = await context.newPage();
+  
+        } else if (data.myDevice == 2) {
+          // Phone browser
+          // -----------
+          const { _android: android } = require('playwright');
+          [device] = await android.devices();
+          if (!device) return resolve({ success: 0, attributes: null, message: 'Scan KO: no device!' })
+  
+          console.log("Launching Chrome...");
+          context = await device.launchBrowser({
+            // Explicitly target the Chrome package to ensure no confusion
+            pkg: 'com.android.chrome',
+            // Increase timeout in case Android 16 is slow to bridge the socket
+            timeout: 30000
+          });
+  
+          console.log("Context created, requesting page...");
+  
+          // If newPage() hangs, try using the existing first page often created by default
+          const pages = context.pages();
+          page = pages.length > 0 ? pages[0] : await context.newPage();
+  
+          console.log("Phone web page ready!");
+  
+  
+  
+        } else if (data.myDevice == 0) {
+          // NATIVE ANDROID (Tap -> Get Element)
+          // ----------------------------------
+          const { _android: android } = require('playwright');
+          [device] = await android.devices();
+  
+          if (!device)
+            return resolve({ success: 0, message: "No Android device detected!" });
+  
+          console.log("Android connected.");
+  
+          // Instruct the user to tap
+          console.log("Please tap on the Android screen...");
+          say.speak("Please tap on the phone screen");
+  
+          // Listen for tap coordinates
+          device.on("touchscreen", async (event) => {
+            if (event.action !== "tap") return;
+  
+            const { x, y } = event;
+            console.log(`Tap detected at: ${x}, ${y}`);
+  
+            // STEP 1 — Dump UI hierarchy
+            const xmlPath = "/sdcard/window_dump.xml";
+            await device.shell(`uiautomator dump ${xmlPath}`);
+  
+            const raw = await device.shell(`cat ${xmlPath}`);
+            const decoder = new TextDecoder();
+            const xmlString = decoder.decode(await raw.arrayBuffer());
+  
+            // STEP 2 — Parse XML
+            const xml2js = require("xml2js");
+            const parser = new xml2js.Parser();
+            const uiTree = await parser.parseStringPromise(xmlString);
+  
+            // STEP 3 — Find element containing the tap
+            const element = findElementByCoordinates(uiTree, x, y);
+  
+            console.log("Element selected:", element);
+  
+            return resolve({
+              success: element ? 1 : 0,
+              attributes: element,
+              message: element ? "Native element selected" : "No element found at tap"
+            });
+          });
+  
+  
+        }
+  
+        let theAttributes
+  
+        try {
+          // The URL you want to inspect
+          const targetUrl = data.myUrl
+          await page.goto(targetUrl);
+        } catch (err) {
+          console.log('Scan Url error', err.message)
+        }
+  
+        // Wait before starting the scan
+        await page.waitForTimeout(data.myDelay * 1000);
+  
+        say.speak("Scanning in progress...", '', 1.0, async () => {
+          console.log('speaking...')
         });
-        page = await context.newPage();
-
-      } else if (data.myDevice == 2) {
-        // Phone browser
-        // -----------
-        const { _android: android } = require('playwright');
-        const [device] = await android.devices();
-        if (!device) return resolve({ success: 0, attributes: null, message: 'Scan KO: no device!' })
-
-        console.log("Launching Chrome...");
-        const context = await device.launchBrowser({
-          // Explicitly target the Chrome package to ensure no confusion
-          pkg: 'com.android.chrome',
-          // Increase timeout in case Android 16 is slow to bridge the socket
-          timeout: 30000
+  
+        // 2. Expose a Node.js function to the browser
+        await page.exposeFunction('onElementClicked', async (attributes) => {
+          console.log('\n[Element Selected]:');
+          //console.table(attributes);
+          theAttributes = attributes
+          console.table(theAttributes);
+  
+  
+          // Close the right thing
+          if (browser) {
+            await browser.close()
+          } else if (context) {
+            await context.close()
+          } else if (device) {
+            await device.close()
+          }
+  
+  
+          // Resolve immediately
+          resolve({
+            success: 1,
+            attributes: theAttributes,
+            message: 'Scan Ok'
+          })
+  
+  
         });
-
-        console.log("Context created, requesting page...");
-
-        // If newPage() hangs, try using the existing first page often created by default
-        const pages = context.pages();
-        page = pages.length > 0 ? pages[0] : await context.newPage();
-
-        console.log("Phone web page ready!");
-
-
-
-      } else if (data.myDevice == 0) {
-        // NATIVE ANDROID (Tap -> Get Element)
-        // ----------------------------------
-        const { _android: android } = require('playwright');
-        const [device] = await android.devices();
-
-        if (!device)
-          return resolve({ success: 0, message: "No Android device detected!" });
-
-        console.log("Android connected.");
-
-        // Instruct the user to tap
-        console.log("Please tap on the Android screen...");
-        say.speak("Please tap on the phone screen");
-
-        // Listen for tap coordinates
-        device.on("touchscreen", async (event) => {
-          if (event.action !== "tap") return;
-
-          const { x, y } = event;
-          console.log(`Tap detected at: ${x}, ${y}`);
-
-          // STEP 1 — Dump UI hierarchy
-          const xmlPath = "/sdcard/window_dump.xml";
-          await device.shell(`uiautomator dump ${xmlPath}`);
-
-          const raw = await device.shell(`cat ${xmlPath}`);
-          const decoder = new TextDecoder();
-          const xmlString = decoder.decode(await raw.arrayBuffer());
-
-          // STEP 2 — Parse XML
-          const xml2js = require("xml2js");
-          const parser = new xml2js.Parser();
-          const uiTree = await parser.parseStringPromise(xmlString);
-
-          // STEP 3 — Find element containing the tap
-          const element = findElementByCoordinates(uiTree, x, y);
-
-          console.log("Element selected:", element);
-
-          return resolve({
-            success: element ? 1 : 0,
-            attributes: element,
-            message: element ? "Native element selected" : "No element found at tap"
+  
+        // 3. Inject the Inspector logic
+        await page.addInitScript(() => {
+  
+          // Helper function to generate XPath
+          const getXPath = (element) => {
+  
+            if (element === document.body) {
+              return '/html/body';
+            }
+  
+            let ix = 0;
+            const siblings = element.parentNode.childNodes;
+            for (let i = 0; i < siblings.length; i++) {
+              const sibling = siblings[i];
+              if (sibling === element) {
+                return getXPath(element.parentNode) + '/' + element.tagName.toLowerCase() + '[' + (ix + 1) + ']';
+              }
+              if (sibling.nodeType === 1 && sibling.tagName === element.tagName) {
+                ix++;
+              }
+            }
+          };
+  
+          window.addEventListener('DOMContentLoaded', () => {
+            // Create a style element for the hover effect
+            const style = document.createElement('style');
+            style.innerHTML = `
+          .playwright-hover-outline {
+            outline: 2px dashed #ff0000 !important;
+            outline-offset: -2px !important;
+            cursor: crosshair !important;
+          }
+        `;
+            document.head.appendChild(style);
+  
+            let lastElement = null;
+  
+            // Mouseover: Highlight the element
+            document.addEventListener('mouseover', (e) => {
+              if (lastElement) lastElement.classList.remove('playwright-hover-outline');
+              e.target.classList.add('playwright-hover-outline');
+              lastElement = e.target;
+            }, true);
+  
+            // Click: Capture attributes and send to Node.js
+            document.addEventListener('click', (e) => {
+              // Prevent links from opening or buttons from submitting
+              e.preventDefault();
+              e.stopPropagation();
+  
+              const el = e.target;
+  
+              // Gather attributes
+              const attributes = {
+                tagName: el.tagName.toLowerCase(),
+                id: el.id || 'N/A',
+                name: el.getAttribute('name') || 'N/A',
+                class: el.className || 'N/A',
+                innerText: el.innerText?.substring(0, 50).trim() || 'N/A',
+                placeholder: el.getAttribute('placeholder') || 'N/A',
+                source: el.getAttribute('src') || 'N/A',
+                type: el.getAttribute('type') || 'N/A',
+                xpath: getXPath(el)
+              };
+  
+              // Call the Node.js function
+              window.onElementClicked(attributes);
+              console.log('End click')
+  
+            }, true);
           });
         });
-
-
-      }
-
-
-
-      let theAttributes
-
-      try {
-        // The URL you want to inspect
-        const targetUrl = data.myUrl
-        await page.goto(targetUrl);
-      } catch (err) {
-        //console.log (err)
-        // if (err.message.includes('ERR_CERT_AUTHORITY_INVALID')) {
-        //   console.log("Warning: Invalid certificate: ERR_CERT_AUTHORITY_INVALID");
-        //   //await page.waitForTimeout(2000);
-        // } else {
-        console.log('Scan Url error', err.message)
-        //   return resolve({ success: 0, message: 'Scan: URL error!' })
-        // }
-      }
-
-      // Wait before starting the scan
-      await page.waitForTimeout(data.myDelay * 1000);
-
-      say.speak("Scanning in progress...", '', 1.0, async () => {
-        console.log('speaking...')
+  
+        // Reload the page once to ensure the script is injected correctly if navigating manually
+        await page.reload();
+  
+  
       });
-
-      // 2. Expose a Node.js function to the browser
-      await page.exposeFunction('onElementClicked', (attributes) => {
-        console.log('\n[Element Selected]:');
-        //console.table(attributes);
-        theAttributes = attributes
-        console.table(theAttributes);
-        browser.close();
-      });
-
-      // 3. Inject the Inspector logic
-      await page.addInitScript(() => {
-
-        // Helper function to generate XPath
-        const getXPath = (element) => {
-
-          if (element === document.body) {
-            return '/html/body';
-          }
-
-          let ix = 0;
-          const siblings = element.parentNode.childNodes;
-          for (let i = 0; i < siblings.length; i++) {
-            const sibling = siblings[i];
-            if (sibling === element) {
-              return getXPath(element.parentNode) + '/' + element.tagName.toLowerCase() + '[' + (ix + 1) + ']';
-            }
-            if (sibling.nodeType === 1 && sibling.tagName === element.tagName) {
-              ix++;
-            }
-          }
-        };
-
-        window.addEventListener('DOMContentLoaded', () => {
-          // Create a style element for the hover effect
-          const style = document.createElement('style');
-          style.innerHTML = `
-        .playwright-hover-outline {
-          outline: 2px dashed #ff0000 !important;
-          outline-offset: -2px !important;
-          cursor: crosshair !important;
-        }
-      `;
-          document.head.appendChild(style);
-
-          let lastElement = null;
-
-          // Mouseover: Highlight the element
-          document.addEventListener('mouseover', (e) => {
-            if (lastElement) lastElement.classList.remove('playwright-hover-outline');
-            e.target.classList.add('playwright-hover-outline');
-            lastElement = e.target;
-          }, true);
-
-          // Click: Capture attributes and send to Node.js
-          document.addEventListener('click', (e) => {
-            // Prevent links from opening or buttons from submitting
-            e.preventDefault();
-            e.stopPropagation();
-
-            const el = e.target;
-
-            // Gather attributes
-            const attributes = {
-              tagName: el.tagName.toLowerCase(),
-              id: el.id || 'N/A',
-              name: el.getAttribute('name') || 'N/A',
-              class: el.className || 'N/A',
-              innerText: el.innerText?.substring(0, 50).trim() || 'N/A',
-              placeholder: el.getAttribute('placeholder') || 'N/A',
-              source: el.getAttribute('src') || 'N/A',
-              type: el.getAttribute('type') || 'N/A',
-              xpath: getXPath(el)
-            };
-
-            // Call the Node.js function
-            window.onElementClicked(attributes);
-          }, true);
-        });
-      });
-
-      // Reload the page once to ensure the script is injected correctly if navigating manually
-      await page.reload();
-
-      // Keep the script running
-      page.on('close', () => {
-        console.log('Browser is closed!')
-        return resolve({ success: 1, attributes: theAttributes, message: 'Scan Ok' })
-      });
-
-
-    });
-  }
+    }
+      */
 
 
 

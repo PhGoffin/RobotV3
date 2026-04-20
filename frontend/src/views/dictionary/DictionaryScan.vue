@@ -514,7 +514,7 @@ export default {
         // --------------------------------------------------------------------------        
         const handleScan = () => {
             consoleLog('DictionaryScan.vue/handleScan', 2, 'User scan a website: ' + myURL.value, trace.value)
-            DisplayError("Close the external window to stop the scan", 'Info', null)
+            DisplayError("Click on the element to analyse", 'Info', null)
 
             // code, label, comment, language, active, projectID, dictionaryID
             const { error, scanForTheDictionary } = scanDictionary(projectID.value, dictionaryID.value, myURL.value, myDelay.value, device.value)
