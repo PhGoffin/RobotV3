@@ -7703,6 +7703,7 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
 
             case 'setVariable':
                 ret = await setVariable(variables, param1, param2)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + param1 + ' = ' + ret.value)
                 return ret
 
             case 'listVariable':
