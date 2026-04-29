@@ -141,7 +141,7 @@ export default {
 
         const code = ref('Reference')
         const codes = ref([{ codeID: 'Reference', code: 'Dashboard Reference' }, { codeID: 'Email Host', code: 'Email host' }
-        , { codeID: 'Email From', code: 'Email From' }, { codeID: 'Proxy', code: 'Proxy' }])
+        , { codeID: 'Email From', code: 'Email From' }, { codeID: 'Proxy', code: 'Proxy' }, { codeID: 'Secret Column', code: 'Secret Column' }])
         const selectedCode = ref({ id: code.value })
 
 

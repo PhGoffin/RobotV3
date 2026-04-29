@@ -4491,10 +4491,12 @@ async function printScreen(page, data, slotID, fullPage) {
         //console.log('printScreen', picture)
         if (fullPage == undefined || fullPage == 0) fullPage = false
         else fullPage = true
+        //console.log ('path: ', picture)
         //console.log ('full page:', fullPage)
         await page.screenshot({ path: picture, fullPage: fullPage })
         return { success: 1, message: 'Printscreen OK', slot: slotID, stop: 0 }
     } catch (err) {
+        console.log('printScreen Error', err.message)
         return { success: 0, message: 'Fatal Error: ' + err.message, stop: 1 }
     }
 }
@@ -6878,12 +6880,19 @@ async function compareImages(baselineImagePath, compareImagePath, options = {}) 
 * 
 * @param {object} page:             playwright page
 * @param {object} data:             all the parameters
+* @param {object} variables:        array of all the variables
 * @param {string} baselineName      name of the baseline image
 * @param {number} printscreenSlot   number of the slot to store the printscreen
 * @param {number} baselineSlot      <optional> number of the slot to store the baseline
+* @param {string} mask1             name of the element to mask (or Dictionary)
+* @param {string} mask2             name of the element to mask (or Dictionary)
+* @param {string} mask3             name of the element to mask (or Dictionary)
+* @param {string} mask4             name of the element to mask (or Dictionary)
+* @param {string} mask5             name of the element to mask (or Dictionary)
+
 *
 */
-async function imageDifference(page, data, baselineName, printscreenSlot, baselineSlot) {
+async function imageDifference(page, data, variables, baselineName, printscreenSlot, baselineSlot, mask1, mask2, mask3, mask4, mask5) {
     const { fileExist } = require("./file.library")
 
     // take a printscreen
@@ -6891,12 +6900,25 @@ async function imageDifference(page, data, baselineName, printscreenSlot, baseli
 
     try {
 
+        // Check the masks
+        const maskLocators = [];
+        for (const rawMask of [mask1, mask2, mask3, mask4, mask5]) {
+            const resolved = await resolveMask(page, data, variables, rawMask);
+            if (resolved === '<ERROR>') return { success: 0, message: 'Mask cannot be resolve: ' + rawMask, stop: 1 };
+            if (resolved != undefined) maskLocators.push(page.locator(resolved));
+        }
+        console.log('maskLocators', maskLocators)
+
+
         let baselinePath = './Image/Baseline/' + baselineName + "_" + data.userID + '_image.png'
         // check if the baseline exists
         ret = await fileExist(baselinePath)
         if (ret == false) {
             // file not found, take a printscreen and store the result as the baseline
-            await page.screenshot({ path: baselinePath })
+            await page.screenshot({
+                path: baselinePath,
+                ...(maskLocators.length > 0 && { mask: maskLocators })
+            })
             let basePath = './printscreen/' + data.userID + '_image' + printscreenSlot + '.png'
             fs.copyFile(baselinePath, basePath, (err) => {
                 if (err) console.log("Error Found:", err);
@@ -6916,7 +6938,10 @@ async function imageDifference(page, data, baselineName, printscreenSlot, baseli
         // Take a fresh printscreen
         let picture = './printscreen/' + data.userID + '_image' + printscreenSlot + '.png'
         console.log('printScreen', picture)
-        await page.screenshot({ path: picture })
+        await page.screenshot({
+            path: picture,
+            ...(maskLocators.length > 0 && { mask: maskLocators })
+        })
 
         // Compare images
         try {
@@ -6994,6 +7019,37 @@ async function imageDifferenceData(variables, parameter, variable) {
 
 }
 
+/**
+* ---------------------------------------------------------------------------- 
+* @function
+*  resolveMask:  resolve the locator of the mask.
+* 
+* @param {object} page:             playwright page
+* @param {object} data:             all the parameters
+* @param {object} variables:        array of all the variables
+* @param {string} mask              name of the element to mask (or Dictionary)
+*
+*/
+async function resolveMask(page, data, variables, mask) {
+    const { getDictionaryByCode } = require("../../dictionary/dictionary.service.js");
+
+    if (!mask || mask === '<N/A>') return undefined
+    else if (mask[0] == '@') {
+        // Check if the mask is expressed in a valid dictionary format
+        const dataAPI = { projectID: data.projectID, code: mask, language: '*', active: 1 }
+        const result = await getDictionaryByCode(dataAPI);
+        if (result.length) {
+            mask = result[0].label
+        } else {
+            return "<ERROR>"
+        }
+    }
+    mask = variables.evaluateVariable(mask)
+    mask = mask.replace(/'/g, "");
+
+    return mask
+}
+
 
 /**
 * ---------------------------------------------------------------------------- 
@@ -7002,18 +7058,37 @@ async function imageDifferenceData(variables, parameter, variable) {
 * 
 * @param {object} page:             playwright page
 * @param {object} data:             all the parameters
+* @param {object} variables:        array of all the variables
 * @param {string} baselineName      name of the baseline image
 * @param {number} printscreenSlot   number of the slot to store the printscreen
+* @param {string} mask1             name of the element to mask (or Dictionary)
+* @param {string} mask2             name of the element to mask (or Dictionary)
+* @param {string} mask3             name of the element to mask (or Dictionary)
+* @param {string} mask4             name of the element to mask (or Dictionary)
+* @param {string} mask5             name of the element to mask (or Dictionary)
 *
 */
-async function imageBaseline(page, data, baselineName, printscreenSlot) {
+async function imageBaseline(page, data, variables, baselineName, printscreenSlot, mask1, mask2, mask3, mask4, mask5) {
+
 
     let fs = require("fs")
 
     try {
 
+        // Check the masks
+        const maskLocators = [];
+        for (const rawMask of [mask1, mask2, mask3, mask4, mask5]) {
+            const resolved = await resolveMask(page, data, variables, rawMask);
+            if (resolved === '<ERROR>') return { success: 0, message: 'Mask cannot be resolve: ' + rawMask, stop: 1 };
+            if (resolved != undefined) maskLocators.push(page.locator(resolved));
+        }
+        console.log('maskLocators', maskLocators)
+
         let baselinePath = './Image/Baseline/' + baselineName + "_" + data.userID + '_image.png'
-        await page.screenshot({ path: baselinePath })
+        await page.screenshot({
+            path: baselinePath,
+            ...(maskLocators.length > 0 && { mask: maskLocators })
+        })
         let basePath = './printscreen/' + data.userID + '_image' + printscreenSlot + '.png'
         fs.copyFile(baselinePath, basePath, (err) => {
             if (err) console.log("Error Found:", err);
@@ -7407,6 +7482,545 @@ async function phoneCapture(data, variables, phoneType, slotID, fullPage) {
     }
 }
 
+
+
+/**
+ * ---------------------------------------------------------------------------- 
+ * @function <OK>
+ *  ODBC_Generic:  Store a generic ODBC Connection string
+ * 
+ * @param {object} data:            all the parameters
+ * @param {object} variables:       array of all the variables
+ * @param {string} connectString:   ODBC Connection string 
+ *  
+ */
+async function ODBC_Generic(data, variables, connectString) {
+
+    const ODBC = require('./odbc.library.js')
+
+
+    try {
+
+        let ret = ODBC.setConnectionString(connectString)
+        console.log('ODBC_Generic', ret)
+        return { success: 1, message: 'ODBC_Generic OK', stop: 0 }
+    } catch (err) {
+        return { success: 0, message: 'ODBC_Generic Fatal Error: ' + err.message, stop: 1 }
+    }
+}
+
+
+
+
+/**
+ * ---------------------------------------------------------------------------- 
+ * @function <OK>
+ *  ODBC_SQLServer:  Store a SQL Server ODBC Connection string
+ * 
+ * @param {object} data:        all the parameters
+ * @param {object} variables:   array of all the variables
+ * @param {string} Driver:      name of the driver
+ * @param {string} Server:      name of the server
+ * @param {string} Database:    name of the database
+ * @param {string} DummyUser:   name of the dummy user
+ * @param {string} Encrypyt:    yes / no
+ * 
+ */
+async function ODBC_SQLServer(data, variables, Driver, Server, Database, DummyUser, Encrypyt) {
+
+    const { getDummyuserByUser } = require("../../dummyuser/dummyuser.service.js");
+    const { decryptPassword } = require("./password.library.js")
+    const { getDatasetByCode } = require("../../dataset/dataset.service.js");
+    const ODBC = require('./odbc.library.js')
+
+    try {
+
+        // Evaluate the dummyUser
+        let UserId = ""
+        let Password = ""
+
+        if (DummyUser == undefined) {
+            return { success: 0, message: "LoginUser: dummy User cannot be empty!", stop: 1 }
+        } else {
+            DummyUser = variables.evaluateVariable(DummyUser, true)
+        }
+
+        if (DummyUser == '<ME>') {
+            DummyUser = data.userName
+            variables.displayLog(1, 3, 'ME Dummy user: ' + DummyUser)
+
+        } else if (DummyUser[0] == '#') {
+            // Evaluate the dataset (if any)
+            const dataAPI = { subprojectID: data.subprojectID, code: DummyUser, language: '*', active: 1 }
+            const result = await getDatasetByCode(dataAPI);
+            if (result.length) {
+                DummyUser = result[0].label
+            } else {
+                variables.displayLog(1, 1, 'Data not found in the dataset! - dummyUser: ' + DummyUser)
+                return { success: 0, message: "Cannot find the code: " + DummyUser + " in the dataset!", stop: 1 }
+            }
+        }
+
+        variables.displayLog(1, 1, '***** Dummy user: ' + DummyUser)
+
+        // get the active dummy user data
+        const dataAPI = { projectID: data.projectID, dummy: DummyUser, active: 1 }
+        const result = await getDummyuserByUser(dataAPI);
+        if (result.length) {
+            UserId = result[0].user
+            Password = result[0].password
+        } else {
+            variables.displayLog(1, 1, '>>>>> Data not found in the dummy users!')
+            return { success: 0, message: "Cannot find the user: " + DummyUser + " in the dummy users!", stop: 1 }
+        }
+
+        // Decrypt the password
+        if (result[0].crypted) {
+            let ret = await decryptPassword(Password)
+            if (ret.success) {
+                Password = ret.password
+            } else {
+                return { success: 0, message: "Cannot decrypt the password!", stop: 1 }
+            }
+        }
+
+        let connectString = `Driver={${Driver}};Server=${Server};Database=${Database};UID=${UserId};PWD=${Password};Encrypt=${Encrypyt};`
+
+        let ret = ODBC.setConnectionString(connectString)
+        //console.log('ODBC_SQLServer', ret)
+        return { success: 1, message: 'ODBC_SQLServer OK', stop: 0 }
+    } catch (err) {
+        return { success: 0, message: 'ODBC_SQLServer Fatal Error: ' + err.message, stop: 1 }
+    }
+}
+
+
+
+/**
+ * ---------------------------------------------------------------------------- 
+ * @function <OK>
+ *  ODBC_Oracle:  Store an Oracle ODBC Connection string
+ * 
+ * @param {object} data:        all the parameters
+ * @param {object} variables:   array of all the variables
+ * @param {string} Driver:      name of the driver
+ * @param {string} Server:      name of the server
+ * @param {string} Database:    name of the database
+ * @param {string} DummyUser:   name of the dummy user
+ * 
+ */
+async function ODBC_Oracle(data, variables, Driver, Server, Database, DummyUser) {
+
+    const { getDummyuserByUser } = require("../../dummyuser/dummyuser.service.js");
+    const { decryptPassword } = require("./password.library.js")
+    const { getDatasetByCode } = require("../../dataset/dataset.service.js");
+    const ODBC = require('./odbc.library.js')
+
+    try {
+
+        // Evaluate the dummyUser
+        let UserId = ""
+        let Password = ""
+
+        if (DummyUser == undefined) {
+            return { success: 0, message: "LoginUser: dummy User cannot be empty!", stop: 1 }
+        } else {
+            DummyUser = variables.evaluateVariable(DummyUser, true)
+        }
+
+        if (DummyUser == '<ME>') {
+            DummyUser = data.userName
+            variables.displayLog(1, 3, 'ME Dummy user: ' + DummyUser)
+
+        } else if (DummyUser[0] == '#') {
+            // Evaluate the dataset (if any)
+            const dataAPI = { subprojectID: data.subprojectID, code: DummyUser, language: '*', active: 1 }
+            const result = await getDatasetByCode(dataAPI);
+            if (result.length) {
+                DummyUser = result[0].label
+            } else {
+                variables.displayLog(1, 1, 'Data not found in the dataset! - dummyUser: ' + DummyUser)
+                return { success: 0, message: "Cannot find the code: " + DummyUser + " in the dataset!", stop: 1 }
+            }
+        }
+
+        variables.displayLog(1, 1, '***** Dummy user: ' + DummyUser)
+
+        // get the active dummy user data
+        const dataAPI = { projectID: data.projectID, dummy: DummyUser, active: 1 }
+        const result = await getDummyuserByUser(dataAPI);
+        if (result.length) {
+            UserId = result[0].user
+            Password = result[0].password
+        } else {
+            variables.displayLog(1, 1, '>>>>> Data not found in the dummy users!')
+            return { success: 0, message: "Cannot find the user: " + DummyUser + " in the dummy users!", stop: 1 }
+        }
+
+        // Decrypt the password
+        if (result[0].crypted) {
+            let ret = await decryptPassword(Password)
+            if (ret.success) {
+                Password = ret.password
+            } else {
+                return { success: 0, message: "Cannot decrypt the password!", stop: 1 }
+            }
+        }
+
+        Server = Server.replace(",", ":")
+        Server = Server.replace(": ", ":")
+        Server = Server.replace(" :", ":")
+
+        let connectString = `Driver={${Driver}};Dbq=${Server}/${Database};UID=${UserId};PWD=${Password};`
+
+        let ret = ODBC.setConnectionString(connectString)
+        //console.log('ODBC_Oracle', ret)
+        return { success: 1, message: 'ODBC_Oracle OK', stop: 0 }
+    } catch (err) {
+        return { success: 0, message: 'ODBC_Oracle Fatal Error: ' + err.message, stop: 1 }
+    }
+}
+
+
+
+/**
+ * ---------------------------------------------------------------------------- 
+ * @function <OK>
+ *  ODBC_MySQL:  Store a MySQL ODBC Connection string
+ * 
+ * @param {object} data:        all the parameters
+ * @param {object} variables:   array of all the variables
+ * @param {string} Driver:      name of the driver
+ * @param {string} Server:      name of the server
+ * @param {string} Database:    name of the database
+ * @param {string} DummyUser:   name of the dummy user
+ * 
+ */
+async function ODBC_MySQL(data, variables, Driver, Server, Database, DummyUser) {
+
+    const { getDummyuserByUser } = require("../../dummyuser/dummyuser.service.js");
+    const { decryptPassword } = require("./password.library.js")
+    const { getDatasetByCode } = require("../../dataset/dataset.service.js");
+
+    const ODBC = require('./odbc.library.js')
+
+    try {
+
+        // Evaluate the dummyUser
+        let UserId = ""
+        let Password = ""
+
+        if (DummyUser == undefined) {
+            return { success: 0, message: "LoginUser: dummy User cannot be empty!", stop: 1 }
+        } else {
+            DummyUser = variables.evaluateVariable(DummyUser, true)
+        }
+
+        if (DummyUser == '<ME>') {
+            DummyUser = data.userName
+            variables.displayLog(1, 3, 'ME Dummy user: ' + DummyUser)
+
+        } else if (DummyUser[0] == '#') {
+            // Evaluate the dataset (if any)
+            const dataAPI = { subprojectID: data.subprojectID, code: DummyUser, language: '*', active: 1 }
+            const result = await getDatasetByCode(dataAPI);
+            if (result.length) {
+                DummyUser = result[0].label
+            } else {
+                variables.displayLog(1, 1, 'Data not found in the dataset! - dummyUser: ' + DummyUser)
+                return { success: 0, message: "Cannot find the code: " + DummyUser + " in the dataset!", stop: 1 }
+            }
+        }
+
+        variables.displayLog(1, 1, '***** Dummy user: ' + DummyUser)
+
+        // get the active dummy user data
+        const dataAPI = { projectID: data.projectID, dummy: DummyUser, active: 1 }
+        const result = await getDummyuserByUser(dataAPI);
+        if (result.length) {
+            UserId = result[0].user
+            Password = result[0].password
+        } else {
+            variables.displayLog(1, 1, '>>>>> Data not found in the dummy users!')
+            return { success: 0, message: "Cannot find the user: " + DummyUser + " in the dummy users!", stop: 1 }
+        }
+
+        // Decrypt the password
+        if (result[0].crypted) {
+            let ret = await decryptPassword(Password)
+            if (ret.success) {
+                Password = ret.password
+            } else {
+                return { success: 0, message: "Cannot decrypt the password!", stop: 1 }
+            }
+        }
+
+        let connectString = `Driver={${Driver}};Server=${Server};Database=${Database};User=${UserId};Password=${Password};`
+
+        let ret = ODBC.setConnectionString(connectString)
+        //console.log('ODBC_MySQL', ret)
+
+        return { success: 1, message: 'ODBC_MySQL OK', stop: 0 }
+    } catch (err) {
+        return { success: 0, message: 'ODBC_MySQL Fatal Error: ' + err.message, stop: 1 }
+    }
+}
+
+/**
+ * ---------------------------------------------------------------------------- 
+ * @function <OK>
+ *  ODBC_normalizeResult:  Normalize the ODBC result to avoid to much information, keep only the essential
+ * 
+ * @param {object} data:            all the parameters 
+ * @param {string} result:          result of the ODBC.executeSql
+ * @param {array} excludedFields:   array of column(s) to exclude from the ODBC result!
+ *
+ * 
+ */
+async function ODBC_normalizeResult(data, result, excludedFields = ['password', 'token', 'secret']) {
+    const { getParametersByCode } = require("../../parameter/parameter.service.js");
+
+    // Check if we have a parameter to exclude some columns of the database
+    let dataAPI = { projectID: data.projectID, code: 'Secret Column' }
+    const result1 = await getParametersByCode(dataAPI);
+    if (result1.length) {
+        let param = result1[0].paramValue
+        excludedFields = param.split(",").map(field => field.trim()).filter(field => field.length > 0);
+    }
+
+    // Remove the secret columns
+    const cleanRows = result.map(row => {
+        const safe = { ...row };
+        for (const field of excludedFields) delete safe[field];
+        return safe;
+    });
+
+    //console.log ('Safe', cleanRows)
+
+    return {
+        rows: cleanRows,
+        count: cleanRows.length,
+        columns: result.columns
+            ? result.columns.map(c => c.name)
+            : Object.keys(cleanRows[0] ?? {})
+    };
+}
+
+
+/**
+ * ---------------------------------------------------------------------------- 
+ * @function <OK>
+ *  ODBC_ExecuteSQL:  Execute a SQL statement with an ODBC Connection
+ * 
+ * @param {object} data:        all the parameters
+ * @param {object} variables:   array of all the variables
+ * @param {string} Sql:         SQL statement
+ * @param {Array} params:       parameter(s)
+ * 
+ */
+async function ODBC_ExecuteSQL(data, variables, Sql, param) {
+
+    const { getDatasetByCode } = require("../../dataset/dataset.service.js");
+
+    const ODBC = require('./odbc.library.js')
+    let returnCount = ''
+
+    try {
+        variables.setVariable("$Error", "0");
+        parameters = param.split(';')
+        console.log('Sql', Sql)
+        console.log('parameters', parameters)
+        const result = await ODBC.executeSql(Sql, parameters)
+
+
+        // COMMIT for DML statements
+        if (/^\s*(INSERT|UPDATE|DELETE)/i.test(Sql)) {
+            if (result.count != undefined) {
+                returnCount = 'Affected rows:' + result.count
+                console.log('Affected rows:', result.count);
+                variables.setVariable("$ODBCRow", result.count);
+            }
+        } else {
+            // Store the result in http data (only for non DML)
+            let code = "ODBC#" + data.userID
+            const normalized = await ODBC_normalizeResult(data, result);
+            //console.log('ODBC_ExecuteSQL', normalized)
+            returnCount = 'rows:' + result.count
+            variables.setVariable("$ODBCRow", result.count);
+
+            let ret = await Store_HttpData(data, code, normalized)
+            if (ret.success != 1) {
+                variables.setVariable("$Error", "1");
+                return { success: 0, message: "ODBC_ExecuteSQL: KO - no way to store the result of the request!", stop: 1 };
+            }
+        }
+
+        return { success: 1, message: 'ODBC_ExecuteSQL OK', value: returnCount, stop: 0 }
+    } catch (err) {
+        variables.setVariable("$Error", "1");
+        return { success: 0, message: 'ODBC_ExecuteSQL Fatal Error: ' + err.message, stop: 1 }
+    }
+}
+
+
+/**
+ * ---------------------------------------------------------------------------- 
+ * @function <OK>
+ *  ODBC_GetResult:  Get the ODBC result stored in the database
+ *
+ * @param {object} data:        all the parameters
+ * @param {object} variables:   array of all the variables
+ * 
+ */
+async function ODBC_GetResult(data, variables) {
+    const { getHttpdataByCode } = require("../../httpdata/httpdata.service.js");
+
+    try {
+
+        // Get the http data
+        let code = "ODBC#" + data.userID
+        const dataAPI1 = { subprojectID: data.subprojectID, code: code };
+        const result1 = await getHttpdataByCode(dataAPI1);
+        variables.setVariable("$Error", "0");
+        if (result1.length == 0) {
+            console.log("httpdata not found! : " + code)
+            variables.setVariable("$Error", "1");
+            return { success: 0, message: "ODBC_GetResult: httpdata not found! : " + code, stop: 1 };
+        }
+
+        const dataResult = result1[0]
+        let xmlData = JSON.parse(dataResult.jsondata);
+        if (!xmlData) {
+            console.log("httpSearchKeyValue: jsondata is empty!",);
+            variables.setVariable("$Error", "1");
+            return { success: 0, message: "ODBC_GetResult: transactionResponse is empty!", stop: 1 };
+        }
+        return { success: 1, message: "ODBC_GetResult: OK!", value: xmlData, stop: 0 };
+
+    } catch (error) {
+        return { success: 0, message: error.message, stop: 1 };
+    }
+
+}
+
+
+/**
+ * ---------------------------------------------------------------------------- 
+ * @function <OK>
+ *  ODBC_DataColumn:  Extract the columns of the previous ODBC process
+ *
+ * @param {object} data:        all the parameters
+ * @param {object} variables:   array of all the variables
+ * 
+ * 
+ */
+async function ODBC_DataColumn(data, variables) {
+
+
+    try {
+
+        // Get the http data
+        let xmlData = ''
+        let ret = await ODBC_GetResult(data, variables)
+        if (ret.success == 1) {
+            xmlData = ret.value
+        } else {
+            return { success: 0, message: ret.message, stop: 1 };
+        }
+        console.log('XMLData', xmlData)
+        return { success: 1, message: 'ODBC_DataColumn OK', value: xmlData.columns, stop: 0 };
+
+
+    } catch (error) {
+        return { success: 0, message: error.message, stop: 1 };
+    }
+
+}
+
+
+
+/**
+ * ---------------------------------------------------------------------------- 
+ * @function <OK>
+ *  ODBC_Data:  Extract the value of a record of the previous ODBC process
+ *
+ * @param {object} data:        all the parameters
+ * @param {object} variables:   array of all the variables
+ * @param {string} column:      name of the column to extract
+ * @param {number} row:         row of the record 
+ * @param {string} variable:    name of the variable to store the value
+ * 
+ */
+async function ODBC_DataValue(data, variables, column, row, variable) {
+
+
+    try {
+
+        // Get the http data
+        let xmlData = ''
+        variables.setVariable("$Error", "0");
+        let ret = await ODBC_GetResult(data, variables)
+        if (ret.success == 1) {
+            xmlData = ret.value
+        } else {
+            variables.setVariable("$Error", "1");
+            return { success: 0, message: ret.message, stop: 1 };
+        }
+        if (row < 1 || row > xmlData.count) {
+            variables.setVariable("$Error", "1");
+            return { success: 0, message: "invalid row: " + row + " (row count: " + xmlData.count + ")", stop: 1 };
+        }
+        row = row - 1
+        console.log('XMLData', xmlData.rows[row][column])
+        variables.setVariable(variable, xmlData.rows[row][column]);
+
+        return { success: 1, message: 'ODBC_DataValue OK', value: xmlData.rows[row][column], stop: 0 };
+
+
+    } catch (error) {
+        return { success: 0, message: error.message, stop: 1 };
+    }
+
+}
+
+
+
+/**
+ * ---------------------------------------------------------------------------- 
+ * @function <OK>
+ *  ODBC_DataCount:  Extract the number of a record of the previous ODBC process
+ *
+ * @param {object} data:        all the parameters
+ * @param {object} variables:   array of all the variables
+ * @param {string} variable:    name of the variable to store the value
+ * 
+ */
+async function ODBC_DataCount(data, variables, variable) {
+
+
+    try {
+
+        // Get the http data
+        let xmlData = ''
+        variables.setVariable("$Error", "0");
+        let ret = await ODBC_GetResult(data, variables)
+        if (ret.success == 1) {
+            xmlData = ret.value
+        } else {
+            variables.setVariable("$Error", "1");
+            return { success: 0, message: ret.message, stop: 1 };
+        }
+        console.log('XMLData', xmlData.count)
+        variables.setVariable(variable, xmlData.count);
+
+        return { success: 1, message: 'ODBC_DataCount OK', value: xmlData.count, stop: 0 };
+
+
+    } catch (error) {
+        return { success: 0, message: error.message, stop: 1 };
+    }
+
+}
 
 
 /**
@@ -7914,12 +8528,12 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 return ret
 
             case 'imageDifference':
-                ret = await imageDifference(page, data, param1, param2, param3)
+                ret = await imageDifference(page, data, variables, param1, param2, param3, param4, param5, param6, param7, param8)
                 if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.message)
                 return ret
 
             case 'imageBaseline':
-                ret = await imageBaseline(page, data, param1, param2)
+                ret = await imageBaseline(page, data, variables, param1, param2, param3, param4, param5, param6, param7)
                 if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.message)
                 return ret
 
@@ -7962,6 +8576,41 @@ async function evaluateFunction(page, variables, name, data, param1, param2, par
                 if (ret.success == 1) await logfile(data.userID, 'Info', '... Print screen is in the slot: ' + ret.slot)
                 return ret
 
+            case 'ODBC_Generic':
+                ret = await ODBC_Generic(data, variables, param1)
+                return ret
+
+            case 'ODBC_SQLServer':
+                ret = await ODBC_SQLServer(data, variables, param1, param2, param3, param4, param5)
+                return ret
+
+            case 'ODBC_Oracle':
+                ret = await ODBC_Oracle(data, variables, param1, param2, param3, param4)
+                return ret
+
+            case 'ODBC_MySQL':
+                ret = await ODBC_MySQL(data, variables, param1, param2, param3, param4)
+                return ret
+
+            case 'ODBC_ExecuteSQL':
+                ret = await ODBC_ExecuteSQL(data, variables, param1, param2)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
+                return ret
+
+            case 'ODBC_DataColumn':
+                ret = await ODBC_DataColumn(data, variables)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
+                return ret
+
+            case 'ODBC_DataValue':
+                ret = await ODBC_DataValue(data, variables, param1, param2, param3)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
+                return ret
+
+            case 'ODBC_DataCount':
+                ret = await ODBC_DataCount(data, variables, param1)
+                if (ret.success == 1) await logfile(data.userID, 'Info', '... ' + ret.value)
+                return ret
 
 
             default:
@@ -8796,6 +9445,14 @@ module.exports = {
     phoneFill: phoneFill,
     phonePress: phonePress,
     phoneUrl: phoneUrl,
-    phoneCapture: phoneCapture
+    phoneCapture: phoneCapture,
+    ODBC_Generic: ODBC_Generic,
+    ODBC_SQLServer: ODBC_SQLServer,
+    ODBC_Oracle: ODBC_Oracle,
+    ODBC_MySQL: ODBC_MySQL,
+    ODBC_ExecuteSQL: ODBC_ExecuteSQL,
+    ODBC_DataColumn: ODBC_DataColumn,
+    ODBC_DataValue: ODBC_DataValue,
+    ODBC_DataCount: ODBC_DataCount
 
 };

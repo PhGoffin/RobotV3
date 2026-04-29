@@ -72,7 +72,6 @@ async function decryptPassword(password) {
 
     ret = { success: 1, message: "Password decrypted ", password: decryptedData }
 
-
     return (ret)
 
 }
