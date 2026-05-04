@@ -20,7 +20,9 @@ const {
   copyStory,
   copyAllStory, 
   deleteStory,
-  deleteAllStory
+  deleteAllStory,
+  exportStory,
+  batchStory
 } = require("./story.service");
 
 const AppError = require("../../utils/appError");
@@ -214,7 +216,41 @@ module.exports = {
       success: 1,
       message: "Full Story deleted successfully",
     });
-  })
+  }),
+
+  // ---------------------------------------------------------------------------
+  // Export a Story into a curl file
+  // ---------------------------------------------------------------------------
+  exportStory: catchAsync(async (req, res, next) => {
+    res.set('Access-Control-Allow-Origin', '*');    
+    const body = req.body;
+    // Call the database services to export a Story into a curl file
+    const result = await exportStory(body);
+    if (!result.affectedRows) {
+      throw new AppError('Failed to export Story into curl file!', 200);
+    }
+    return res.json({
+      success: 1,
+      message: "Story exported successfully",
+    });
+  }),
+  
+  // ---------------------------------------------------------------------------
+  // Export a batch to execute a Story with a curl file
+  // ---------------------------------------------------------------------------
+  batchStory: catchAsync(async (req, res, next) => {
+    res.set('Access-Control-Allow-Origin', '*');    
+    const body = req.body;
+    // Call the database services to export a batch to execute a Story with a curl file
+    const result = await batchStory(body);
+    if (!result.affectedRows) {
+      throw new AppError('Failed to export batch Story!', 200);
+    }
+    return res.json({
+      success: 1,
+      message: "Batch Story exported successfully",
+    });
+  })  
 
 };
 

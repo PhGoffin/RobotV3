@@ -6148,7 +6148,14 @@ async function SAML_Transaction(page, data, variables, certificateDataName, asse
             data: dynamicData
         });
 
-        const txResult = await txResponse.json();
+        try {
+            const txResult = await txResponse.json();
+        } catch (err) {
+            console.log('SAML: Error -  Not a Json answer!', txResponse)
+            let errMsg = await txResponse.text()
+            console.log ('error msg:' + errMsg)
+            return { success: 0, message: "SAML Transaction Error: " + errMsg, stop: 1 };
+        }
         console.log("Transaction Result:", txResult);
         console.log("Transaction Response:", txResult.transactionResponse);
 
@@ -7973,6 +7980,8 @@ async function ODBC_DataValue(data, variables, column, row, variable) {
         row = row - 1
         console.log('XMLData', xmlData.rows[row][column])
         variables.setVariable(variable, xmlData.rows[row][column]);
+
+        if (xmlData.rows[row][column] == undefined) variables.setVariable("$Error", "1");
 
         return { success: 1, message: 'ODBC_DataValue OK', value: xmlData.rows[row][column], stop: 0 };
 

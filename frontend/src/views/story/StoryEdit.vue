@@ -13,7 +13,25 @@
 
             <div class="entity">
 
+                <div class="input-container focus">
+                    <button @click="handleExport" class="action" title="Export current Story into a curl file">
+                        <i class="fa-solid fa-square-share-nodes"></i>
+                        Curl Export</button>
+                    <p v-if="viewLink">
+                       Json file:  <a :href="URL + jsonFile" :key="jsonFile" >{{ jsonFile }}</a>
+                    </p>
+
+                    <p v-if="viewLink">
+                      Batch file:   <a :href="URL + batchFile" :key="batchFile" >{{ batchFile }}</a>
+                    </p>
+
+                </div>
+
+
+
+
                 <form @submit.prevent="handleSubmit">
+
 
                     <div class="input-container focus">
                         <input type="text" name="subproject" class="input disabled" v-model="subprojectName" disabled />
@@ -36,8 +54,8 @@
                     </div>
 
                     <div class="input-container focus">
-                        <input type="text" name="story" class="input" v-model="graphLabel" title="Name of the label to display on the graph"
-                            maxlength="20" />
+                        <input type="text" name="story" class="input" v-model="graphLabel"
+                            title="Name of the label to display on the graph" maxlength="20" />
                         <label>Graph label</label>
                         <span>Graph label</span>
                     </div>
@@ -79,7 +97,8 @@
                     <div class="input-container textarea focus">
                         <textarea name="comment" class="input disabled" maxlength="80" v-model="comment"
                             @focus="handleFocus($event)" @blur="handleBlur($event)"
-                            :title="selectorID == 1 ? 'Comment on the selected scenario' : 'Comment on the selected suite'" disabled></textarea>
+                            :title="selectorID == 1 ? 'Comment on the selected scenario' : 'Comment on the selected suite'"
+                            disabled></textarea>
                         <label>Comment</label>
                         <span>Comment</span>
                     </div>
@@ -120,6 +139,8 @@ import { useRouter } from 'vue-router'
 import Spinner from '../../components/Spinner.vue'
 import updateStory from '../../composables/story/updateStory'
 import getStory from '../../composables/story/getStory'
+import exportStory from '../../composables/story/exportStory'
+import batchStory from '../../composables/story/batchStory'
 
 import { displayMsg, consoleLog } from '../../util/debug';
 
@@ -171,6 +192,10 @@ export default {
         const scenarioParam2 = ref('')
         const suiteParam1 = ref(0)
         const suiteParam2 = ref('')
+        const viewLink = ref(false)
+        const jsonFile = ref(userName.value + '.json')
+        const batchFile = ref(userName.value + '.bat')
+        const URL = ref(process.env.VUE_APP_MYSQL_API + 'test/download/')
 
         // --------------------------------------------------------------------
         // Check if we received a scenarioID from the scenario screen
@@ -240,7 +265,7 @@ export default {
                 if (story.value.success && story.value.data.length) {
                     story.value = story.value.data
                     consoleLog('Storys.vue/loadStoryData', 2, story, trace.value)
-                    subprojectID.value = story.value[0].subprojectID
+                    //subprojectID.value = story.value[0].subprojectID
                     storyheaderID.value = story.value[0].storyheaderID
                     storysetName.value = story.value[0].headerlabel
                     storyName.value = story.value[0].story
@@ -371,6 +396,65 @@ export default {
         }
 
 
+
+        // --------------------------------------------------------------------------
+        // User asks to Export tests into a json file
+        // --------------------------------------------------------------------------
+        const handleExport = async (event) => {
+            let ret = doExportBatch()
+            if (ret) ret = await doExport()
+            if (ret) viewLink.value = true
+            DisplayError('Curl file created', 'Info')
+        }
+
+        // --------------------------------------------------------------------------
+        // Call the API to export the story into a curl file 
+        // --------------------------------------------------------------------------
+        const doExportBatch = async () => {
+            let story = []
+            let filename = './data/' + batchFile.value
+
+            consoleLog('StoryEdit.vue/doExportBatch', 2, 'Export batch story in ' + filename, trace.value)
+            const { error, batchTheStory } = batchStory(userName.value, jsonFile.value, filename)
+            return await batchTheStory(story, trace.value)
+                .then(function () {
+                    // check the status of the export
+                    consoleLog('StoryEdit.vue/doExportBatch', 2, 'Story batch export status: ' + story.value.success, trace.value)
+                    if (story.value.success) {
+                        consoleLog('StoryEdit.vue/doExportBatch', 2, story, trace.value)
+                        return (1)
+                    } else {
+                        consoleLog('StoryEdit.vue/doExportBatch', 2, 'Error during the export of a batch story', trace.value)
+                        return (0)
+                    }
+                })
+        }
+
+        // --------------------------------------------------------------------------
+        // Call the API to export the story into a curl file 
+        // --------------------------------------------------------------------------
+        const doExport = async () => {
+            let story = []
+            let filename = './data/' + jsonFile.value
+
+            consoleLog('StoryEdit.vue/doExport', 2, 'Export story in ' + filename, trace.value)
+            const { error, exportTheStory } = exportStory(storyName.value, storyheaderID.value, storyID.value, projectID.value, subprojectID.value, userID.value, userName.value, filename)
+            return await exportTheStory(story, trace.value)
+                .then(function () {
+                    // check the status of the export
+                    consoleLog('StoryEdit.vue/doExport', 2, 'Story export status: ' + story.value.success, trace.value)
+                    if (story.value.success) {
+                        consoleLog('StoryEdit.vue/doExport', 2, story, trace.value)
+                        return (1)
+                    } else {
+                        consoleLog('StoryEdit.vue/doExport', 2, 'Error during the export of a story', trace.value)
+                        return (0)
+                    }
+                })
+        }
+
+
+
         // --------------------------------------------------------------------------
         // User submit the data
         // --------------------------------------------------------------------------
@@ -396,8 +480,8 @@ export default {
         return {
             errorMessage, styleMessage, story, projectName, projectID, subprojectName, subprojectID, userID, userName,
             storysetName, storyName, graphLabel, scenarioID, comment, activeID, actives, selectedActive, selectorID, selectors, selectedSelector,
-            scenarioID, suiteID,
-            handleCancel, handleSubmit, handleFocus, handleBlur, handleActiveChange, handleScenario, handleSuite, handleSelectorChange
+            scenarioID, suiteID, viewLink, jsonFile, batchFile, URL,
+            handleCancel, handleSubmit, handleFocus, handleBlur, handleActiveChange, handleScenario, handleSuite, handleSelectorChange, handleExport
         }
 
     }

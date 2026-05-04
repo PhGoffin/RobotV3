@@ -7,7 +7,7 @@ module.exports = {
    * @Email: artcomputer123@gmail.com
    * @Date: 2024-01-28
  * @Last Modified by: Someone
-   * @Last Modified time: 2026-03-12 07:46:12
+   * @Last Modified time: 2026-04-30 09:19:35
    * @Description: All the database services available for the API Test
    */
 
@@ -336,7 +336,7 @@ module.exports = {
   exportTest: async (data) => {
     const { getTestByScenario } = require("./test.service");
 
-    //console.log ('Data: ', data)
+    console.log ('Data: ', data)
 
     let fs = require("fs")
     let myTestData = [];

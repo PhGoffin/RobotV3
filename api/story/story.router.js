@@ -20,7 +20,9 @@ const {
   copyStory,
   copyAllStory, 
   deleteStory,
-  deleteAllStory
+  deleteAllStory,
+  exportStory,
+  batchStory
 } = require("./story.controller");
 
 // -------------------------------------------------------------
@@ -37,6 +39,8 @@ router.post("/fullcopy", copyAllStory);
 router.post("/delete", deleteStory);
 router.post("/fulldelete", deleteAllStory);
 router.post("/create", createStory); 
+router.post("/export", exportStory); 
+router.post("/batch", batchStory); 
 
 
 module.exports = router;
